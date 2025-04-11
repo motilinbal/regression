@@ -1,0 +1,517 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{lmodern} % Or another suitable font package
+
+\geometry{margin=1in}
+
+% Theorem Environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% Custom environment for administrative notes
+\newenvironment{adminnote}{%
+  \par\medskip\noindent\rule{\linewidth}{0.4pt}\par\nobreak\medskip% Start with a horizontal rule
+  \noindent\textbf{Administrative Notes:}\par\nobreak\smallskip% Title
+}
+{%
+  \par\medskip\noindent\rule{\linewidth}{0.4pt}\par\nobreak\medskip% End with a horizontal rule
+}
+
+% Macros
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Mat}[1]{\text{Mat}_{#1}(\R)} % Or general field F
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\Span}{\operatorname{span}}
+\newcommand{\dimn}{\operatorname{dim}}
+\newcommand{\detm}{\operatorname{det}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\nul}{\operatorname{null}}
+\newcommand{\col}{\operatorname{Col}}
+\newcommand{\row}{\operatorname{Row}}
+\newcommand{\inner}[2]{\langle #1, #2 \rangle}
+\newcommand{\norm}[1]{\| #1 \|}
+\newcommand{\proj}{\operatorname{proj}}
+\newcommand{\ortho}{\perp}
+\newcommand{\trans}{^T} % Transpose
+
+\title{Review of Linear Algebra Concepts and Course Introduction}
+\author{Lecture Notes} % Placeholder
+\date{\today} % Or specific date
+
+\begin{document}
+
+\maketitle
+
+\begin{adminnote}
+Welcome! Let's cover a few administrative points before diving into the mathematics.
+
+\textbf{Grading Scheme:} Your final grade in this course will be based on the following components:
+\begin{itemize}
+    \item \textbf{Homework Assignments (10\%):} There will be approximately 10 assignments throughout the semester. Submission is mandatory. You are allowed to miss submitting *one* assignment without penalty. Each submitted assignment will be graded on a pass/fail/excellent scale:
+        \begin{itemize}
+            \item Did not submit / Unsatisfactory attempt: 0 points
+            \item Satisfactory attempt (shows genuine effort): 80 points
+            \item Excellent work: 100 points
+        \end{itemize}
+        A 'satisfactory' grade indicates you've seriously engaged with the problems, even if not every detail is perfect. Aim for understanding!
+    \item \textbf{Midterm Quiz (20\%):} This quiz serves as a 'shield' (or 'magen' grade), meaning it can only help your final grade (it will replace a portion of the final exam weight if it's higher than your final exam score). However, \textbf{taking the quiz is mandatory}. We anticipate the quiz will be around week 8-9, but the exact date will be confirmed later.
+    \item \textbf{Final Exam (70\%):} This comprehensive exam covers all course material. The exact weight might be adjusted slightly depending on your quiz performance (if the quiz score is higher).
+\end{itemize}
+
+\textbf{Homework Logistics:}
+\begin{itemize}
+    \item Expect roughly one assignment per week.
+    \item You will generally have about 10 days to complete each assignment.
+    \item \textbf{Extensions:} If you foresee difficulty meeting a deadline due to legitimate reasons, please request an extension *in advance* through the designated private forum (see below). Don't wait until the last minute. Try your best to solve the problems yourself first, even if you need more time.
+    \item \textbf{Collaboration and Resources:} You will likely find solutions to some homework problems online (e.g., via Google, ChatGPT, past course materials). While these resources exist, relying on them directly will hinder your learning and won't prepare you for the quiz or exam.
+        \begin{itemize}
+            \item \textbf{Recommended Approach:} Always attempt the problems seriously on your own first. If you get stuck, discuss concepts with peers, consult the textbook/notes, or ask for *hints* on the forum or during office hours. If you do consult an external solution, make sure you understand it deeply and then write up your own version *in your own words* without looking at the source.
+            \item \textbf{Warning about AI Tools (e.g., ChatGPT):} While potentially helpful for generating ideas or checking simple steps, these tools can make mistakes, especially with more complex statistical or proof-based reasoning. They might provide answers that seem plausible but are incorrect. Developing your own understanding is crucial to identify such errors. Using AI to simply generate answers might get you points on homework but not the understanding needed for exams.
+        \end{itemize}
+\end{itemize}
+
+\textbf{Getting Help and Communication:}
+\begin{itemize}
+    \item \textbf{Public Q\&A Forum:} This is the primary place for questions about course material (definitions, concepts, lecture examples, general homework questions). Asking here benefits everyone, and you'll likely get faster responses. The forum is anonymous to other students, so please feel comfortable asking anything, no matter how basic it seems. (Note: Course staff can see your name).
+    \item \textbf{Private Request Forum:} Use this forum for personal matters, such as extension requests or discussing grades.
+    \item \textbf{Email:} Please use the forums as the primary means of communication. Email should be reserved for urgent or highly personal matters that cannot be addressed via the forums.
+\end{itemize}
+\end{adminnote}
+
+\section{Motivation: Why Linear Algebra Matters}
+
+Before we dive into the technical details, let's take a moment to understand why linear algebra is such a fundamental tool, especially in statistics, data science, and machine learning. You might wonder why the first few weeks of a statistics course are dedicated to this topic. It's not just mathematical formalism; it's the language we use to efficiently represent and manipulate data.
+
+\begin{itemize}
+    \item \textbf{Representing Data:} The most basic way to organize data is often a table, like a spreadsheet. Imagine a dataset of patients, where each row is a patient and columns represent features like height, age, and weight. In linear algebra, this table is simply a \textbf{matrix}. Each patient can be seen as a \textbf{vector} of features.
+
+    \item \textbf{Beyond Simple Tables:} Linear algebra allows us to represent more complex data structures.
+        \begin{itemize}
+            \item \textbf{Images:} A digital image is essentially a grid of pixels. A grayscale image can be represented as a matrix where each entry is the intensity of a pixel. A color image (RGB) can be represented as three matrices (one for each color channel) or often as a 3rd-order tensor. Operations like finding edges or features in an image often involve multiplying the image matrix by smaller matrices (filters or kernels) in a process related to convolution.
+            \item \textbf{Graphs and Networks:} Consider a social network. We can represent the relationships (e.g., who talks to whom) using an \textbf{adjacency matrix}, $A$, where $A_{ij}=1$ if person $i$ and person $j$ are connected (or interact), and $A_{ij}=0$ otherwise. We could even weight these connections. Analyzing properties of the network often involves computations on this matrix. (Think of the characters in "Friends" and mapping who talks to whom).
+        \end{itemize}
+
+    \item \textbf{Analyzing Data:} Once data is represented using vectors and matrices, linear algebra provides the tools for analysis.
+        \begin{itemize}
+            \item \textbf{Regression:} In introductory statistics, you likely encountered simple linear regression ($y = \beta_0 + \beta_1 x + \epsilon$). What if we have multiple predictors (height, age, weight predicting a disease)? We move to multiple regression, which is most naturally expressed and solved using matrix notation: $\mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}$. Finding the best $\boldsymbol{\beta}$ involves matrix operations.
+            \item \textbf{Comparing Groups (ANOVA):} You might have compared the means of two groups (e.g., men vs. women). What if you have multiple groups? Analysis of Variance (ANOVA) techniques, used to determine if there are significant differences between multiple group means, are deeply rooted in linear algebra concepts like projections and subspaces.
+            \item \textbf{Dimensionality Reduction:} Techniques like Principal Component Analysis (PCA) use eigenvalues and eigenvectors (which we'll review) to find the most important directions in high-dimensional data.
+        \end{itemize}
+
+    \item \textbf{Machine Learning:} Many machine learning algorithms, including neural networks, fundamentally rely on matrix and vector operations. Training these models involves optimizing functions defined over matrices (e.g., weights in a neural network).
+\end{itemize}
+
+So, the linear algebra we cover in the first five weeks is not an arbitrary hurdle. It's the essential foundation for understanding and working with the statistical models and data analysis techniques that follow. Mastering these tools will make the rest of the course, and further studies in related fields, much more accessible.
+
+\section{Course Structure Preview}
+
+\begin{itemize}
+    \item \textbf{Weeks 1-5 (Foundation):} We start with a review of core linear algebra concepts (vector spaces, bases, orthogonality, eigenvalues, etc.). We will then introduce random vectors and random matrices, exploring their properties (mean vectors, covariance matrices). This part is mathematically intensive but crucial.
+    \item \textbf{Subsequent Weeks (Applications):} Building on this foundation, we will delve into statistical inference in higher dimensions, multivariate analysis techniques, and more advanced regression models, all framed using the language of linear algebra.
+\end{itemize}
+Practice is key during the initial weeks. The concepts build on each other, and familiarity with the manipulations will make later topics much easier. You'll find that many 'tricks' and techniques reappear in different contexts.
+
+\section{Review: Vector Spaces and Subspaces}
+
+Let's refresh some fundamental concepts. We'll primarily work over the field of real numbers, $\R$.
+
+\begin{definition}[Vector Space]
+A \textbf{vector space} $V$ over a field $\F$ (for us, $\F = \R$) is a set of objects called vectors, equipped with two operations:
+\begin{enumerate}
+    \item Vector Addition: $+ : V \times V \to V$
+    \item Scalar Multiplication: $\cdot : \F \times V \to V$
+\end{enumerate}
+These operations must satisfy certain axioms (associativity, commutativity, identity elements, inverses, distributivity, etc.). We won't list all the axioms here, but standard examples like $\R^n$, the space of polynomials, and the space of continuous functions should be familiar.
+\end{definition}
+
+\begin{definition}[Subspace]
+Let $V$ be a vector space over $\F$. A subset $W \subseteq V$ is called a \textbf{subspace} of $V$ if $W$ is itself a vector space over $\F$ with the same operations inherited from $V$.
+\end{definition}
+
+It's often easier to check the subspace conditions directly:
+\begin{theorem}[Subspace Test]
+A non-empty subset $W \subseteq V$ is a subspace of $V$ if and only if it satisfies the following two closure properties:
+\begin{enumerate}
+    \item \textbf{Closure under Addition:} For all $\mathbf{w}_1, \mathbf{w}_2 \in W$, we have $\mathbf{w}_1 + \mathbf{w}_2 \in W$.
+    \item \textbf{Closure under Scalar Multiplication:} For all $\mathbf{w} \in W$ and all scalars $\alpha \in \F$, we have $\alpha \mathbf{w} \in W$.
+\end{enumerate}
+Equivalently, a non-empty subset $W$ is a subspace if and only if for all $\mathbf{w}_1, \mathbf{w}_2 \in W$ and all scalars $\alpha, \beta \in \F$, the linear combination $\alpha \mathbf{w}_1 + \beta \mathbf{w}_2$ is also in $W$.
+Note: These conditions imply that the zero vector $\mathbf{0}$ must be in $W$ (take $\alpha = 0$).
+\end{theorem}
+
+\section{Span, Linear Independence, Basis, and Dimension}
+
+\begin{definition}[Linear Combination and Span]
+Let $S = \{\mathbf{v}_1, \mathbf{v}_2, \dots, \mathbf{v}_k\}$ be a set of vectors in a vector space $V$.
+\begin{itemize}
+    \item A \textbf{linear combination} of vectors in $S$ is a vector of the form $\mathbf{w} = \alpha_1 \mathbf{v}_1 + \alpha_2 \mathbf{v}_2 + \dots + \alpha_k \mathbf{v}_k$, where $\alpha_1, \dots, \alpha_k$ are scalars.
+    \item The \textbf{span} of $S$, denoted $\Span(S)$, is the set of all possible linear combinations of vectors in $S$.
+    \[ \Span(S) = \{ \alpha_1 \mathbf{v}_1 + \dots + \alpha_k \mathbf{v}_k \mid \alpha_1, \dots, \alpha_k \in \F \} \]
+\end{itemize}
+If $W = \Span(S)$, we say that $S$ \textbf{spans} or \textbf{generates} $W$.
+\end{definition}
+
+\begin{proposition}
+For any set of vectors $S \subseteq V$, the span $\Span(S)$ is a subspace of $V$.
+\end{proposition}
+\begin{proof}[Sketch based on lecture]
+We need to check the closure properties for $W = \Span(S)$.
+\begin{enumerate}
+    \item Zero Vector: $\mathbf{0} = 0\mathbf{v}_1 + \dots + 0\mathbf{v}_k$, so $\mathbf{0} \in W$. (Assuming $S$ is not empty).
+    \item Closure under Addition: Let $\mathbf{w}_1, \mathbf{w}_2 \in W$. Then $\mathbf{w}_1 = \sum \alpha_i \mathbf{v}_i$ and $\mathbf{w}_2 = \sum \beta_i \mathbf{v}_i$ for some scalars $\alpha_i, \beta_i$. Their sum is $\mathbf{w}_1 + \mathbf{w}_2 = \sum (\alpha_i + \beta_i) \mathbf{v}_i$. Since $\alpha_i + \beta_i$ are scalars, this sum is also a linear combination of vectors in $S$, so $\mathbf{w}_1 + \mathbf{w}_2 \in W$.
+    \item Closure under Scalar Multiplication: Let $\mathbf{w} \in W$ and $c \in \F$. Then $\mathbf{w} = \sum \alpha_i \mathbf{v}_i$. So, $c\mathbf{w} = c(\sum \alpha_i \mathbf{v}_i) = \sum (c\alpha_i) \mathbf{v}_i$. Since $c\alpha_i$ are scalars, $c\mathbf{w}$ is a linear combination, hence $c\mathbf{w} \in W$.
+\end{enumerate}
+Therefore, $\Span(S)$ is a subspace.
+\end{proof}
+
+\begin{definition}[Linear Dependence and Independence]
+Let $S = \{\mathbf{v}_1, \mathbf{v}_2, \dots, \mathbf{v}_k\}$ be a set of vectors in $V$.
+\begin{itemize}
+    \item $S$ is \textbf{linearly dependent} if there exist scalars $\alpha_1, \dots, \alpha_k$, \textit{not all zero}, such that $\alpha_1 \mathbf{v}_1 + \alpha_2 \mathbf{v}_2 + \dots + \alpha_k \mathbf{v}_k = \mathbf{0}$. This means at least one vector in $S$ can be written as a linear combination of the others.
+    \item $S$ is \textbf{linearly independent} if the only way to form the zero vector as a linear combination is by using all zero scalars. That is, the equation $\alpha_1 \mathbf{v}_1 + \alpha_2 \mathbf{v}_2 + \dots + \alpha_k \mathbf{v}_k = \mathbf{0}$ implies $\alpha_1 = \alpha_2 = \dots = \alpha_k = 0$.
+\end{itemize}
+\end{definition}
+
+\begin{remark}
+Any set containing more than $n$ vectors in $\R^n$ must be linearly dependent.
+\end{remark}
+
+\begin{definition}[Basis]
+A set of vectors $B = \{\mathbf{b}_1, \mathbf{b}_2, \dots, \mathbf{b}_n\}$ in a vector space $V$ is called a \textbf{basis} for $V$ if:
+\begin{enumerate}
+    \item $B$ is linearly independent.
+    \item $B$ spans $V$ (i.e., $\Span(B) = V$).
+\end{enumerate}
+\end{definition}
+
+\begin{theorem}[Equivalent Conditions for Basis]
+Let $W$ be a subspace. A set $B \subseteq W$ is a basis for $W$ if and only if it satisfies any of the following equivalent conditions:
+\begin{itemize}
+    \item $B$ is a minimal spanning set for $W$. (Removing any vector makes it no longer span $W$).
+    \item $B$ is a maximal linearly independent set in $W$. (Adding any other vector from $W$ makes the set dependent).
+\end{itemize}
+\end{theorem}
+
+\begin{remark}[Non-uniqueness of Basis]
+A given vector space (or subspace) generally has infinitely many different bases. However, all bases for a given finite-dimensional vector space have the same number of vectors.
+\end{remark}
+
+\begin{example}[From Lecture: Non-unique Basis]
+Consider the set $S = \left\{ \begin{pmatrix} 1 \\ 1 \end{pmatrix}, \begin{pmatrix} 2 \\ 2 \end{pmatrix} \right\}$ in $\R^2$.
+\begin{itemize}
+    \item Is $S$ linearly independent? No, because $2 \begin{pmatrix} 1 \\ 1 \end{pmatrix} - 1 \begin{pmatrix} 2 \\ 2 \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \end{pmatrix}$, a non-trivial linear combination giving the zero vector.
+    \item What is the span of $S$? $\Span(S) = \left\{ \alpha \begin{pmatrix} 1 \\ 1 \end{pmatrix} + \beta \begin{pmatrix} 2 \\ 2 \end{pmatrix} \right\} = \left\{ (\alpha + 2\beta) \begin{pmatrix} 1 \\ 1 \end{pmatrix} \right\} = \left\{ k \begin{pmatrix} 1 \\ 1 \end{pmatrix} \mid k \in \R \right\}$. This is the line $y=x$ in $\R^2$. Let $W = \Span(S)$.
+    \item $S$ spans $W$ but is not a basis because it's linearly dependent.
+    \item What are some bases for $W$?
+        \begin{itemize}
+            \item $B_1 = \left\{ \begin{pmatrix} 1 \\ 1 \end{pmatrix} \right\}$ is linearly independent (single non-zero vector) and spans $W$. So $B_1$ is a basis.
+            \item $B_2 = \left\{ \begin{pmatrix} 2 \\ 2 \end{pmatrix} \right\}$ is also linearly independent and spans $W$. So $B_2$ is a basis.
+            \item $B_3 = \left\{ \begin{pmatrix} -1 \\ -1 \end{pmatrix} \right\}$ is also a basis.
+        \end{itemize}
+    This illustrates that a subspace can have multiple bases.
+\end{itemize}
+\end{example}
+
+\begin{definition}[Dimension]
+The \textbf{dimension} of a finite-dimensional vector space $V$, denoted $\dimn(V)$, is the number of vectors in any basis for $V$.
+\end{definition}
+In the example above, $\dimn(W) = 1$.
+
+\section{Inner Products, Orthogonality, and Orthonormality}
+
+We often want to measure lengths and angles in vector spaces. This requires the notion of an inner product.
+
+\begin{definition}[Inner Product]
+An \textbf{inner product} on a real vector space $V$ is a function $\inner{\cdot}{\cdot}: V \times V \to \R$ that satisfies the following properties for all $\mathbf{u}, \mathbf{v}, \mathbf{w} \in V$ and all scalars $\alpha \in \R$:
+\begin{enumerate}
+    \item Symmetry: $\inner{\mathbf{u}}{\mathbf{v}} = \inner{\mathbf{v}}{\mathbf{u}}$
+    \item Linearity in the first argument: $\inner{\alpha \mathbf{u} + \mathbf{v}}{\mathbf{w}} = \alpha \inner{\mathbf{u}}{\mathbf{w}} + \inner{\mathbf{v}}{\mathbf{w}}$
+    \item Positive-definiteness: $\inner{\mathbf{u}}{\mathbf{u}} \ge 0$, and $\inner{\mathbf{u}}{\mathbf{u}} = 0$ if and only if $\mathbf{u} = \mathbf{0}$.
+\end{enumerate}
+A vector space equipped with an inner product is called an \textbf{inner product space}.
+\end{definition}
+
+\begin{remark}[Standard Inner Product on $\R^n$]
+Unless otherwise specified, the inner product we use on $\R^n$ is the standard \textbf{Euclidean inner product} (or dot product):
+For $\mathbf{u} = (u_1, \dots, u_n)$ and $\mathbf{w} = (w_1, \dots, w_n)$,
+\[ \inner{\mathbf{u}}{\mathbf{w}} = \mathbf{u}\trans \mathbf{w} = \sum_{i=1}^n u_i w_i \]
+We will use this inner product throughout the course.
+\end{remark}
+
+\begin{definition}[Norm and Orthogonality]
+In an inner product space $V$:
+\begin{itemize}
+    \item The \textbf{norm} (or length) of a vector $\mathbf{v}$ is $\norm{\mathbf{v}} = \sqrt{\inner{\mathbf{v}}{\mathbf{v}}}$.
+    \item Two vectors $\mathbf{u}, \mathbf{v} \in V$ are \textbf{orthogonal} if $\inner{\mathbf{u}}{\mathbf{v}} = 0$. We write $\mathbf{u} \ortho \mathbf{v}$.
+    \item A set of vectors $S = \{\mathbf{v}_1, \dots, \mathbf{v}_k\}$ is an \textbf{orthogonal set} if all pairs of distinct vectors are orthogonal: $\inner{\mathbf{v}_i}{\mathbf{v}_j} = 0$ for all $i \neq j$.
+    \item An \textbf{orthonormal set} is an orthogonal set where additionally each vector has norm 1: $\norm{\mathbf{v}_i} = 1$ for all $i$. (Equivalently, $\inner{\mathbf{v}_i}{\mathbf{v}_j} = \delta_{ij}$, the Kronecker delta).
+\end{itemize}
+\end{definition}
+
+\begin{theorem}
+Any orthogonal set of non-zero vectors is linearly independent.
+\end{theorem}
+
+\begin{definition}[Orthogonal and Orthonormal Basis]
+\begin{itemize}
+    \item An \textbf{orthogonal basis} for an inner product space $V$ is a basis that is also an orthogonal set.
+    \item An \textbf{orthonormal basis (ONB)} for $V$ is a basis that is also an orthonormal set.
+\end{itemize}
+\end{definition}
+
+Orthonormal bases are particularly convenient to work with (e.g., finding coordinates, projections).
+
+\begin{example}[From Lecture: Orthogonal Basis]
+Consider the set $B = \{\mathbf{v}_1, \mathbf{v}_2, \mathbf{v}_3\}$ in $\R^3$, where
+$\mathbf{v}_1 = \begin{pmatrix} 2 \\ 0 \\ 0 \end{pmatrix}$, $\mathbf{v}_2 = \begin{pmatrix} 0 \\ 1 \\ 0 \end{pmatrix}$, $\mathbf{v}_3 = \begin{pmatrix} 0 \\ 0 \\ 3 \end{pmatrix}$.
+\begin{itemize}
+    \item \textbf{Check Orthogonality:}
+        \begin{itemize}
+            \item $\inner{\mathbf{v}_1}{\mathbf{v}_2} = (2)(0) + (0)(1) + (0)(0) = 0$
+            \item $\inner{\mathbf{v}_1}{\mathbf{v}_3} = (2)(0) + (0)(0) + (0)(3) = 0$
+            \item $\inner{\mathbf{v}_2}{\mathbf{v}_3} = (0)(0) + (1)(0) + (0)(3) = 0$
+        \end{itemize}
+        The set is orthogonal.
+    \item \textbf{Check Linear Independence:} Since it's an orthogonal set of non-zero vectors, it's linearly independent.
+    \item \textbf{Check Spanning:} We have 3 linearly independent vectors in $\R^3$. Therefore, they form a basis for $\R^3$.
+    \item \textbf{Conclusion:} $B$ is an orthogonal basis for $\R^3$.
+    \item \textbf{Is it Orthonormal?} Let's check the norms:
+        \begin{itemize}
+            \item $\norm{\mathbf{v}_1} = \sqrt{2^2 + 0^2 + 0^2} = \sqrt{4} = 2$
+            \item $\norm{\mathbf{v}_2} = \sqrt{0^2 + 1^2 + 0^2} = \sqrt{1} = 1$
+            \item $\norm{\mathbf{v}_3} = \sqrt{0^2 + 0^2 + 3^2} = \sqrt{9} = 3$
+        \end{itemize}
+        Since not all norms are 1, the basis $B$ is orthogonal but \textit{not} orthonormal.
+    \item \textbf{Creating an Orthonormal Basis:} We can normalize each vector:
+        $\mathbf{u}_1 = \frac{\mathbf{v}_1}{\norm{\mathbf{v}_1}} = \begin{pmatrix} 1 \\ 0 \\ 0 \end{pmatrix}$,
+        $\mathbf{u}_2 = \frac{\mathbf{v}_2}{\norm{\mathbf{v}_2}} = \begin{pmatrix} 0 \\ 1 \\ 0 \end{pmatrix}$,
+        $\mathbf{u}_3 = \frac{\mathbf{v}_3}{\norm{\mathbf{v}_3}} = \begin{pmatrix} 0 \\ 0 \\ 1 \end{pmatrix}$.
+        The set $B' = \{\mathbf{u}_1, \mathbf{u}_2, \mathbf{u}_3\}$ is an orthonormal basis (the standard basis, in this case).
+\end{itemize}
+\end{example}
+
+\begin{definition}[Orthogonal Matrix]
+A square matrix $A \in \R^{n \times n}$ is called an \textbf{orthogonal matrix} if its columns form an orthonormal basis for $\R^n$.
+\end{definition}
+
+\begin{theorem}
+A square matrix $A \in \R^{n \times n}$ is orthogonal if and only if $A\trans A = I$. This also implies $A A\trans = I$, and thus $A^{-1} = A\trans$.
+\end{theorem}
+\begin{proof}[Sketch of $A\trans A = I$]
+Let $A = [\mathbf{a}_1 \ \mathbf{a}_2 \ \dots \ \mathbf{a}_n]$, where $\{\mathbf{a}_1, \dots, \mathbf{a}_n\}$ are the columns of $A$.
+The matrix $A\trans$ has the rows $(\mathbf{a}_1)\trans, \dots, (\mathbf{a}_n)\trans$.
+Consider the $(i, j)$-th entry of the product $A\trans A$:
+\[ (A\trans A)_{ij} = (\text{row } i \text{ of } A\trans) \cdot (\text{column } j \text{ of } A) = (\mathbf{a}_i)\trans \mathbf{a}_j = \inner{\mathbf{a}_i}{\mathbf{a}_j} \]
+Since the columns $\{\mathbf{a}_1, \dots, \mathbf{a}_n\}$ form an orthonormal basis by definition of an orthogonal matrix, we have:
+\[ \inner{\mathbf{a}_i}{\mathbf{a}_j} = \begin{cases} 1 & \text{if } i = j \\ 0 & \text{if } i \neq j \end{cases} = \delta_{ij} \]
+This means $(A\trans A)_{ij} = \delta_{ij}$, which is precisely the definition of the identity matrix $I$. Therefore, $A\trans A = I$.
+(A similar argument using the fact that the rows of an orthogonal matrix also form an ONB shows $AA\trans = I$).
+\end{proof}
+
+\begin{remark}[Rank]
+For any matrix $A$, $\rank(A) = \rank(A\trans)$. This means the row rank (dimension of the row space) equals the column rank (dimension of the column space).
+\end{remark}
+
+\section{Projections and Orthogonal Complements}
+
+\begin{definition}[Orthogonal Complement]
+Let $W$ be a subspace of an inner product space $V$. The \textbf{orthogonal complement} of $W$, denoted $W^\ortho$ (read "W perp"), is the set of all vectors in $V$ that are orthogonal to every vector in $W$:
+\[ W^\ortho = \{ \mathbf{v} \in V \mid \inner{\mathbf{v}}{\mathbf{w}} = 0 \text{ for all } \mathbf{w} \in W \} \]
+\end{definition}
+
+\begin{proposition}
+$W^\ortho$ is also a subspace of $V$.
+\end{proposition}
+
+\begin{theorem}[Orthogonal Decomposition Theorem]
+Let $W$ be a finite-dimensional subspace of an inner product space $V$. Then every vector $\mathbf{y} \in V$ can be written uniquely as
+\[ \mathbf{y} = \hat{\mathbf{y}} + \mathbf{e} \]
+where $\hat{\mathbf{y}} \in W$ and $\mathbf{e} \in W^\ortho$.
+The vector $\hat{\mathbf{y}}$ is called the \textbf{orthogonal projection} of $\mathbf{y}$ onto $W$, denoted $\proj_W \mathbf{y}$. Furthermore, $V$ decomposes as a direct sum: $V = W \oplus W^\ortho$.
+\end{theorem}
+
+\begin{remark}[Projection Formula]
+If $\{\mathbf{b}_1, \dots, \mathbf{b}_k\}$ is an \textit{orthonormal} basis for $W$, then the projection of $\mathbf{y}$ onto $W$ is given by:
+\[ \hat{\mathbf{y}} = \proj_W \mathbf{y} = \sum_{i=1}^k \inner{\mathbf{y}}{\mathbf{b}_i} \mathbf{b}_i \]
+The component orthogonal to $W$ is $\mathbf{e} = \mathbf{y} - \hat{\mathbf{y}}$.
+\end{remark}
+
+\begin{remark}[Geometric Interpretation]
+The projection $\hat{\mathbf{y}}$ is the vector in $W$ that is "closest" to $\mathbf{y}$ (in terms of the norm induced by the inner product). The vector $\mathbf{e} = \mathbf{y} - \hat{\mathbf{y}}$ represents the "error" or the part of $\mathbf{y}$ that cannot be represented by vectors in $W$.
+\end{remark}
+
+\begin{remark}[Gram-Schmidt Process]
+Given any basis for a subspace $W$, the Gram-Schmidt process provides an algorithm to construct an orthogonal (and subsequently orthonormal) basis for $W$. This is essential for using the projection formula above.
+\end{remark}
+
+\begin{example}[From Lecture: Projection in Regression]
+Consider the linear regression model $\mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}$.
+Let $W = \col(\mathbf{X})$ be the column space of the design matrix $\mathbf{X}$ (the subspace spanned by the predictor vectors, including a column of ones if there's an intercept).
+\begin{itemize}
+    \item The vector of fitted values, $\hat{\mathbf{y}} = \mathbf{X}\hat{\boldsymbol{\beta}} = \mathbf{X}(\mathbf{X}\trans\mathbf{X})^{-1}\mathbf{X}\trans\mathbf{y}$, is the orthogonal projection of the observed values $\mathbf{y}$ onto the subspace $W$. So, $\hat{\mathbf{y}} = \proj_W \mathbf{y}$.
+    \item The vector of residuals, $\mathbf{e} = \mathbf{y} - \hat{\mathbf{y}}$, represents the part of $\mathbf{y}$ that is orthogonal to the column space $W$. Thus, $\mathbf{e} \in W^\ortho$.
+    \item This orthogonality ($\mathbf{e} \in W^\ortho$) means that $\mathbf{e}$ is orthogonal to every column of $\mathbf{X}$. Mathematically, $\mathbf{X}\trans \mathbf{e} = \mathbf{0}$. This is exactly what the normal equations state!
+    \item As shown in the lecture, this implies $\inner{\mathbf{e}}{\hat{\mathbf{y}}} = 0$. We can verify this: since $\hat{\mathbf{y}} \in W$, and $\mathbf{e} \in W^\ortho$, their inner product must be zero by definition of the orthogonal complement.
+    \item Specifically, if the model includes an intercept $\beta_0$ and a single predictor $x_1$ (so $W = \Span\{\mathbf{1}, \mathbf{x}_1\}$), then $\mathbf{X}\trans \mathbf{e} = \mathbf{0}$ means:
+        \begin{itemize}
+            \item $\mathbf{1}\trans \mathbf{e} = \sum e_i = 0$ (sum of residuals is zero).
+            \item $\mathbf{x}_1\trans \mathbf{e} = \sum x_{i1} e_i = 0$ (residuals are uncorrelated with the predictor).
+        \end{itemize}
+        The calculation $\sum \hat{y}_i e_i = \sum (\hat{\beta}_0 + \hat{\beta}_1 x_{i1}) e_i = \hat{\beta}_0 \sum e_i + \hat{\beta}_1 \sum x_{i1} e_i = \hat{\beta}_0(0) + \hat{\beta}_1(0) = 0$ directly verifies $\inner{\hat{\mathbf{y}}}{\mathbf{e}}=0$.
+\end{itemize}
+This connection between projection, orthogonal complements, and the residuals in linear regression is fundamental.
+\end{example}
+
+
+\section{Sums and Direct Sums of Subspaces}
+
+\begin{definition}[Sum of Subspaces]
+Let $U$ and $W$ be subspaces of a vector space $V$. Their \textbf{sum} is the set:
+\[ U + W = \{ \mathbf{u} + \mathbf{w} \mid \mathbf{u} \in U, \mathbf{w} \in W \} \]
+$U+W$ is the smallest subspace of $V$ containing both $U$ and $W$.
+\end{definition}
+
+\begin{theorem}[Dimension of a Sum]
+If $U$ and $W$ are finite-dimensional subspaces of $V$, then
+\[ \dimn(U + W) = \dimn(U) + \dimn(W) - \dimn(U \cap W) \]
+\end{theorem}
+
+\begin{definition}[Direct Sum]
+Let $U$ and $W$ be subspaces of $V$. The sum $U+W$ is called a \textbf{direct sum}, denoted $U \oplus W$, if $U \cap W = \{\mathbf{0}\}$ (their intersection contains only the zero vector).
+\end{definition}
+
+\begin{theorem}[Unique Decomposition for Direct Sums]
+Let $U$ and $W$ be subspaces of $V$. Then $V = U \oplus W$ if and only if every vector $\mathbf{v} \in V$ can be written \textbf{uniquely} as $\mathbf{v} = \mathbf{u} + \mathbf{w}$, where $\mathbf{u} \in U$ and $\mathbf{w} \in W$.
+\end{theorem}
+\begin{proof}[Sketch based on lecture]
+($\Rightarrow$) Assume $V = U \oplus W$. This means $V = U+W$ and $U \cap W = \{\mathbf{0}\}$. Suppose $\mathbf{v}$ has two representations: $\mathbf{v} = \mathbf{u}_1 + \mathbf{w}_1 = \mathbf{u}_2 + \mathbf{w}_2$, with $\mathbf{u}_1, \mathbf{u}_2 \in U$ and $\mathbf{w}_1, \mathbf{w}_2 \in W$. Rearranging gives $\mathbf{u}_1 - \mathbf{u}_2 = \mathbf{w}_2 - \mathbf{w}_1$. The left side is in $U$ (since $U$ is a subspace), and the right side is in $W$. Therefore, this vector lies in $U \cap W$. Since the intersection is only $\{\mathbf{0}\}$, we must have $\mathbf{u}_1 - \mathbf{u}_2 = \mathbf{0}$ and $\mathbf{w}_2 - \mathbf{w}_1 = \mathbf{0}$. Thus, $\mathbf{u}_1 = \mathbf{u}_2$ and $\mathbf{w}_1 = \mathbf{w}_2$, proving uniqueness.
+
+($\Leftarrow$) Assume every $\mathbf{v} \in V$ has a unique representation $\mathbf{v} = \mathbf{u} + \mathbf{w}$ with $\mathbf{u} \in U, \mathbf{w} \in W$.
+\begin{itemize}
+    \item This immediately implies $V = U+W$.
+    \item We need to show $U \cap W = \{\mathbf{0}\}$. Assume $\mathbf{x} \in U \cap W$. We can write $\mathbf{x}$ in two ways as a sum from $U+W$:
+        \begin{enumerate}
+            \item $\mathbf{x} = \mathbf{x} + \mathbf{0}$ (where $\mathbf{x} \in U$, $\mathbf{0} \in W$)
+            \item $\mathbf{x} = \mathbf{0} + \mathbf{x}$ (where $\mathbf{0} \in U$, $\mathbf{x} \in W$)
+        \end{enumerate}
+        Since the representation must be unique by assumption, we must have $\mathbf{x} = \mathbf{0}$. Therefore, $U \cap W = \{\mathbf{0}\}$, and the sum is direct.
+\end{itemize}
+\end{proof}
+
+\section{Eigenvalues and Eigenvectors}
+
+Eigenvalues and eigenvectors are crucial for understanding linear transformations, solving differential equations, and many statistical techniques like PCA.
+
+\begin{definition}[Eigenvalue and Eigenvector]
+Let $A$ be an $n \times n$ matrix. A scalar $\lambda$ is called an \textbf{eigenvalue} of $A$ if there exists a non-zero vector $\mathbf{u} \in \R^n$ such that
+\[ A \mathbf{u} = \lambda \mathbf{u} \]
+Any such non-zero vector $\mathbf{u}$ is called an \textbf{eigenvector} of $A$ corresponding to the eigenvalue $\lambda$.
+\end{definition}
+Intuitively, an eigenvector $\mathbf{u}$ is a vector whose direction is unchanged (only scaled by a factor $\lambda$) when multiplied by the matrix $A$.
+
+\begin{definition}[Finding Eigenvalues: Characteristic Polynomial]
+Eigenvalues are found by solving the characteristic equation:
+\[ \detm(A - \lambda I) = 0 \]
+The expression $p(\lambda) = \detm(A - \lambda I)$ is a polynomial in $\lambda$ of degree $n$, called the \textbf{characteristic polynomial} of $A$. The eigenvalues are the roots of this polynomial.
+\end{definition}
+
+\begin{definition}[Finding Eigenvectors: Eigenspace]
+For a given eigenvalue $\lambda$, the corresponding eigenvectors are the non-zero solutions $\mathbf{u}$ to the homogeneous system $(A - \lambda I)\mathbf{u} = \mathbf{0}$. The set of all solutions (including the zero vector) forms a subspace called the \textbf{eigenspace} of $\lambda$, denoted $E_\lambda = \nul(A - \lambda I)$.
+\end{definition}
+
+\begin{definition}[Diagonalization]
+An $n \times n$ matrix $A$ is \textbf{diagonalizable} if it is similar to a diagonal matrix. That is, if there exists an invertible matrix $P$ and a diagonal matrix $D$ such that
+\[ A = P D P^{-1} \]
+This is possible if and only if $A$ has $n$ linearly independent eigenvectors. In this case, the columns of $P$ are the linearly independent eigenvectors, and the diagonal entries of $D$ are the corresponding eigenvalues, in the same order.
+\end{definition}
+
+\subsection{Symmetric Matrices and the Spectral Theorem}
+
+Symmetric matrices have particularly nice properties regarding eigenvalues and eigenvectors.
+
+\begin{theorem}[Properties of Real Symmetric Matrices]
+Let $A$ be an $n \times n$ real symmetric matrix ($A = A\trans$). Then:
+\begin{enumerate}
+    \item All eigenvalues of $A$ are real numbers.
+    \item Eigenvectors corresponding to distinct eigenvalues are orthogonal.
+    \item $A$ is always diagonalizable.
+\end{enumerate}
+\end{theorem}
+
+\begin{theorem}[Spectral Theorem for Real Symmetric Matrices]
+If $A$ is an $n \times n$ real symmetric matrix, then there exists an \textbf{orthogonal} matrix $U$ (i.e., $U\trans U = I$, so $U^{-1} = U\trans$) and a diagonal matrix $\Lambda$ such that
+\[ A = U \Lambda U\trans \]
+The columns of $U$ are an orthonormal basis of eigenvectors for $A$, and the diagonal entries of $\Lambda$ are the corresponding real eigenvalues. This is called the \textbf{spectral decomposition} of $A$.
+\end{theorem}
+This theorem is incredibly important in statistics and many other fields.
+
+\subsection{Examples and Properties}
+
+\begin{example}[From Lecture: Eigenvalues/vectors of $A+cI$]
+Let $A$ be a symmetric $n \times n$ matrix with spectral decomposition $A = U \Lambda U\trans$. Let $c \in \R$ be a scalar, and define $S = A + cI$.
+\begin{enumerate}
+    \item \textbf{Is S symmetric?}
+    $S\trans = (A + cI)\trans = A\trans + (cI)\trans = A + cI\trans = A + cI = S$. Yes, $S$ is symmetric.
+    \item \textbf{What are the eigenvalues and eigenvectors of S?}
+    Let $\mathbf{u}$ be an eigenvector of $A$ corresponding to eigenvalue $\lambda$, so $A\mathbf{u} = \lambda \mathbf{u}$. Consider $S\mathbf{u}$:
+    \[ S\mathbf{u} = (A + cI)\mathbf{u} = A\mathbf{u} + cI\mathbf{u} = \lambda \mathbf{u} + c\mathbf{u} = (\lambda + c)\mathbf{u} \]
+    This shows that $\mathbf{u}$ is also an eigenvector of $S$, but with eigenvalue $(\lambda + c)$.
+    \item \textbf{Spectral Decomposition of S:} Since $S$ is symmetric and has the same eigenvectors as $A$ (which form the columns of $U$) and eigenvalues $\lambda_i + c$, its spectral decomposition is:
+    \[ S = U (\Lambda + cI) U\trans \]
+    where $\Lambda + cI$ is the diagonal matrix with entries $\lambda_i + c$.
+\end{enumerate}
+\end{example}
+
+\begin{example}[From Lecture: Powers and Inverses via Spectral Decomposition]
+Let $A$ be a symmetric matrix with $A = U \Lambda U\trans$.
+\begin{enumerate}
+    \item \textbf{Powers of A:} Consider $A^2$:
+    \[ A^2 = A A = (U \Lambda U\trans)(U \Lambda U\trans) = U \Lambda (U\trans U) \Lambda U\trans \]
+    Since $U\trans U = I$ (because $U$ is orthogonal), this simplifies to:
+    \[ A^2 = U \Lambda I \Lambda U\trans = U \Lambda^2 U\trans \]
+    By induction, for any positive integer $k$, $A^k = U \Lambda^k U\trans$. ($\Lambda^k$ is the diagonal matrix with entries $\lambda_i^k$).
+    \item \textbf{Inverse of A:} Assume $A$ is invertible. This means all eigenvalues $\lambda_i$ must be non-zero. We look for $A^{-1}$. Consider the matrix $X = U \Lambda^{-1} U\trans$, where $\Lambda^{-1}$ is the diagonal matrix with entries $1/\lambda_i$. Let's check if $AX = I$:
+    \[ AX = (U \Lambda U\trans)(U \Lambda^{-1} U\trans) = U \Lambda (U\trans U) \Lambda^{-1} U\trans = U \Lambda I \Lambda^{-1} U\trans = U (\Lambda \Lambda^{-1}) U\trans \]
+    Since $\Lambda \Lambda^{-1} = I$ (the identity matrix), we have:
+    \[ AX = U I U\trans = U U\trans = I \]
+    Therefore, $A^{-1} = U \Lambda^{-1} U\trans$.
+    \item \textbf{Applying to $S = A+cI$:} Assuming $S$ is invertible (i.e., all $\lambda_i + c \neq 0$), its inverse is:
+    \[ S^{-1} = (A+cI)^{-1} = U (\Lambda+cI)^{-1} U\trans \]
+    where $(\Lambda+cI)^{-1}$ is the diagonal matrix with entries $1/(\lambda_i + c)$.
+\end{enumerate}
+These properties are extremely useful for computing functions of symmetric matrices.
+\end{example}
+
+\begin{adminnote}
+\textbf{Homework Assignments:}
+\begin{itemize}
+    \item \textbf{Homework 0 (Optional):} This assignment covers background material and serves as a refresher. It is highly recommended but not for submission/grading. You can find it on the course website.
+    \item \textbf{Homework 1 (Required):} This assignment is due [Insert Due Date if known, otherwise state 'Next Week' or similar]. Please submit it via the course website by the deadline.
+        \begin{itemize}
+            \item It covers material from this week's review.
+            \item It includes topics like positive definite matrices (the definition is provided).
+            \item \textbf{Note on Question 3:} This question might be more challenging, partly because we haven't covered all related concepts in detail yet and the problem itself is a bit more involved. Please attempt it, try your best, and don't hesitate to ask for clarification or hints on the forum or during office hours if you get stuck.
+        \end{itemize}
+\end{itemize}
+My office hours are [Insert Day/Time/Location]. Please come prepared with specific questions.
+\end{adminnote}
+
+\end{document}

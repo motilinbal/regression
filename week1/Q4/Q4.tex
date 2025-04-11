@@ -1,0 +1,206 @@
+\documentclass[11pt]{article}
+
+% PACKAGES
+\usepackage{geometry} % For page margins
+\usepackage{amsmath}  % For math environments and symbols
+\usepackage{amssymb}  % For math symbols like \mathbb{R}
+\usepackage{amsthm}   % For theorem environments
+% \usepackage{unicode-math} % Removed: Requires XeLaTeX or LuaLaTeX
+% \setmathfont{Latin Modern Math} % Removed: Requires unicode-math
+
+% PAGE LAYOUT
+\geometry{a4paper, margin=1in}
+
+% THEOREM ENVIRONMENTS
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% CUSTOM COMMANDS
+\newcommand{\R}{\mathbb{R}} % Real numbers symbol
+\newcommand{\norm}[1]{\|#1\|} % Norm symbol
+\newcommand{\inner}[2]{\langle #1, #2 \rangle} % Inner product symbol
+% Using * for the adjoint operator as requested.
+\newcommand{\adj}{*} % Changed \adj definition to *
+\DeclareMathOperator{\rank}{rank} % Rank operator
+\DeclareMathOperator{\nullspace}{null} % Null space operator
+\DeclareMathOperator{\im}{Im} % Image/Column space operator
+\DeclareMathOperator{\Var}{Var} % Variance operator
+\DeclareMathOperator{\Cov}{Cov} % Covariance operator
+\DeclareMathOperator{\E}{E} % Expectation operator
+
+% DOCUMENT TITLE
+\title{Least Squares Estimation: A Linear Algebra Perspective}
+\author{Notes} % Optional: Add author/course name
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{The Problem of Best Approximation}
+
+Often in science and engineering, we encounter systems described by linear models that don't perfectly fit observed data. Consider a linear transformation $T: \R^p \to \R^n$, represented by a matrix $X \in \R^{n \times p}$. We might hypothesize a relationship $Y \approx T\beta$ (or $Y \approx X\beta$ in matrix form), where $Y \in \R^n$ is a vector of observations and $\beta \in \R^p$ is a vector of unknown parameters we wish to estimate.
+
+Since the system might be overdetermined ($n > p$) or subject to noise, there might be no $\beta$ for which $Y = T\beta$ holds exactly. That is, $Y$ may not lie in the image (column space) of $T$, $\im(T)$. The core idea of least squares is to find the vector $\hat{\beta}$ such that $T\hat{\beta}$ is the \emph{closest} vector within $\im(T)$ to the observed vector $Y$. Closeness is measured using the standard Euclidean distance (or norm).
+
+\begin{definition}[Least Squares Problem]
+Given a linear operator $T: \R^p \to \R^n$ (represented by matrix $X \in \R^{n \times p}$) and a vector $Y \in \R^n$, the least squares problem is to find a vector $\hat{\beta} \in \R^p$ that minimizes the squared Euclidean norm of the residual vector $r = Y - T\beta$:
+\[
+\min_{\beta \in \R^p} \norm{Y - T\beta}^2
+\]
+\end{definition}
+
+\section{Derivation of the Least Squares Solution}
+
+Let's analyze the objective function $f(\beta) = \norm{Y - T\beta}^2$. Using the definition of the norm via the standard inner product $\inner{\cdot}{\cdot}$ on $\R^n$:
+\begin{align*}
+f(\beta) = \norm{Y - T\beta}^2 &= \inner{Y - T\beta}{Y - T\beta} \\
+&= \inner{Y}{Y} - \inner{Y}{T\beta} - \inner{T\beta}{Y} + \inner{T\beta}{T\beta} \\
+&= \norm{Y}^2 - 2 \inner{Y}{T\beta} + \norm{T\beta}^2
+\end{align*}
+Now, we introduce the adjoint operator $T^*: \R^n \to \R^p$, which satisfies $\inner{v}{Tu} = \inner{T^* v}{u}$ for all $u \in \R^p, v \in \R^n$. In matrix terms, if $T$ is represented by $X$, then $T^*$ is represented by the transpose $X^T$ (for real vector spaces with the standard inner product). Applying this property:
+\begin{align*}
+f(\beta) &= \norm{Y}^2 - 2 \inner{T^* Y}{\beta} + \inner{T^* T \beta}{\beta}
+\end{align*}
+
+\begin{remark}[Gradient Identities] \label{rem:grad_identities}
+Before computing the gradient of $f(\beta)$, let's recall or prove two useful gradient identities involving the standard inner product on $\R^p$. Let $a, \beta \in \R^p$ and $M \in \R^{p \times p}$.
+\begin{enumerate}
+    \item \textbf{Gradient of a linear function:} $\nabla_\beta \inner{a}{\beta} = a$. \\
+    \textit{Proof:} Let $\beta = [\beta_1, \dots, \beta_p]^T$ and $a = [a_1, \dots, a_p]^T$. The inner product is $\inner{a}{\beta} = \sum_{i=1}^p a_i \beta_i$. The gradient is the vector of partial derivatives:
+    \[
+    \nabla_\beta \inner{a}{\beta} = \begin{bmatrix} \frac{\partial}{\partial \beta_1} (\sum_i a_i \beta_i) \\ \vdots \\ \frac{\partial}{\partial \beta_p} (\sum_i a_i \beta_i) \end{bmatrix} = \begin{bmatrix} a_1 \\ \vdots \\ a_p \end{bmatrix} = a.
+    \]
+
+    \item \textbf{Gradient of a quadratic form:} $\nabla_\beta \inner{M\beta}{\beta} = (M + M^T)\beta$. \\
+    \textit{Proof:} The quadratic form is $\inner{M\beta}{\beta} = \sum_{i=1}^p (M\beta)_i \beta_i = \sum_{i=1}^p \left( \sum_{j=1}^p M_{ij} \beta_j \right) \beta_i = \sum_{i=1}^p \sum_{j=1}^p M_{ij} \beta_i \beta_j$.
+    We compute the partial derivative with respect to $\beta_k$:
+    \begin{align*} \frac{\partial}{\partial \beta_k} \left( \sum_{i=1}^p \sum_{j=1}^p M_{ij} \beta_i \beta_j \right) &= \sum_{i=1}^p \sum_{j=1}^p M_{ij} \frac{\partial}{\partial \beta_k} (\beta_i \beta_j) \\ &= \sum_{i=1}^p \sum_{j=1}^p M_{ij} (\delta_{ik} \beta_j + \beta_i \delta_{jk}) \quad (\text{where } \delta_{xy} \text{ is the Kronecker delta}) \\ &= \sum_{j=1}^p M_{kj} \beta_j + \sum_{i=1}^p M_{ik} \beta_i \end{align*}
+    The first term, $\sum_{j=1}^p M_{kj} \beta_j$, is the $k$-th component of the vector $M\beta$.
+    The second term, $\sum_{i=1}^p M_{ik} \beta_i$, is the $k$-th component of the vector $M^T\beta$.
+    Therefore, the gradient vector is:
+    \[
+    \nabla_\beta \inner{M\beta}{\beta} = M\beta + M^T\beta = (M + M^T)\beta.
+    \]
+    Note: If $M$ is symmetric ($M = M^T$), then $\nabla_\beta \inner{M\beta}{\beta} = 2M\beta$.
+\end{enumerate}
+\end{remark}
+
+To find the minimum of $f(\beta)$, we compute its gradient with respect to $\beta$ and set it to the zero vector. Using the identities from Remark \ref{rem:grad_identities}, specifically $\nabla_\beta \inner{a}{\beta} = a$ with $a = T^*Y$, and $\nabla_\beta \inner{M\beta}{\beta} = (M+M^T)\beta$ with $M = T^*T$:
+\[
+\nabla_\beta f(\beta) = \nabla_\beta (\norm{Y}^2 - 2 \inner{T^* Y}{\beta} + \inner{T^* T \beta}{\beta})
+\]
+Since $\norm{Y}^2$ is constant with respect to $\beta$, its gradient is zero.
+\[
+\nabla_\beta f(\beta) = -2 \nabla_\beta \inner{T^* Y}{\beta} + \nabla_\beta \inner{(T^* T) \beta}{\beta}
+\]
+Applying the identities (and noting that $M=T^*T$ is symmetric, so $M^T=M$):
+\[
+\nabla_\beta f(\beta) = -2 (T^* Y) + (T^*T + (T^*T)^T) \beta = -2 T^* Y + 2 (T^* T) \beta
+\]
+Setting the gradient to zero gives the fundamental equation:
+\[
+-2 T^* Y + 2 T^* T \beta = 0 \implies T^* T \beta = T^* Y
+\]
+This is known as the \textbf{normal equation(s)}.
+
+\begin{theorem}[Least Squares Solution]
+Suppose the linear operator $T: \R^p \to \R^n$ has full column rank, meaning $\rank(T) = p$ (or equivalently, the columns of its matrix representation $X$ are linearly independent). Then the operator $T^* T: \R^p \to \R^p$ is invertible. The unique least squares solution $\hat{\beta}$ that minimizes $\norm{Y - T\beta}^2$ is given by:
+\[
+\hat{\beta} = (T^* T)^{-1} T^* Y
+\]
+In matrix notation:
+\[
+\hat{\beta} = (X^T X)^{-1} X^T Y
+\]
+\end{theorem}
+
+\begin{proof}
+If $T$ has full column rank $p$, its null space is trivial: $\nullspace(T) = \{0\}$. We show that this implies $T^* T$ is invertible. Suppose $(T^* T)u = 0$ for some $u \in \R^p$. Then $\inner{(T^* T)u}{u} = \inner{0}{u} = 0$. But $\inner{(T^* T)u}{u} = \inner{Tu}{Tu} = \norm{Tu}^2$. So, $\norm{Tu}^2 = 0$, which implies $Tu = 0$. Since $\nullspace(T) = \{0\}$, we must have $u = 0$. Thus, the null space of $T^* T$ is also trivial, $\nullspace(T^* T) = \{0\}$. Since $T^* T$ maps $\R^p$ to $\R^p$ and is injective, it must be invertible.
+
+The normal equation $T^* T \beta = T^* Y$ arises from setting the gradient of the objective function to zero. Since the Hessian of $f(\beta)$ is $2 T^* T$, which is positive definite under the full rank assumption (as shown by $\inner{(T^* T)u}{u} = \norm{Tu}^2 > 0$ for $u \neq 0$), the solution to the normal equation corresponds to a unique minimum. Multiplying by the inverse $(T^* T)^{-1}$ gives the unique solution $\hat{\beta}$.
+\end{proof}
+
+\begin{remark}[Geometric Interpretation: Orthogonal Projection] \label{rem:geometric_interpretation}
+The normal equation $T^* T \hat{\beta} = T^* Y$ can be rewritten as $T^* (Y - T\hat{\beta}) = 0$. This equation holds if and only if the residual vector $r = Y - T\hat{\beta}$ is in the null space of $T^*$. Recall that the null space of the adjoint, $\nullspace(T^*)$, is the orthogonal complement of the image (or column space) of the original operator $T$, i.e., $\nullspace(T^*) = (\im T)^\perp$.
+Thus, the normal equation is equivalent to the condition that the residual $Y - T\hat{\beta}$ must be orthogonal to the subspace $\im(T)$.
+
+Let's see how this relates to orthogonal projection explicitly. Let $\{u_1, \dots, u_p\}$ be an orthonormal basis for the subspace $\im(T) \subseteq \R^n$. The condition that $Y - T\hat{\beta}$ is orthogonal to $\im(T)$ means it must be orthogonal to every basis vector:
+\[
+\inner{Y - T\hat{\beta}}{u_i} = 0 \quad \text{for all } i=1, \dots, p
+\]
+This implies that
+\[
+\inner{Y}{u_i} = \inner{T\hat{\beta}}{u_i} \quad \text{for all } i=1, \dots, p
+\]
+Now, consider the vector $T\hat{\beta}$. Since it lies in the subspace $\im(T)$, it can be expressed as a linear combination of the orthonormal basis vectors using its coordinates with respect to that basis:
+\[
+T\hat{\beta} = \sum_{i=1}^p \inner{T\hat{\beta}}{u_i} u_i
+\]
+Substituting the result from the orthogonality condition ($\inner{T\hat{\beta}}{u_i} = \inner{Y}{u_i}$):
+\[
+T\hat{\beta} = \sum_{i=1}^p \inner{Y}{u_i} u_i
+\]
+This is precisely the standard formula for the \textbf{orthogonal projection} of the vector $Y$ onto the subspace spanned by the orthonormal basis $\{u_1, \dots, u_p\}$, which is $\im(T)$. We denote this projection as $P_{\im(T)} Y$.
+
+Therefore, the least squares solution $\hat{\beta}$ is the vector such that $T\hat{\beta}$ is the orthogonal projection of $Y$ onto the image of $T$. This confirms our initial intuition: the vector in $\im(T)$ closest to $Y$ is its orthogonal projection onto that subspace.
+\end{remark}
+
+\section{Application: Simple Linear Regression}
+
+Let's apply this framework to the familiar problem of simple linear regression. We model a relationship $y_i \approx \beta_0 + \beta_1 x_i$ for $i=1, \dots, n$.
+
+We can set this up in our vector/matrix framework:
+Let $Y = \begin{bmatrix} y_1 \\ \vdots \\ y_n \end{bmatrix} \in \R^n$.
+Let $\beta = \begin{bmatrix} \beta_0 \\ \beta_1 \end{bmatrix} \in \R^2$.
+Let $X = \begin{bmatrix} 1 & x_1 \\ 1 & x_2 \\ \vdots & \vdots \\ 1 & x_n \end{bmatrix} \in \R^{n \times 2}$.
+Our model is $Y \approx X\beta$. We assume $X$ has full column rank, which requires $n \ge 2$ and that not all $x_i$ values are the same.
+
+The least squares estimate $\hat{\beta} = \begin{bmatrix} \hat{\beta}_0 \\ \hat{\beta}_1 \end{bmatrix}$ is given by $\hat{\beta} = (X^T X)^{-1} X^T Y$. (Note that even though we use $T^*$ abstractly, its matrix representation remains $X^T$).
+
+Let's compute the components:
+\begin{itemize}
+    \item $X^T X = \begin{bmatrix} 1 & \dots & 1 \\ x_1 & \dots & x_n \end{bmatrix} \begin{bmatrix} 1 & x_1 \\ \vdots & \vdots \\ 1 & x_n \end{bmatrix} = \begin{bmatrix} n & \sum x_i \\ \sum x_i & \sum x_i^2 \end{bmatrix}$
+    \item $X^T Y = \begin{bmatrix} 1 & \dots & 1 \\ x_1 & \dots & x_n \end{bmatrix} \begin{bmatrix} y_1 \\ \vdots \\ y_n \end{bmatrix} = \begin{bmatrix} \sum y_i \\ \sum x_i y_i \end{bmatrix}$
+\end{itemize}
+The determinant of $X^T X$ is $\det(X^T X) = n \sum x_i^2 - (\sum x_i)^2$.
+The inverse is $(X^T X)^{-1} = \frac{1}{n \sum x_i^2 - (\sum x_i)^2} \begin{bmatrix} \sum x_i^2 & -\sum x_i \\ -\sum x_i & n \end{bmatrix}$.
+
+Now, we find $\hat{\beta}$:
+\begin{align*}
+\hat{\beta} = \begin{bmatrix} \hat{\beta}_0 \\ \hat{\beta}_1 \end{bmatrix} &= (X^T X)^{-1} X^T Y \\
+&= \frac{1}{n \sum x_i^2 - (\sum x_i)^2} \begin{bmatrix} \sum x_i^2 & -\sum x_i \\ -\sum x_i & n \end{bmatrix} \begin{bmatrix} \sum y_i \\ \sum x_i y_i \end{bmatrix} \\
+&= \frac{1}{n \sum x_i^2 - (\sum x_i)^2} \begin{bmatrix} (\sum x_i^2)(\sum y_i) - (\sum x_i)(\sum x_i y_i) \\ n \sum x_i y_i - (\sum x_i)(\sum y_i) \end{bmatrix}
+\end{align*}
+
+Extracting the components gives the standard formulas:
+\begin{align*}
+\hat{\beta}_1 &= \frac{n \sum x_i y_i - (\sum x_i)(\sum y_i)}{n \sum x_i^2 - (\sum x_i)^2} \\
+\hat{\beta}_0 &= \frac{(\sum x_i^2)(\sum y_i) - (\sum x_i)(\sum x_i y_i)}{n \sum x_i^2 - (\sum x_i)^2}
+\end{align*}
+
+\begin{remark}[Connection to Statistics]
+These formulas become more intuitive when related to sample statistics. Let $\bar{x} = \frac{1}{n}\sum x_i$ and $\bar{y} = \frac{1}{n}\sum y_i$ be the sample means. Algebraic manipulation (or recognizing centered forms) shows:
+\begin{itemize}
+    \item $n \sum x_i^2 - (\sum x_i)^2 = n \sum (x_i - \bar{x})^2$
+    \item $n \sum x_i y_i - (\sum x_i)(\sum y_i) = n \sum (x_i - \bar{x})(y_i - \bar{y})$
+\end{itemize}
+Substituting these into the formula for $\hat{\beta}_1$:
+\[
+\hat{\beta}_1 = \frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{\sum (x_i - \bar{x})^2} = \frac{\text{Sample Covariance}(x, y)}{\text{Sample Variance}(x)}
+\]
+For $\hat{\beta}_0$, we can simplify its formula or use the property that the regression line passes through the point of means $(\bar{x}, \bar{y})$: $\bar{y} = \hat{\beta}_0 + \hat{\beta}_1 \bar{x}$. This gives:
+\[
+\hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x}
+\]
+These are the familiar estimators for the slope and intercept in simple linear regression, derived elegantly from the general principle of minimizing squared error via orthogonal projection in vector spaces. If we view $(x_i, y_i)$ as samples from a bivariate distribution $(X, Y)$, these sample statistics estimate the population parameters: $\hat{\beta}_1 \to \frac{\Cov(X, Y)}{\Var(X)}$ and $\hat{\beta}_0 \to \E[Y] - \frac{\Cov(X, Y)}{\Var(X)} \E[X]$, assuming $\Var(X) \neq 0$.
+\end{remark}
+
+\end{document}

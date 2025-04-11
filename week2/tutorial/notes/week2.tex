@@ -1,0 +1,480 @@
+\documentclass[12pt, letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{parskip} % Adds space between paragraphs
+\usepackage{bm} % Bold math symbols
+
+\geometry{
+    letterpaper,
+    total={170mm,257mm},
+    left=20mm,
+    top=20mm,
+}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Linear Algebra and Statistics: Foundations Revisited}, % Use plain text for PDF title
+    pdfpagemode=FullScreen,
+}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{remark}{Remark}[section]
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\V}{\mathcal{V}}
+\newcommand{\W}{\mathcal{W}}
+\newcommand{\B}{\mathcal{B}}
+\newcommand{\C}{\mathcal{C}}
+\newcommand{\E}{\mathcal{E}}
+\newcommand{\mat}[1]{\mathbf{#1}} % Matrices in bold
+\newcommand{\vect}[1]{\mathbf{#1}} % Vectors in bold lowercase
+\renewcommand{\v}{\vect{v}} % Shortcut for vector v
+\newcommand{\uvec}{\vect{u}} % Shortcut for vector u
+\newcommand{\x}{\vect{x}} % Shortcut for vector x
+\newcommand{\y}{\vect{y}} % Shortcut for vector y
+\newcommand{\w}{\vect{w}} % Shortcut for vector w
+\newcommand{\e}{\vect{e}} % Shortcut for standard basis vector e
+\newcommand{\bvec}{\vect{b}} % Shortcut for vector b
+\newcommand{\kvec}{\vect{k}} % Shortcut for vector k
+\newcommand{\colspace}{\text{colspace}}
+\newcommand{\im}{\text{Im}}
+\newcommand{\Ker}{\text{Ker}}
+\newcommand{\rank}{\text{rank}}
+\newcommand{\tr}{\text{tr}}
+\newcommand{\diag}{\text{diag}}
+\newcommand{\Span}{\text{span}}
+
+% Use \texorpdfstring for title if it contains math or special chars
+\title{\texorpdfstring{\textbf{Linear Algebra \& Statistics: Foundations Revisited}}{\textbf{Linear Algebra and Statistics: Foundations Revisited}}}
+\author{A Refined Perspective}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+    These notes revisit fundamental concepts in linear algebra and their application in statistics, focusing on vector spaces, bases, linear transformations, eigenvalues, eigenvectors, spectral decomposition, projection matrices, and vector calculus. The aim is to provide a clear, intuitive, and rigorous understanding of these essential tools.
+\end{abstract}
+
+\section{Vector Spaces, Bases, and Coordinates}
+
+Linear algebra provides the language to describe and manipulate objects in spaces equipped with addition and scalar multiplication. Central to this is the idea of a basis, which allows us to coordinatize these spaces.
+
+\begin{lemma}[Matrix-Vector Product as Linear Combination]
+Let $\mat{A} \in \R^{n \times m}$ and $\uvec \in \R^m$. The product $\v = \mat{A}\uvec$ is a linear combination of the columns of $\mat{A}$. Specifically, if $\mat{A}^1, \dots, \mat{A}^m$ are the columns of $\mat{A}$ and $\uvec = (u_1, \dots, u_m)^T$, then
+\[ \v = \sum_{j=1}^m u_j \mat{A}^j \]
+Consequently, $\v$ belongs to the column space of $\mat{A}$, denoted $\colspace(\mat{A})$.
+\end{lemma}
+\begin{proof}
+The $i$-th component of $\v$ is given by $v_i = \sum_{j=1}^m A_{ij} u_j$. Let $[\mat{A}^j]_i$ denote the $i$-th component of the $j$-th column vector $\mat{A}^j$. Since $A_{ij} = [\mat{A}^j]_i$, we have $v_i = \sum_{j=1}^m [\mat{A}^j]_i u_j$. This is precisely the $i$-th component of the sum $\sum_{j=1}^m u_j \mat{A}^j$. Therefore, $\v = \sum_{j=1}^m u_j \mat{A}^j$.
+\end{proof}
+
+\begin{definition}[Coordinate Vector]
+Let $\V$ be a vector space and $\B = \{\bvec_1, \dots, \bvec_n\}$ be an ordered basis for $\V$. Any vector $\v \in \V$ can be uniquely expressed as a linear combination of the basis vectors:
+\[ \v = \sum_{i=1}^n k_i \bvec_i \]
+The vector $[\v]_\B = (k_1, \dots, k_n)^T \in \R^n$ is called the \textbf{coordinate vector} of $\v$ with respect to the basis $\B$.
+If we arrange the basis vectors as columns of a matrix $\mat{B} = [\bvec_1 \dots \bvec_n]$, then the relationship can be written compactly as $\v = \mat{B} [\v]_\B$.
+\end{definition}
+
+\begin{remark}[Standard Basis]
+If $\V = \R^n$ and $\B = \E = \{\e_1, \dots, \e_n\}$ is the standard basis (where $\e_i$ has a 1 in the $i$-th position and 0s elsewhere), then the coordinate vector $[\v]_\E$ is simply the vector $\v$ itself. Thinking in terms of coordinate systems, the standard basis corresponds to the familiar Cartesian axes. Choosing a different basis is akin to choosing a different set of reference axes.
+\end{remark}
+
+\begin{example}[Finding Coordinates]
+Let $\V = \R^2$, $\v = \begin{pmatrix} 2 \\ 5 \end{pmatrix}$, and consider the basis $\B = \left\{ \bvec_1 = \begin{pmatrix} 1 \\ 0 \end{pmatrix}, \bvec_2 = \begin{pmatrix} 1 \\ 1 \end{pmatrix} \right\}$. We seek scalars $k_1, k_2$ such that $\v = k_1 \bvec_1 + k_2 \bvec_2$. This translates to the matrix equation:
+\[ \begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix} \begin{pmatrix} k_1 \\ k_2 \end{pmatrix} = \begin{pmatrix} 2 \\ 5 \end{pmatrix} \]
+Solving this system (e.g., using Gaussian elimination on the augmented matrix):
+\[ \left[ \begin{array}{cc|c} 1 & 1 & 2 \\ 0 & 1 & 5 \end{array} \right] \xrightarrow{R_1 \leftarrow R_1 - R_2} \left[ \begin{array}{cc|c} 1 & 0 & -3 \\ 0 & 1 & 5 \end{array} \right] \]
+Thus, $k_1 = -3$ and $k_2 = 5$. The coordinate vector is $[\v]_\B = \begin{pmatrix} -3 \\ 5 \end{pmatrix}$.
+We can verify: $-3 \begin{pmatrix} 1 \\ 0 \end{pmatrix} + 5 \begin{pmatrix} 1 \\ 1 \end{pmatrix} = \begin{pmatrix} -3 \\ 0 \end{pmatrix} + \begin{pmatrix} 5 \\ 5 \end{pmatrix} = \begin{pmatrix} 2 \\ 5 \end{pmatrix} = \v$.
+\end{example}
+
+\section{Linear Transformations and Change of Basis}
+
+Linear transformations preserve the structure of vector spaces. Representing them with matrices depends crucially on the chosen bases for the domain and codomain.
+
+\begin{definition}[Change-of-Basis Matrix]
+Let $\B = \{\bvec_1, \dots, \bvec_n\}$ and $\C = \{\vect{c}_1, \dots, \vect{c}_n\}$ be two ordered bases for a vector space $\V$. The \textbf{change-of-basis matrix} from $\B$ to $\C$, denoted $[\mat{I}]_\C^\B$, is the unique matrix such that for any $\v \in \V$:
+\[ [\mat{I}]_\C^\B [\v]_\B = [\v]_\C \]
+This matrix transforms coordinates relative to $\B$ into coordinates relative to $\C$.
+\end{definition}
+
+\begin{proposition}[Structure of Change-of-Basis Matrix]
+Let $\mat{B} = [\bvec_1 \dots \bvec_n]$ and $\mat{C} = [\vect{c}_1 \dots \vect{c}_n]$ be matrices whose columns are the basis vectors of $\B$ and $\C$ respectively (expressed in some common basis, typically the standard basis if $\V = \R^n$). Then:
+\[ [\mat{I}]_\C^\B = \mat{C}^{-1} \mat{B} \]
+The $j$-th column of $[\mat{I}]_\C^\B$ is the coordinate vector of the $j$-th basis vector of $\B$ relative to the basis $\C$, i.e., $[\mat{I}]_{\C, j}^\B = [\bvec_j]_\C$.
+\end{proposition}
+\begin{proof}
+We know $\v = \mat{B} [\v]_\B$ and $\v = \mat{C} [\v]_\C$. Thus, $\mat{C} [\v]_\C = \mat{B} [\v]_\B$. Since $\mat{C}$ is invertible (its columns form a basis), we have $[\v]_\C = \mat{C}^{-1} \mat{B} [\v]_\B$. Comparing this with the definition $[\v]_\C = [\mat{I}]_\C^\B [\v]_\B$, we get $[\mat{I}]_\C^\B = \mat{C}^{-1} \mat{B}$.
+For the second part, let $\v = \bvec_j$. Then $[\v]_\B = \e_j$ (the $j$-th standard basis vector). The equation becomes $[\mat{I}]_\C^\B \e_j = [\bvec_j]_\C$. But $[\mat{I}]_\C^\B \e_j$ is precisely the $j$-th column of $[\mat{I}]_\C^\B$.
+\end{proof}
+
+\begin{proposition}[Inverse Change-of-Basis]
+The change-of-basis matrix from $\C$ to $\B$ is the inverse of the matrix from $\B$ to $\C$:
+\[ [\mat{I}]_\B^\C = ([\mat{I}]_\C^\B)^{-1} \]
+\end{proposition}
+\begin{proof}
+Follows directly from $[\mat{I}]_\C^\B = \mat{C}^{-1} \mat{B}$ and $[\mat{I}]_\B^\C = \mat{B}^{-1} \mat{C}$.
+\end{proof}
+
+\begin{remark}
+If $\B$ is a basis for $\R^n$ represented by the matrix $\mat{B}$, then $\mat{B} = [\mat{I}]_\E^\B$ is the change-of-basis matrix from $\B$ to the standard basis $\E$. Its inverse, $\mat{B}^{-1} = [\mat{I}]_\B^\E$, is the change-of-basis matrix from the standard basis $\E$ to $\B$.
+\end{remark}
+
+\begin{definition}[Matrix Representation of a Linear Transformation]
+Let $T: \V \to \W$ be a linear transformation, $\B = \{\bvec_1, \dots, \bvec_n\}$ a basis for $\V$, and $\C = \{\vect{c}_1, \dots, \vect{c}_m\}$ a basis for $\W$. The \textbf{matrix representation} of $T$ with respect to bases $\B$ and $\C$, denoted $[T]_\C^\B$, is the unique $m \times n$ matrix such that for all $\v \in \V$:
+\[ [T]_\C^\B [\v]_\B = [T(\v)]_\C \]
+The $j$-th column of $[T]_\C^\B$ is the coordinate vector of $T(\bvec_j)$ relative to the basis $\C$, i.e., $[T]_{\C, j}^\B = [T(\bvec_j)]_\C$.
+\end{definition}
+
+\begin{remark}
+The change-of-basis matrix $[\mat{I}]_\C^\B$ is a special case where $T$ is the identity transformation $I: \V \to \V$.
+\end{remark}
+
+\begin{theorem}[Changing Bases for a Linear Transformation]
+Let $T: \V \to \V$ be a linear transformation, and let $\B, \C$ be two bases for $\V$. Let $[T]_\B$ be the matrix representation of $T$ relative to $\B$ (i.e., $[T]_\B^\B$) and $[T]_\C$ be the matrix representation relative to $\C$. Then these matrices are related by similarity transformation:
+\[ [T]_\C = [\mat{I}]_\C^\B [T]_\B [\mat{I}]_\B^\C \]
+where $[\mat{I}]_\C^\B$ is the change-of-basis matrix from $\B$ to $\C$, and $[\mat{I}]_\B^\C = ([\mat{I}]_\C^\B)^{-1}$ is the change-of-basis matrix from $\C$ to $\B$.
+\end{theorem}
+\begin{proof}
+For any $\v \in \V$, we want to relate $[T(\v)]_\C$ to $[\v]_\C$. We know:
+\begin{align*} [T(\v)]_\C &= [T]_\C [\v]_\C \\ [T(\v)]_\C &= [\mat{I}]_\C^\B [T(\v)]_\B \quad \text{(Change basis of the output)} \\ &= [\mat{I}]_\C^\B ([T]_\B [\v]_\B) \quad \text{(Apply T in basis B)} \\ &= [\mat{I}]_\C^\B [T]_\B ([\mat{I}]_\B^\C [\v]_\C) \quad \text{(Change basis of the input)} \end{align*}
+So, $[T]_\C [\v]_\C = ([\mat{I}]_\C^\B [T]_\B [\mat{I}]_\B^\C) [\v]_\C$. Since this holds for all $\v$, the matrices must be equal: $[T]_\C = [\mat{I}]_\C^\B [T]_\B [\mat{I}]_\B^\C$.
+\end{proof}
+
+\begin{example}[Applying the Change of Basis Formula]
+Consider the linear transformation $F: \R^2 \to \R^2$ defined by $F(x,y)=(5x-y, 2x+y)$.
+The standard basis is $\E = \{\e_1=(1,0), \e_2=(0,1)\}$.
+The matrix representation of $F$ relative to $\E$ is found by applying $F$ to the basis vectors:
+$F(\e_1) = F(1,0) = (5, 2) = 5\e_1 + 2\e_2$
+$F(\e_2) = F(0,1) = (-1, 1) = -1\e_1 + 1\e_2$
+So, $\mat{A} = [F]_\E = \begin{pmatrix} 5 & -1 \\ 2 & 1 \end{pmatrix}$.
+
+Now consider a different basis $S = \{\uvec_1=(1,4), \uvec_2=(2,7)\}$.
+We want to find the matrix $\mat{B} = [F]_S$.
+The change-of-basis matrix from $S$ to $\E$ is simply the matrix whose columns are the vectors in $S$:
+$\mat{P} = [\mat{I}]_\E^S = \begin{pmatrix} 1 & 2 \\ 4 & 7 \end{pmatrix}$.
+The change-of-basis matrix from $\E$ to $S$ is its inverse:
+$\mat{P}^{-1} = [\mat{I}]_S^\E = \frac{1}{(1)(7)-(2)(4)} \begin{pmatrix} 7 & -2 \\ -4 & 1 \end{pmatrix} = \begin{pmatrix} -7 & 2 \\ 4 & -1 \end{pmatrix}$.
+
+Using the theorem:
+\begin{align*} \mat{B} = [F]_S &= [\mat{I}]_S^\E [F]_\E [\mat{I}]_\E^S \\ &= \mat{P}^{-1} \mat{A} \mat{P} \\ &= \begin{pmatrix} -7 & 2 \\ 4 & -1 \end{pmatrix} \begin{pmatrix} 5 & -1 \\ 2 & 1 \end{pmatrix} \begin{pmatrix} 1 & 2 \\ 4 & 7 \end{pmatrix} \\ &= \begin{pmatrix} -35+4 & 7+2 \\ 20-2 & -4-1 \end{pmatrix} \begin{pmatrix} 1 & 2 \\ 4 & 7 \end{pmatrix} \\ &= \begin{pmatrix} -31 & 9 \\ 18 & -5 \end{pmatrix} \begin{pmatrix} 1 & 2 \\ 4 & 7 \end{pmatrix} \\ &= \begin{pmatrix} -31+36 & -62+63 \\ 18-20 & 36-35 \end{pmatrix} \\ &= \begin{pmatrix} 5 & 1 \\ -2 & 1 \end{pmatrix} \end{align*}
+So, the matrix representing $F$ in the basis $S$ is $\mat{B} = \begin{pmatrix} 5 & 1 \\ -2 & 1 \end{pmatrix}$.
+\end{example}
+
+\begin{remark}[Default Basis]
+Unless specified otherwise, a matrix $\mat{A}$ representing a linear transformation $T: \R^n \to \R^m$ is assumed to be with respect to the standard bases in both the domain and codomain, i.e., $\mat{A} = [T]_\E^\E$.
+\end{remark}
+
+\section{Kernel, Image, and the Rank-Nullity Theorem}
+
+The kernel and image are fundamental subspaces associated with a linear transformation (and its matrix representation).
+
+\begin{definition}[Kernel and Image]
+Let $T: \V \to \W$ be a linear transformation, represented by matrix $\mat{A}$ (typically w.r.t. standard bases).
+\begin{itemize}
+    \item The \textbf{Kernel} (or Null Space) of $T$ is the set of vectors in $\V$ that map to the zero vector in $\W$:
+    \[ \Ker(T) = \{\v \in \V \mid T(\v) = \vect{0}\} \]
+    In terms of the matrix $\mat{A}$, this corresponds to the null space of $\mat{A}$:
+    \[ \Ker(\mat{A}) = \{\x \in \R^n \mid \mat{A}\x = \vect{0}\} \]
+    Finding a basis for $\Ker(T)$ involves finding a basis for the solution space of the homogeneous system $\mat{A}\x = \vect{0}$.
+    
+    \item The \textbf{Image} (or Range) of $T$ is the set of all possible outputs in $\W$:
+    \[ \im(T) = \{T(\v) \mid \v \in \V\} = \{\w \in \W \mid \exists \v \in \V, T(\v) = \w\} \]
+    In terms of the matrix $\mat{A}$, this corresponds to the column space of $\mat{A}$:
+    \[ \im(\mat{A}) = \colspace(\mat{A}) = \{\mat{A}\x \mid \x \in \R^n\} = \{\w \in \R^m \mid \exists \x \in \R^n, \mat{A}\x = \w\} \]
+    A basis for $\im(T)$ can be found by finding a basis for the column space of $\mat{A}$. A common method is to find the row space of $\mat{A}^T$ (since $\colspace(\mat{A}) = \text{rowspace}(\mat{A}^T)$) by row-reducing $\mat{A}^T$ and taking the non-zero rows.
+\end{itemize}
+\end{definition}
+
+\begin{theorem}[Rank-Nullity Theorem]
+For any linear transformation $T: \V \to \W$, where $\V$ is finite-dimensional:
+\[ \dim(\Ker(T)) + \dim(\im(T)) = \dim(\V) \]
+In terms of a matrix $\mat{A} \in \R^{m \times n}$ representing $T$:
+\[ \dim(\Ker(\mat{A})) + \dim(\im(\mat{A})) = n \]
+where $\dim(\Ker(\mat{A}))$ is the nullity of $\mat{A}$, $\dim(\im(\mat{A}))$ is the rank of $\mat{A}$ (which equals the rank of $T$), and $n$ is the dimension of the domain (number of columns in $\mat{A}$).
+If $\rank(\mat{A}) = r$, then $\dim(\im(\mat{A})) = r$ and $\dim(\Ker(\mat{A})) = n - r$. Note that $r \le \min(n, m)$.
+\end{theorem}
+
+\section{Eigenvalues, Eigenvectors, and Spectral Decomposition}
+
+Eigenvalues and eigenvectors reveal the intrinsic geometry of a linear transformation – directions that are simply scaled by the transformation.
+
+\begin{definition}[Eigenvalue and Eigenvector]
+Let $\mat{A} \in \R^{n \times n}$ be a square matrix. A scalar $\lambda \in \mathbb{C}$ (or $\R$) is an \textbf{eigenvalue} of $\mat{A}$ if there exists a non-zero vector $\x \in \mathbb{C}^n$ (or $\R^n$) such that:
+\[ \mat{A}\x = \lambda \x \]
+The vector $\x$ is called an \textbf{eigenvector} corresponding to the eigenvalue $\lambda$.
+\end{definition}
+
+\begin{definition}[Characteristic Polynomial]
+The eigenvalues $\lambda$ are the solutions to the equation $\mat{A}\x = \lambda \x$, or $(\mat{A} - \lambda \mat{I})\x = \vect{0}$. For a non-zero eigenvector $\x$ to exist, the matrix $(\mat{A} - \lambda \mat{I})$ must be singular (non-invertible). This means its determinant must be zero:
+\[ p(\lambda) = \det(\mat{A} - \lambda \mat{I}) = 0 \]
+The polynomial $p(\lambda)$ is called the \textbf{characteristic polynomial} of $\mat{A}$. Its roots are the eigenvalues of $\mat{A}$.
+\end{definition}
+
+\begin{theorem}[Spectral Theorem for Symmetric Matrices]
+Let $\mat{A} \in \R^{n \times n}$ be a symmetric matrix ($\mat{A} = \mat{A}^T$). Then:
+\begin{enumerate}
+    \item All eigenvalues of $\mat{A}$ are real.
+    \item Eigenvectors corresponding to distinct eigenvalues are orthogonal.
+    \item $\mat{A}$ is orthogonally diagonalizable. That is, there exists an orthogonal matrix $\mat{U}$ (whose columns form an orthonormal basis of eigenvectors for $\R^n$, so $\mat{U}^T \mat{U} = \mat{U} \mat{U}^T = \mat{I}$) and a diagonal matrix $\mat{\Lambda}$ (whose diagonal entries are the eigenvalues of $\mat{A}$) such that:
+    \[ \mat{A} = \mat{U} \mat{\Lambda} \mat{U}^T \]
+    This is called the \textbf{spectral decomposition} of $\mat{A}$. Equivalently, $\mat{U}^T \mat{A} \mat{U} = \mat{\Lambda} = \allowbreak \diag(\lambda_1, \dots, \lambda_n)$. % Added \allowbreak here
+\end{enumerate}
+\end{theorem}
+
+\begin{remark}
+The columns of $\mat{U}$ are the orthonormal eigenvectors $\uvec_1, \dots, \uvec_n$, and the diagonal entries of $\mat{\Lambda}$ are the corresponding eigenvalues $\lambda_1, \dots, \lambda_n$. The spectral decomposition expresses $\mat{A}$ as a sum of rank-one projection matrices scaled by the eigenvalues: $\mat{A} = \sum_{i=1}^n \lambda_i \uvec_i \uvec_i^T$.
+\end{remark}
+
+\begin{example}[Interpretation of Spectral Decomposition]
+Consider $\mat{A} = \mat{X}^T \mat{X} \in \R^{p \times p}$ where $\mat{X} \in \R^{n \times p}$. Since $\mat{A}$ is symmetric, it has a spectral decomposition $\mat{A} = \mat{U} \mat{\Lambda} \mat{U}^T$. Assume the eigenvalues $\lambda_1, \dots, \lambda_p$ are distinct.
+The matrix $\mat{A}$ represents the linear transformation $T(\v) = \mat{A}\v$ with respect to the standard basis $\E$.
+However, consider the basis $\B = \{\uvec_1, \dots, \uvec_p\}$ formed by the orthonormal eigenvectors (columns of $\mat{U}$). What is the matrix representation of $T$ with respect to $\B$?
+Let $[T]_\B$ be this matrix. By the change of basis formula:
+\[ [T]_\B = [\mat{I}]_\B^\E [T]_\E [\mat{I}]_\E^\B \]
+Here, $[T]_\E = \mat{A}$. The change-of-basis matrix from $\B$ to $\E$ is $\mat{U} = [\mat{I}]_\E^\B$. The change-of-basis matrix from $\E$ to $\B$ is $\mat{U}^{-1} = \mat{U}^T = [\mat{I}]_\B^\E$.
+So,
+\[ [T]_\B = \mat{U}^T \mat{A} \mat{U} = \mat{U}^T (\mat{U} \mat{\Lambda} \mat{U}^T) \mat{U} = (\mat{U}^T \mat{U}) \mat{\Lambda} (\mat{U}^T \mat{U}) = \mat{I} \mat{\Lambda} \mat{I} = \mat{\Lambda} \]
+This confirms that the matrix representing the transformation $T(\v) = \mat{A}\v$ in the basis of eigenvectors $\B$ is the diagonal matrix $\mat{\Lambda}$ of eigenvalues. The transformation simply scales the components along the eigenvector directions.
+
+Now consider the transformation $f: \R^p \to \R^p$ defined by $f(\v) = (\lambda_1 v_1, \dots, \lambda_p v_p)^T$. This transformation scales the standard basis vectors. Its matrix representation in the standard basis $\E$ is precisely $\mat{\Lambda}$.
+The connection is: The transformation $T(\v) = \mat{A}\v$ (represented by $\mat{A}$ in $\E$) behaves like the simpler scaling transformation $f$ (represented by $\mat{\Lambda}$ in $\E$) when viewed in the eigenbasis $\B$. The matrix $\mat{A}$ represents a scaling along the axes defined by its eigenvectors.
+\end{example}
+
+\begin{remark}[Geometric Interpretation via SVD]
+While the spectral decomposition applies to symmetric matrices, the Singular Value Decomposition (SVD) applies to any matrix $\mat{A} \in \R^{m \times n}$. It states $\mat{A} = \mat{U} \mat{\Sigma} \mat{V}^T$, where $\mat{U}$ and $\mat{V}$ are orthogonal matrices and $\mat{\Sigma}$ is a diagonal matrix of singular values.
+Geometrically, multiplying by $\mat{A}$ can be seen as:
+1.  A rotation/reflection in the domain space (by $\mat{V}^T$).
+2.  A scaling along the principal axes (by $\mat{\Sigma}$).
+3.  A rotation/reflection in the codomain space (by $\mat{U}$).
+The images provided likely illustrate this decomposition: $\mat{V}^T$ aligns the input vector with axes, $\mat{\Sigma}$ scales it, and $\mat{U}$ rotates the result. For a symmetric matrix $\mat{A} = \mat{U} \mat{\Lambda} \mat{U}^T$, the rotations are related ($\mat{V} = \mat{U}$) and the scaling factors are the eigenvalues (possibly negative, absorbed into rotation).
+\end{remark}
+
+\begin{proposition}[Determinant and Trace]
+For any square matrix $\mat{A} \in \R^{n \times n}$ (even non-diagonalizable) with eigenvalues $\lambda_1, \dots, \lambda_n$ (counted with algebraic multiplicity):
+\begin{enumerate}
+    \item $\det(\mat{A}) = \prod_{i=1}^n \lambda_i$
+    \item $\tr(\mat{A}) = \sum_{i=1}^n \lambda_i$
+\end{enumerate}
+If $\mat{A}$ is diagonalizable, $\mat{A} = \mat{P} \mat{\Lambda} \mat{P}^{-1}$, the proof is straightforward using properties of determinant and trace:
+$\det(\mat{A}) = \det(\mat{P} \mat{\Lambda} \mat{P}^{-1}) = \det(\mat{P}) \det(\mat{\Lambda}) \det(\mat{P}^{-1}) = \det(\mat{\Lambda}) = \prod \lambda_i$.
+$\tr(\mat{A}) = \tr(\mat{P} \mat{\Lambda} \mat{P}^{-1}) = \tr(\mat{\Lambda} \mat{P}^{-1} \mat{P}) = \tr(\mat{\Lambda}) = \sum \lambda_i$.
+The result holds even for non-diagonalizable matrices, but the proof involves Jordan Normal Form or properties of the characteristic polynomial.
+\end{proposition}
+
+\section{Orthogonal Projection Matrices}
+
+Projection matrices are fundamental in statistics (e.g., linear regression) and numerical analysis.
+
+\begin{definition}[Idempotent Matrix]
+A square matrix $\mat{P} \in \R^{n \times n}$ is \textbf{idempotent} if $\mat{P}^2 = \mat{P}$.
+\end{definition}
+
+\begin{definition}[Orthogonal Projection Matrix]
+A matrix $\mat{P} \in \R^{n \times n}$ is an \textbf{orthogonal projection matrix} if it is both:
+\begin{enumerate}
+    \item Symmetric: $\mat{P}^T = \mat{P}$
+    \item Idempotent: $\mat{P}^2 = \mat{P}$
+\end{enumerate}
+Such a matrix projects vectors orthogonally onto its column space (image).
+\end{definition}
+
+\begin{proposition}[Eigenvalues of Projection Matrices]
+The eigenvalues of an orthogonal projection matrix $\mat{P}$ are either 0 or 1.
+\end{proposition}
+\begin{proof}
+Let $\lambda$ be an eigenvalue with eigenvector $\x \ne \vect{0}$. So $\mat{P}\x = \lambda \x$.
+Applying $\mat{P}$ again: $\mat{P}^2 \x = \mat{P}(\lambda \x) = \lambda (\mat{P}\x) = \lambda (\lambda \x) = \lambda^2 \x$.
+Since $\mat{P}$ is idempotent, $\mat{P}^2 = \mat{P}$, so $\mat{P}^2 \x = \mat{P}\x = \lambda \x$.
+Thus, $\lambda^2 \x = \lambda \x$, which implies $(\lambda^2 - \lambda)\x = \vect{0}$. Since $\x \ne \vect{0}$, we must have $\lambda^2 - \lambda = 0$, or $\lambda(\lambda - 1) = 0$. The only possible eigenvalues are $\lambda = 0$ or $\lambda = 1$.
+The multiplicity of the eigenvalue 1 is the dimension of the eigenspace $E_1 = \{\x \mid \mat{P}\x = \x\}$, which is the subspace onto which $\mat{P}$ projects, i.e., $\im(\mat{P})$. So, multiplicity of 1 is $\rank(\mat{P})$.
+The multiplicity of the eigenvalue 0 is the dimension of the eigenspace $E_0 = \{\x \mid \mat{P}\x = \vect{0}\}$, which is $\Ker(\mat{P})$. By Rank-Nullity, this multiplicity is $n - \rank(\mat{P})$.
+\end{proof}
+
+\begin{proposition}[Projection onto Column Space]
+Let $\mat{X} \in \R^{n \times p}$ be a matrix with linearly independent columns (full column rank, $p \le n$). The matrix
+\[ \mat{P}_\mat{X} = \mat{X}(\mat{X}^T \mat{X})^{-1} \mat{X}^T \]
+is the orthogonal projection matrix onto the column space of $\mat{X}$, $\colspace(\mat{X}) = \im(\mat{X})$.
+\end{proposition}
+\begin{proof} We verify the properties:
+\begin{enumerate}
+    \item Symmetry: 
+    \begin{align*} \mat{P}_\mat{X}^T &= (\mat{X}(\mat{X}^T \mat{X})^{-1} \mat{X}^T)^T \\ &= (\mat{X}^T)^T ((\mat{X}^T \mat{X})^{-1})^T \mat{X}^T \\ &= \mat{X} (\mat{X}^T \mat{X})^{-1} \mat{X}^T \quad \text{(since } (\mat{A}^{-1})^T = (\mat{A}^T)^{-1} \text{ and } \mat{X}^T\mat{X} \text{ is symmetric)} \\ &= \mat{P}_\mat{X} \end{align*}
+    \item Idempotence: 
+    \begin{align*} \mat{P}_\mat{X}^2 &= (\mat{X}(\mat{X}^T \mat{X})^{-1} \mat{X}^T) (\mat{X}(\mat{X}^T \mat{X})^{-1} \mat{X}^T) \\ &= \mat{X}(\mat{X}^T \mat{X})^{-1} (\mat{X}^T \mat{X}) (\mat{X}^T \mat{X})^{-1} \mat{X}^T \\ &= \mat{X} \mat{I} (\mat{X}^T \mat{X})^{-1} \mat{X}^T \\ &= \mat{X}(\mat{X}^T \mat{X})^{-1} \mat{X}^T \\ &= \mat{P}_\mat{X} \end{align*}
+    \item Image: For any $\v \in \R^n$, $\mat{P}_\mat{X}\v = \mat{X}[(\mat{X}^T \mat{X})^{-1} \mat{X}^T \v]$. Let $\bvec{\beta} = (\mat{X}^T \mat{X})^{-1} \mat{X}^T \v$. Then $\mat{P}_\mat{X}\v = \mat{X}\bvec{\beta}$, which is clearly a linear combination of the columns of $\mat{X}$, hence $\mat{P}_\mat{X}\v \in \im(\mat{X})$.
+\end{enumerate}
+\end{proof} % Added missing \end{proof}
+
+\begin{remark}[Properties of $\mat{P}_\mat{X}$]
+The provided list (Proposition 4, 6, 7 in the original notes) summarizes key properties:
+\begin{itemize}
+    \item $\mat{P}_\mat{X}$ is symmetric and idempotent (proved above).
+    \item $\mat{P}_\mat{X} \mat{X} = \mat{X}$: Projecting the columns of $\mat{X}$ onto their own span leaves them unchanged. ($\mat{X}(\mat{X}^T \mat{X})^{-1} \mat{X}^T \mat{X} = \mat{X}\mat{I} = \mat{X}$)
+    \item $\mat{X}^T (\mat{I} - \mat{P}_\mat{X}) = \mat{0}$: The residual matrix $(\mat{I} - \mat{P}_\mat{X})$ projects onto the orthogonal complement of $\im(\mat{X})$. The columns of $\mat{X}$ are orthogonal to this space. ($\mat{X}^T - \mat{X}^T\mat{P}_\mat{X} = \mat{X}^T - \mat{X}^T\mat{X}(\mat{X}^T \mat{X})^{-1} \mat{X}^T = \mat{X}^T - \mat{X}^T = \mat{0}$)
+    \item $\im(\mat{P}_\mat{X}) = \im(\mat{X})$ (proved above).
+    \item If $m=n$ and $\mat{X}$ is invertible, $\mat{P}_\mat{X} = \mat{X}(\mat{X}^T \mat{X})^{-1} \mat{X}^T = \mat{X} \mat{X}^{-1} (\mat{X}^T)^{-1} \mat{X}^T = \mat{I} \mat{I} = \mat{I}$. (Projection onto the whole space $\R^n$).
+    \item $(\mat{I} - \mat{P}_\mat{X})\v \in \im(\mat{X})^\perp$: The vector $\v - \mat{P}_\mat{X}\v$ is the residual, orthogonal to the projection space.
+    \item If $\w \in \im(\mat{X})$, then $\mat{P}_\mat{X}\w = \w$. (Vectors already in the space are unchanged by projection).
+    \item If $\w \in \im(\mat{X})^\perp$, then $\mat{P}_\mat{X}\w = \vect{0}$. (Vectors orthogonal to the space project to the origin).
+    \item $\mat{P}_\mat{X}$ depends only on the subspace $\im(\mat{X})$, not the specific basis $\mat{X}$. If $\im(\mat{Z}) = \im(\mat{X})$, then $\mat{P}_\mat{Z} = \mat{P}_\mat{X}$.
+    \item If $L \subseteq M$ are subspaces, then $\mat{P}_M \mat{P}_L = \mat{P}_L \mat{P}_M = \mat{P}_L$. (Projecting onto $L$ then $M$ is the same as just projecting onto $L$).
+    \item $\mat{I} - \mat{P}_\mat{X} = \mat{P}_{\im(\mat{X})^\perp}$. The matrix $\mat{I} - \mat{P}_\mat{X}$ projects onto the orthogonal complement of $\im(\mat{X})$.
+    \item If $L \subseteq M$, then $\mat{P}_M - \mat{P}_L = \mat{P}_{M \cap L^\perp}$. (Projects onto the part of $M$ orthogonal to $L$).
+    \item Any symmetric, idempotent matrix $\mat{Q}$ is an orthogonal projection matrix onto its own image, $\im(\mat{Q})$.
+\end{itemize}
+\end{remark}
+
+\section{Orthogonal Complements and Fundamental Subspaces}
+
+\begin{definition}[Orthogonal Complement]
+Let $U$ be a subspace of an inner product space $V$. The \textbf{orthogonal complement} of $U$, denoted $U^\perp$, is the set of all vectors in $V$ that are orthogonal to every vector in $U$:
+\[ U^\perp = \{\v \in V \mid \langle \uvec, \v \rangle = 0 \text{ for all } \uvec \in U\} \]
+In $\R^n$ with the standard dot product, $U^\perp = \{\v \in \R^n \mid \uvec^T \v = 0 \text{ for all } \uvec \in U\}$.
+\end{definition}
+
+\begin{theorem}[Direct Sum Decomposition]
+For any subspace $U$ of a finite-dimensional inner product space $V$, $V$ is the direct sum of $U$ and its orthogonal complement:
+\[ V = U \oplus U^\perp \]
+This means every $\v \in V$ can be uniquely written as $\v = \uvec + \w$ where $\uvec \in U$ and $\w \in U^\perp$. Furthermore, $\uvec = \text{proj}_U(\v)$ and $\w = \text{proj}_{U^\perp}(\v)$.
+\end{theorem}
+
+\begin{theorem}[Fundamental Subspaces Theorem Part 1]
+For any matrix $\mat{A} \in \R^{m \times n}$:
+\[ \im(\mat{A}^T) = \Ker(\mat{A})^\perp \]
+The row space of $\mat{A}$ is the orthogonal complement of the null space of $\mat{A}$ (subspaces of $\R^n$).
+And also:
+\[ \Ker(\mat{A}^T) = \im(\mat{A})^\perp \]
+The null space of $\mat{A}^T$ (left null space of $\mat{A}$) is the orthogonal complement of the column space of $\mat{A}$ (subspaces of $\R^m$).
+\end{theorem}
+\begin{proof}[Proof of $\im(\mat{A}^T) = \Ker(\mat{A})^\perp$]
+Let $\x \in \Ker(\mat{A})$. This means $\mat{A}\x = \vect{0}$. Let $\vect{r}_1, \dots, \vect{r}_m$ be the rows of $\mat{A}$. Then $\mat{A}\x = \vect{0}$ means $\vect{r}_i^T \x = 0$ for all $i=1, \dots, m$. This implies $\x$ is orthogonal to every row of $\mat{A}$. Since the row space $\im(\mat{A}^T)$ is the span of the rows, $\x$ must be orthogonal to every vector in $\im(\mat{A}^T)$. Thus, $\Ker(\mat{A}) \subseteq \im(\mat{A}^T)^\perp$.
+
+Now let $\y \in \im(\mat{A}^T)^\perp$. This means $\y$ is orthogonal to every vector in the row space, including the rows themselves: $\vect{r}_i^T \y = 0$ for all $i$. But this is exactly the condition $\mat{A}\y = \vect{0}$, which means $\y \in \Ker(\mat{A})$. Thus, $\im(\mat{A}^T)^\perp \subseteq \Ker(\mat{A})$.
+Combining the inclusions and using the property $(U^\perp)^\perp = U$, we get $\Ker(\mat{A})^\perp = (\im(\mat{A}^T)^\perp)^\perp = \im(\mat{A}^T)$.
+\end{proof}
+
+\begin{remark}[Diagonalizability]
+A matrix $\mat{A}$ is diagonalizable if it has a full set of linearly independent eigenvectors. Not all matrices are diagonalizable. A matrix fails to be diagonalizable if and only if for at least one eigenvalue $\lambda_i$, the geometric multiplicity (dimension of the eigenspace $E_{\lambda_i} = \Ker(\mat{A}-\lambda_i \mat{I})$) is strictly less than the algebraic multiplicity (multiplicity of $\lambda_i$ as a root of the characteristic polynomial). The original notes mention a condition involving powers $(A-\lambda_i I)^k = 0$, related to generalized eigenvectors and Jordan Normal Form, which arises when geometric multiplicity < algebraic multiplicity.
+However, a crucial result is that all symmetric matrices are orthogonally diagonalizable (as stated in the Spectral Theorem).
+\end{remark}
+
+\begin{corollary}[Projection onto Orthogonal Complement]
+Let $\mat{P}_\mat{X} = \mat{X}(\mat{X}^T \mat{X})^{-1} \mat{X}^T$ be the projection onto $\im(\mat{X})$. The matrix $\mat{Q} = \mat{I} - \mat{P}_\mat{X}$ is the orthogonal projection matrix onto the orthogonal complement space $\im(\mat{X})^\perp$.
+\end{corollary}
+\begin{proof}
+1. Symmetry: $\mat{Q}^T = (\mat{I} - \mat{P}_\mat{X})^T = \mat{I}^T - \mat{P}_\mat{X}^T = \mat{I} - \mat{P}_\mat{X} = \mat{Q}$.
+2. Idempotence: $\mat{Q}^2 = (\mat{I} - \mat{P}_\mat{X})(\mat{I} - \mat{P}_\mat{X}) = \mat{I} - \mat{P}_\mat{X} - \mat{P}_\mat{X} + \mat{P}_\mat{X}^2 = \mat{I} - \mat{P}_\mat{X} - \mat{P}_\mat{X} + \mat{P}_\mat{X} = \mat{I} - \mat{P}_\mat{X} = \mat{Q}$.
+Thus $\mat{Q}$ is an orthogonal projection matrix. It projects onto $\im(\mat{Q})$. What is $\im(\mat{Q})$?
+A vector $\w$ is in $\im(\mat{Q})$ if $\w = \mat{Q}\v = (\mat{I} - \mat{P}_\mat{X})\v$ for some $\v$. We know from property 7 of $\mat{P}_\mat{X}$ that $(\mat{I} - \mat{P}_\mat{X})\v \in \im(\mat{X})^\perp$. So $\im(\mat{Q}) \subseteq \im(\mat{X})^\perp$.
+Conversely, let $\y \in \im(\mat{X})^\perp$. We want to show $\y = \mat{Q}\y$.
+$\mat{Q}\y = (\mat{I} - \mat{P}_\mat{X})\y = \y - \mat{P}_\mat{X}\y$. Since $\y \in \im(\mat{X})^\perp$, by property 9, $\mat{P}_\mat{X}\y = \vect{0}$. Thus $\mat{Q}\y = \y$. This means $\y \in \im(\mat{Q})$. So $\im(\mat{X})^\perp \subseteq \im(\mat{Q})$.
+Therefore, $\im(\mat{Q}) = \im(\mat{X})^\perp$.
+
+Spectral Decomposition of $\mat{Q}$: Since $\mat{P}_\mat{X}$ is symmetric, it has spectral decomposition $\mat{P}_\mat{X} = \mat{U} \mat{\Lambda}_P \mat{U}^T$, where $\mat{\Lambda}_P$ has $r = \rank(\mat{P}_\mat{X})$ ones and $n-r$ zeros on the diagonal.
+Then $\mat{Q} = \mat{I} - \mat{P}_\mat{X} = \mat{U}\mat{I}\mat{U}^T - \mat{U}\mat{\Lambda}_P\mat{U}^T = \mat{U}(\mat{I} - \mat{\Lambda}_P)\mat{U}^T$.
+The matrix $\mat{\Lambda}_Q = \mat{I} - \mat{\Lambda}_P$ is also diagonal. Its diagonal entries are $1-1=0$ (where $\mat{\Lambda}_P$ had 1) and $1-0=1$ (where $\mat{\Lambda}_P$ had 0). So $\mat{\Lambda}_Q$ has $n-r$ ones and $r$ zeros.
+The eigenvectors (columns of $\mat{U}$) remain the same, but the eigenvalues are flipped (0 becomes 1, 1 becomes 0). The eigenvectors corresponding to eigenvalue 1 for $\mat{Q}$ are those corresponding to eigenvalue 0 for $\mat{P}_\mat{X}$ (i.e., a basis for $\Ker(\mat{P}_\mat{X}) = \im(\mat{X})^\perp$). The eigenvectors corresponding to eigenvalue 0 for $\mat{Q}$ are those corresponding to eigenvalue 1 for $\mat{P}_\mat{X}$ (i.e., a basis for $\im(\mat{P}_\mat{X}) = \im(\mat{X})$).
+\end{proof}
+
+\begin{remark}[Application to OLS]
+In Ordinary Least Squares (OLS), we want to minimize the squared norm of the residual vector $||\y - \mat{X}\bvec{\beta}||^2$. The solution is found by projecting $\y$ onto the column space of $\mat{X}$. The fitted values are $\hat{\y} = \mat{P}_\mat{X}\y$, and the optimal coefficients are $\hat{\bvec{\beta}}_{OLS} = (\mat{X}^T \mat{X})^{-1} \mat{X}^T \y$.
+The residual vector is $\vect{e} = \y - \hat{\y} = \y - \mat{P}_\mat{X}\y = (\mat{I} - \mat{P}_\mat{X})\y$. This is the projection of $\y$ onto the orthogonal complement space $\im(\mat{X})^\perp$.
+The squared norm of the residual is $||\vect{e}||^2 = ||(\mat{I} - \mat{P}_\mat{X})\y||^2$. Since $(\mat{I} - \mat{P}_\mat{X})$ is a projection matrix, this represents the squared distance from $\y$ to the subspace $\im(\mat{X})$.
+If we increase the rank of $\mat{X}$ (by adding more linearly independent predictors), we are projecting onto a larger subspace. Projecting onto a larger subspace can never increase the distance from the original vector, so the residual sum of squares $||\y - \mat{X}\bvec{\beta}||^2$ will generally decrease (or stay the same).
+\end{remark}
+
+\section{Examples and Statistical Connections}
+
+\begin{example}[Rank-One Projection]
+Let $\vect{v} \in \R^n$, $\vect{v} \ne \vect{0}$. Consider the matrix $\mat{P} = \frac{\vect{v}\vect{v}^T}{||\vect{v}||^2}$.
+Let's show it's an orthogonal projection matrix. Let $c = ||\vect{v}||^2 = \vect{v}^T\vect{v}$.
+1. Symmetry: $\mat{P}^T = (c^{-1} \vect{v}\vect{v}^T)^T = c^{-1} (\vect{v}^T)^T \vect{v}^T = c^{-1} \vect{v}\vect{v}^T = \mat{P}$.
+2. Idempotence: $\mat{P}^2 = (c^{-1} \vect{v}\vect{v}^T)(c^{-1} \vect{v}\vect{v}^T) = c^{-2} \vect{v}(\vect{v}^T\vect{v})\vect{v}^T = c^{-2} \vect{v}(c)\vect{v}^T = c^{-1} \vect{v}\vect{v}^T = \mat{P}$.
+So, $\mat{P}$ is an orthogonal projection matrix. What does it project onto? Its image is $\im(\mat{P}) = \{ \mat{P}\x \mid \x \in \R^n \} = \{ c^{-1}\vect{v}(\vect{v}^T\x) \mid \x \in \R^n \}$. Since $\vect{v}^T\x$ is a scalar, any output is a scalar multiple of $\vect{v}$. Thus, $\im(\mat{P}) = \Span\{\vect{v}\}$. It projects onto the line spanned by $\vect{v}$.
+The rank of the matrix is the dimension of its image, which is $\dim(\Span\{\vect{v}\}) = 1$ (since $\vect{v} \ne \vect{0}$).
+\end{example}
+
+\begin{example}[Sample Variance and Projections]
+Let $Y_1, \dots, Y_n$ be random variables with mean $\mu$ and variance $\sigma^2$. The sample mean is $\bar{Y} = \frac{1}{n}\sum_{i=1}^n Y_i$. The sample variance is $S_n^2 = \frac{1}{n-1}\sum_{i=1}^n (Y_i - \bar{Y})^2$.
+Let $\vect{Y} = (Y_1, \dots, Y_n)^T$. Let $\vect{1} = (1, \dots, 1)^T \in \R^n$.
+Then $\bar{Y} = \frac{1}{n} \vect{1}^T \vect{Y}$.
+The vector of means is $\bar{Y}\vect{1} = (\frac{1}{n} \vect{1}^T \vect{Y}) \vect{1} = \frac{\vect{1}\vect{1}^T}{n} \vect{Y}$.
+Notice that $\mat{P}_{\vect{1}} = \frac{\vect{1}\vect{1}^T}{||\vect{1}||^2} = \frac{\vect{1}\vect{1}^T}{n}$ is the projection matrix onto the subspace spanned by $\vect{1}$.
+So, the vector of sample means is $\bar{Y}\vect{1} = \mat{P}_{\vect{1}} \vect{Y}$.
+The vector of deviations from the mean is $\vect{Y} - \bar{Y}\vect{1} = \vect{Y} - \mat{P}_{\vect{1}} \vect{Y} = (\mat{I} - \mat{P}_{\vect{1}}) \vect{Y}$.
+The sum of squared deviations is $||\vect{Y} - \bar{Y}\vect{1}||^2 = ||(\mat{I} - \mat{P}_{\vect{1}}) \vect{Y}||^2$.
+Let $\mat{M} = \mat{I} - \mat{P}_{\vect{1}} = \mat{I} - \frac{1}{n}\vect{1}\vect{1}^T$. This is the projection matrix onto the orthogonal complement of $\Span\{\vect{1}\}$. This subspace has dimension $n-1$. $\mat{M}$ is often called the "centering matrix".
+The sum of squares is $\sum_{i=1}^n (Y_i - \bar{Y})^2 = \vect{Y}^T \mat{M}^T \mat{M} \vect{Y} = \vect{Y}^T \mat{M} \vect{Y}$ (since $\mat{M}$ is symmetric and idempotent).
+So, $(n-1)S_n^2 = \vect{Y}^T \mat{M} \vect{Y}$.
+
+If $Y_i \sim N(\mu, \sigma^2)$ independently, then $\vect{Y} \sim N(\mu\vect{1}, \sigma^2 \mat{I})$.
+The quadratic form $(n-1)S_n^2/\sigma^2 = \frac{1}{\sigma^2}\vect{Y}^T \mat{M} \vect{Y}$ involves the projection matrix $\mat{M}$.
+If $\mu=0$, then $\frac{1}{\sigma^2}\vect{Y}^T \mat{M} \vect{Y} \sim \chi^2_{\rank(\mat{M})}$. Since $\rank(\mat{M}) = \rank(\mat{I}) - \rank(\mat{P}_{\vect{1}}) = n - 1$, we get $\frac{(n-1)S_n^2}{\sigma^2} \sim \chi^2_{n-1}$. This result (Cochran's Theorem) holds even if $\mu \ne 0$.
+The fact that $S_n^2$ is an unbiased estimator for $\sigma^2$ ($E[S_n^2] = \sigma^2$) relies on $E[\vect{Y}^T \mat{M} \vect{Y}] = \tr(\mat{M}(\sigma^2\mat{I})) + (\mu\vect{1})^T \mat{M} (\mu\vect{1}) = \sigma^2 \tr(\mat{M}) + \mu^2 \vect{1}^T \mat{M} \vect{1}$. Since $\mat{M}\vect{1} = \vect{0}$ and $\tr(\mat{M}) = n-1$, we get $E[(n-1)S_n^2] = \sigma^2(n-1)$, proving unbiasedness.
+\end{example}
+
+\section{Vector and Matrix Calculus}
+
+Derivatives involving vectors and matrices are essential in optimization problems (like OLS).
+
+\begin{definition}[Gradient]
+For a scalar-valued function $f: \R^n \to \R$, $f(x_1, \dots, x_n)$, the \textbf{gradient} is the vector of partial derivatives:
+\[ \nabla f = \frac{\partial f}{\partial \x} = \begin{pmatrix} \partial f / \partial x_1 \\ \vdots \\ \partial f / \partial x_n \end{pmatrix} \]
+\end{definition}
+
+\begin{definition}[Derivative of Vector w.r.t. Scalar]
+For a vector-valued function $\y: \R \to \R^m$, $\y(x) = (y_1(x), \dots, y_m(x))^T$, the derivative with respect to the scalar $x$ is:
+\[ \frac{\partial \y}{\partial x} = \begin{pmatrix} \partial y_1 / \partial x \\ \vdots \\ \partial y_m / \partial x \end{pmatrix} \]
+\end{definition}
+
+\begin{definition}[Jacobian Matrix]
+For a vector-valued function $\y: \R^n \to \R^m$, $\y(\x) = (y_1(\x), \dots, y_m(\x))^T$ where $\x = (x_1, \dots, x_n)^T$, the derivative of $\y$ with respect to $\x$ is the $m \times n$ \textbf{Jacobian matrix}:
+\[ \frac{\partial \y}{\partial \x} = \begin{pmatrix}
+\frac{\partial y_1}{\partial x_1} & \frac{\partial y_1}{\partial x_2} & \cdots & \frac{\partial y_1}{\partial x_n} \\
+\frac{\partial y_2}{\partial x_1} & \frac{\partial y_2}{\partial x_2} & \cdots & \frac{\partial y_2}{\partial x_n} \\
+\vdots & \vdots & \ddots & \vdots \\
+\frac{\partial y_m}{\partial x_1} & \frac{\partial y_m}{\partial x_2} & \cdots & \frac{\partial y_m}{\partial x_n}
+\end{pmatrix} = [\nabla y_1^T, \dots, \nabla y_m^T]^T \]
+(Note: Some definitions transpose this matrix. We use the layout where rows correspond to components of $\y$ and columns to components of $\x$.)
+\end{definition}
+
+\begin{proposition}[Common Vector Derivatives]
+Let $\x \in \R^n$, $\bvec \in \R^n$ be a constant vector, and $\mat{A} \in \R^{m \times n}$ be a constant matrix.
+\begin{enumerate}
+    \item Linear function (scalar output): $f(\x) = \bvec^T \x = \x^T \bvec$.
+    \[ \frac{\partial}{\partial \x} (\bvec^T \x) = \frac{\partial}{\partial \x} (\x^T \bvec) = \bvec \]
+    \item Quadratic form (scalar output): $f(\x) = \x^T \x = ||\x||^2$.
+    \[ \frac{\partial}{\partial \x} (\x^T \x) = 2\x \]
+    \item Linear transformation (vector output): $\y(\x) = \mat{A}\x$.
+    \[ \frac{\partial}{\partial \x} (\mat{A}\x) = \mat{A} \]
+    (This is the Jacobian matrix. The $i$-th row is $\frac{\partial}{\partial \x}(\sum_j A_{ij}x_j)$, whose $k$-th element is $\frac{\partial}{\partial x_k}(\sum_j A_{ij}x_j) = A_{ik}$. So the $i$-th row is the $i$-th row of $\mat{A}$.)
+    \item General quadratic form (scalar output): $f(\x) = \x^T \mat{A} \x$ where $\mat{A} \in \R^{n \times n}$.
+    \[ \frac{\partial}{\partial \x} (\x^T \mat{A} \x) = (\mat{A} + \mat{A}^T) \x \]
+    If $\mat{A}$ is symmetric ($\mat{A} = \mat{A}^T$), then:
+    \[ \frac{\partial}{\partial \x} (\x^T \mat{A} \x) = 2\mat{A} \x \]
+\end{enumerate}
+\end{proposition}
+\begin{proof}[Derivation of $\frac{\partial}{\partial \x} (\x^T \mat{A} \x)$]
+Let $f(\x) = \x^T \mat{A} \x = \sum_{i=1}^n \sum_{j=1}^n A_{ij} x_i x_j$. We find the $k$-th component of the gradient:
+\begin{align*} \frac{\partial f}{\partial x_k} &= \frac{\partial}{\partial x_k} \left( \sum_{i=1}^n \sum_{j=1}^n A_{ij} x_i x_j \right) \\ &= \sum_{i=1}^n \sum_{j=1}^n A_{ij} \frac{\partial}{\partial x_k} (x_i x_j) \\ &= \sum_{i=1}^n \sum_{j=1}^n A_{ij} (\delta_{ik} x_j + x_i \delta_{jk}) \quad (\text{where } \delta_{ab}=1 \text{ if } a=b, 0 \text{ otherwise}) \\ &= \sum_{j=1}^n A_{kj} x_j + \sum_{i=1}^n A_{ik} x_i \\ &= (\text{k-th row of } \mat{A}) \x + (\text{k-th column of } \mat{A})^T \x \\ &= [\mat{A}\x]_k + [\mat{A}^T\x]_k = [(\mat{A} + \mat{A}^T)\x]_k \end{align*}
+Thus, the gradient vector is $(\mat{A} + \mat{A}^T)\x$. If $\mat{A}$ is symmetric, this simplifies to $2\mat{A}\x$.
+\end{proof}
+
+\end{document}

@@ -1,0 +1,189 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsfonts, amsthm}
+\usepackage{bm} % For bold math symbols (vectors and matrices)
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+% --- Custom Math Commands ---
+\newcommand{\E}{\mathbb{E}} % Expectation
+\newcommand{\tr}{\operatorname{tr}} % Trace
+\newcommand{\Var}{\operatorname{Var}} % Variance
+\newcommand{\Cov}{\operatorname{Cov}} % Covariance
+\newcommand{\bY}{\bm{Y}} % Bold Y vector
+\newcommand{\bM}{\mathbf{M}} % Bold M matrix
+\newcommand{\bI}{\mathbf{I}} % Bold I matrix (identity)
+\newcommand{\bSigma}{\boldsymbol{\Sigma}} % Bold Sigma matrix
+\newcommand{\bmu}{\boldsymbol{\mu}} % Bold mu vector
+\newcommand{\bone}{\mathbf{1}} % Bold 1 vector (vector of ones)
+\newcommand{\bzero}{\mathbf{0}} % Bold 0 vector (vector of zeros)
+\newcommand{\R}{\mathbb{R}} % Real numbers
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+
+% --- Document ---
+\title{Unbiasedness of the Sample Variance: A Linear Algebra Perspective}
+\author{Your Friendly Math Teacher}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Motivation: Why Estimate Variance?}
+
+In statistics, we often work with a sample $Y_1, Y_2, \dots, Y_n$ drawn from a larger population. We assume these are independent draws from a distribution with some unknown mean $\mu$ and unknown variance $\sigma^2$. While the sample mean $\bar{Y} = \frac{1}{n}\sum Y_i$ is a natural estimator for $\mu$, estimating the population's spread, $\sigma^2$, requires a bit more thought.
+
+A key measure of spread in our sample is the \emph{sample variance}, defined as:
+\begin{definition}[Sample Variance]
+The sample variance, denoted $S_n^2$, is given by
+\[
+S_n^2 = \frac{1}{n-1} \sum_{i=1}^n (Y_i - \bar{Y})^2
+\]
+\end{definition}
+You might wonder: why divide by $n-1$ instead of the seemingly more natural $n$? This factor is known as \emph{Bessel's correction}. Our goal today is to prove that this correction makes $S_n^2$ an \emph{unbiased estimator} for $\sigma^2$.
+
+\begin{definition}[Unbiased Estimator]
+An estimator $\hat{\theta}$ for a parameter $\theta$ is called unbiased if its expected value equals the true value of the parameter, i.e., $\E[\hat{\theta}] = \theta$.
+\end{definition}
+
+So, we want to rigorously show that $\E[S_n^2] = \sigma^2$. We'll use the power of linear algebra, assuming for this derivation that our observations $Y_i$ are independent and identically distributed (i.i.d.) as $N(\mu, \sigma^2)$.
+
+\section{Setting the Stage: Vector Notation}
+
+Let's represent our sample as a vector in $\R^n$:
+\[ \bY = \begin{bmatrix} Y_1 \\ Y_2 \\ \vdots \\ Y_n \end{bmatrix} \]
+Since $Y_i \sim N(\mu, \sigma^2)$ independently, the random vector $\bY$ follows a multivariate normal distribution:
+\[ \bY \sim N(\bmu_{\bY}, \bSigma_{\bY}) \]
+where
+\begin{itemize}
+    \item The mean vector is $\bmu_{\bY} = \E[\bY] = \begin{bmatrix} \mu \\ \mu \\ \vdots \\ \mu \end{bmatrix} = \mu \bone$, where $\bone$ is the $n \times 1$ vector of ones.
+    \item The covariance matrix is $\bSigma_{\bY} = \Cov(\bY) = \begin{bmatrix} \sigma^2 & 0 & \dots & 0 \\ 0 & \sigma^2 & \dots & 0 \\ \vdots & \vdots & \ddots & \vdots \\ 0 & 0 & \dots & \sigma^2 \end{bmatrix} = \sigma^2 \bI$, where $\bI$ is the $n \times n$ identity matrix. The off-diagonal zeros reflect the independence of the $Y_i$.
+\end{itemize}
+
+\section{The Sum of Squares as a Quadratic Form}
+
+The core of $S_n^2$ is the sum of squared deviations: $\sum_{i=1}^n (Y_i - \bar{Y})^2$. Let's see how this looks in matrix form. This sum measures the squared length of the vector of deviations from the mean. We can express this using a special matrix operation.
+
+Consider the \emph{centering matrix} $\bM$:
+\[ \bM = \bI - \frac{1}{n}\bone\bone^T \]
+This matrix has the remarkable property that when it multiplies a vector $\bY$, it yields a vector whose components are the deviations from the mean, i.e., $Y_i - \bar{Y}$. (Although we won't explicitly show $\bM\bY$ gives that exact vector, its quadratic form $\bY^T \bM \bY$ achieves the desired sum.)
+
+Let's verify the connection:
+\begin{align*}
+\bY^T \bM \bY &= \bY^T \left( \bI - \frac{1}{n}\bone\bone^T \right) \bY \\
+&= \bY^T \bI \bY - \bY^T \left( \frac{1}{n}\bone\bone^T \right) \bY \\
+&= \bY^T \bY - \frac{1}{n} (\bY^T \bone) (\bone^T \bY) \\
+&= \sum_{i=1}^n Y_i^2 - \frac{1}{n} \left( \sum_{i=1}^n Y_i \right) \left( \sum_{j=1}^n Y_j \right) \\
+&= \sum Y_i^2 - \frac{1}{n} (n\bar{Y})(n\bar{Y}) \\
+&= \sum Y_i^2 - n \bar{Y}^2
+\end{align*}
+Recall the computational formula for the sum of squares: $\sum (Y_i - \bar{Y})^2 = \sum Y_i^2 - n\bar{Y}^2$. So, we've shown:
+\begin{lemma}
+The sum of squared deviations can be expressed as the quadratic form:
+\[ \sum_{i=1}^n (Y_i - \bar{Y})^2 = \bY^T \bM \bY \]
+where $\bM = \bI - \frac{1}{n}\bone\bone^T$.
+\end{lemma}
+Therefore, we can write the quantity related to the sample variance as:
+\[ (n-1)S_n^2 = \bY^T \bM \bY \]
+
+\section{The Main Tool: Expectation of a Quadratic Form}
+
+To find $\E[(n-1)S_n^2]$, we need the expectation of $\bY^T \bM \bY$. There's a beautiful general theorem for this:
+
+\begin{theorem}[Expectation of a Quadratic Form]
+Let $\mathbf{X}$ be a random vector with mean vector $\E[\mathbf{X}] = \bmu$ and covariance matrix $\Cov(\mathbf{X}) = \bSigma$. For any constant matrix $\mathbf{A}$ of appropriate dimensions, the expected value of the quadratic form $\mathbf{X}^T \mathbf{A} \mathbf{X}$ is given by:
+\[ \E[\mathbf{X}^T \mathbf{A} \mathbf{X}] = \tr(\mathbf{A} \bSigma) + \bmu^T \mathbf{A} \bmu \]
+where $\tr(\cdot)$ denotes the trace of a matrix (the sum of its diagonal elements).
+\end{theorem}
+\begin{remark}
+This theorem is a cornerstone result in multivariate statistics. It arises from applying the linearity of expectation and properties of the trace operator.
+\end{remark}
+
+\section{Applying the Theorem}
+
+Let's apply this theorem to our situation. We have:
+\begin{itemize}
+    \item Random vector: $\mathbf{X} = \bY$
+    \item Constant matrix: $\mathbf{A} = \bM$
+    \item Mean vector: $\bmu = \bmu_{\bY} = \mu\bone$
+    \item Covariance matrix: $\bSigma = \bSigma_{\bY} = \sigma^2\bI$
+\end{itemize}
+Plugging these into the formula:
+\begin{align*}
+\E[\bY^T \bM \bY] &= \tr(\bM (\sigma^2\bI)) + (\mu\bone)^T \bM (\mu\bone) \\
+&= \tr(\sigma^2 \bM \bI) + \mu^2 (\bone^T \bM \bone) \\
+&= \sigma^2 \tr(\bM) + \mu^2 (\bone^T \bM \bone) \quad \text{(since } \bM\bI = \bM \text{ and trace is linear)}
+\end{align*}
+Our task now boils down to calculating two key quantities: $\tr(\bM)$ and $\bone^T \bM \bone$.
+
+\section{Calculating the Components}
+
+\subsection{The Trace of the Centering Matrix: \texorpdfstring{$\tr(\bM)$}{tr(M)}}
+
+We need the trace of $\bM = \bI - \frac{1}{n}\bone\bone^T$.
+\begin{align*}
+\tr(\bM) &= \tr\left(\bI - \frac{1}{n}\bone\bone^T\right) \\
+&= \tr(\bI) - \tr\left(\frac{1}{n}\bone\bone^T\right) \quad \text{(Linearity of trace)} \\
+&= n - \frac{1}{n} \tr(\bone\bone^T)
+\end{align*}
+What is $\tr(\bone\bone^T)$? The matrix $\bone\bone^T$ is an $n \times n$ matrix where every entry is 1.
+\[ \bone\bone^T = \begin{bmatrix} 1 \\ \vdots \\ 1 \end{bmatrix} \begin{bmatrix} 1 & \dots & 1 \end{bmatrix} = \begin{bmatrix} 1 & 1 & \dots & 1 \\ 1 & 1 & \dots & 1 \\ \vdots & \vdots & \ddots & \vdots \\ 1 & 1 & \dots & 1 \end{bmatrix} \]
+The trace is the sum of the diagonal elements, which are all 1s. There are $n$ diagonal elements, so $\tr(\bone\bone^T) = n$.
+Alternatively, note that $\mathbf{P}_{\bone} = \frac{1}{n}\bone\bone^T$ is the projection matrix onto the one-dimensional subspace spanned by $\bone$. For any projection matrix, the trace equals its rank. The rank of $\mathbf{P}_{\bone}$ is 1. Thus $\tr(\mathbf{P}_{\bone}) = 1$, which means $\tr(\frac{1}{n}\bone\bone^T) = 1$.
+
+Substituting back:
+\[ \tr(\bM) = n - \frac{1}{n}(n) = n - 1 \]
+So, the trace of the centering matrix is $n-1$. This number might look familiar – it's exactly the divisor in our sample variance formula! It represents the degrees of freedom associated with the variance estimation after accounting for estimating the mean.
+
+\subsection{The Mean Term: \texorpdfstring{$\bone^T \bM \bone$}{1T M 1}}
+
+Now let's figure out the second part, $\bone^T \bM \bone$. The key is to first calculate $\bM\bone$:
+\begin{align*}
+\bM\bone &= \left(\bI - \frac{1}{n}\bone\bone^T\right)\bone \\
+&= \bI\bone - \frac{1}{n}\bone(\bone^T\bone) \quad \text{(Matrix multiplication associativity)} \\
+&= \bone - \frac{1}{n}\bone(n) \quad \text{(since } \bI\bone=\bone \text{ and } \bone^T\bone = \sum 1^2 = n) \\
+&= \bone - \bone \\
+&= \bzero \quad \text{(the } n \times 1 \text{ zero vector)}
+\end{align*}
+This is a crucial property: the centering matrix $\bM$ annihilates the vector $\bone$ (and any vector proportional to it). This makes intuitive sense: if all data points were the same ($Y_i = c$), their mean would be $c$, and all deviations $(Y_i - \bar{Y})$ would be zero. $\bM$ effectively removes the 'average level' component represented by $\bone$.
+
+Now, we can easily compute the quadratic form involving the mean:
+\[ \bone^T \bM \bone = \bone^T (\bM\bone) = \bone^T \bzero = 0 \]
+
+\section{Putting It All Together: The Expected Sum of Squares}
+
+Let's substitute our findings for $\tr(\bM)$ and $\bone^T \bM \bone$ back into the expectation formula:
+\begin{align*}
+\E[\bY^T \bM \bY] &= \sigma^2 \tr(\bM) + \mu^2 (\bone^T \bM \bone) \\
+&= \sigma^2 (n-1) + \mu^2 (0) \\
+&= \sigma^2 (n-1)
+\end{align*}
+So, we have found the expected value of the sum of squared deviations:
+\[ \E\left[ \sum_{i=1}^n (Y_i - \bar{Y})^2 \right] = \sigma^2 (n-1) \]
+
+\section{Conclusion: \texorpdfstring{$S_n^2$}{Sn2} is Unbiased!}
+
+We are just one step away. Recall that $(n-1)S_n^2 = \sum (Y_i - \bar{Y})^2 = \bY^T \bM \bY$. Taking the expectation:
+\[ \E[(n-1)S_n^2] = \E[\bY^T \bM \bY] \]
+Using our result from the previous section:
+\[ \E[(n-1)S_n^2] = \sigma^2 (n-1) \]
+By the linearity property of expectation, we can pull the constant $(n-1)$ out:
+\[ (n-1)\E[S_n^2] = \sigma^2 (n-1) \]
+Assuming $n > 1$ (we need at least two data points to estimate variance), we can divide both sides by $(n-1)$:
+\[ \boxed{\E[S_n^2] = \sigma^2} \]
+
+\begin{corollary}
+The sample variance $S_n^2 = \frac{1}{n-1} \sum_{i=1}^n (Y_i - \bar{Y})^2$ is an unbiased estimator for the population variance $\sigma^2$.
+\end{corollary}
+
+This elegant result confirms that the inclusion of Bessel's correction $(n-1)$ in the denominator is precisely what's needed to ensure that, on average, our sample variance correctly estimates the true population variance. Without it, dividing by $n$ would lead to an estimator that systematically underestimates $\sigma^2$.
+
+\begin{remark}
+While we used the normality assumption ($\bY \sim N(\mu\bone, \sigma^2\bI)$) to cleanly apply the standard theorem for the expectation of a quadratic form of a multivariate normal vector, the result that $S_n^2$ is an unbiased estimator for $\sigma^2$ holds more generally. It only requires that the $Y_i$ are i.i.d. with finite mean $\mu$ and finite variance $\sigma^2$. The proof in that general case typically uses algebraic manipulation of the sums directly, rather than matrix forms.
+\end{remark}
+
+\end{document}

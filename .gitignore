@@ -1,0 +1,8 @@
+# Ignore intermediary LaTeX to PDF files
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk

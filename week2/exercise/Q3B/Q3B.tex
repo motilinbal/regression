@@ -1,0 +1,55 @@
+\documentclass{article}
+\usepackage{amsmath, amssymb, amsthm} % For math symbols, environments like align*, theorems
+\usepackage{geometry} % For page layout
+\geometry{a4paper, margin=1in} % Example page settings
+
+\renewcommand{\vec}[1]{\mathbf{#1}} % Define \vec for vectors (bold)
+\newcommand{\mat}[1]{\mathbf{#1}} % Define \mat for matrices (bold)
+\newcommand{\R}{\mathbb{R}} % Real numbers symbol
+\DeclareMathOperator*{\argmax}{arg\,max} % Define argmax operator
+\DeclareMathOperator*{\argmin}{arg\,min} % Define argmin operator
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert} % Define norm command
+\newcommand{\dist}{\operatorname{dist}} % Define dist operator
+
+\newtheorem*{exercise}{Exercise} % Define an unnumbered exercise environment
+
+\begin{document}
+
+\section*{A. Definition for a Matrix $\mat{X} \in \R^{n \times p}$}
+
+\subsection*{First Definition (Maximizing Variance)\textsuperscript{1}}
+
+The first principal component, defined by maximizing variance ($\vec{PC}_1^{\text{var}}$), is the unit vector $\vec{w}$ that maximizes the sum of squared projections of the data points ($\vec{x}_i$) onto it. This can be expressed as:
+\begin{align*}
+\vec{PC}_1^{\text{var}} &= \argmax_{\substack{\vec{w} \in \R^p \\ \norm{\vec{w}}_2=1}} \sum_{i=1}^n (\vec{w}^T \vec{x}_i)^2 \\
+&= \argmax_{\substack{\vec{w} \in \R^p \\ \norm{\vec{w}}_2=1}} \norm{\mat{X}\vec{w}}_2^2 \\
+&= \argmax_{\substack{\vec{w} \in \R^p \\ \norm{\vec{w}}_2=1}} \vec{w}^T \mat{X}^T \mat{X} \vec{w}
+\end{align*}
+\textit{Note: The notation $||\vec{w}||=1$ typically implies the Euclidean norm, $||\vec{w}||_2=1$.}
+
+\subsection*{Second Definition (Minimizing Least Squares Error)}
+
+The first principal component, defined by minimizing the least squares reconstruction error ($\vec{PC}_1^{\text{LS}}$), is the unit vector $\vec{w}$ that minimizes the sum of squared distances between the data points ($\vec{x}_i$) and their projections onto the line defined by $\vec{w}$. This is given by:
+\[
+\vec{PC}_1^{\text{LS}} = \argmin_{\substack{\vec{w} \in \R^p \\ \norm{\vec{w}}_2=1}} \sum_{i=1}^n \dist(\vec{x}_i, \vec{w})^2
+\]
+where:
+\[
+\dist(\vec{x}_i, \vec{w}) = \norm{\vec{x}_i - P_{\vec{w}}(\vec{x}_i)}_2
+\]
+and $P_{\vec{w}}(\vec{x}_i)$ is the orthonormal projection of the point $\vec{x}_i$ onto the one-dimensional subspace spanned by the vector $\vec{w}$. Specifically, $P_{\vec{w}}(\vec{x}_i) = (\vec{w}^T \vec{x}_i)\vec{w}$ since $\norm{\vec{w}}_2=1$.
+
+\vspace{1em} % Add some vertical space before the exercise
+
+\begin{exercise}
+Assume that the eigenvalues of the matrix $\mat{X}^T \mat{X}$ satisfy $\lambda_1 > \lambda_2 > \dots > \lambda_p \ge 0$. Show that $\vec{PC}_1^{\text{var}}$ corresponds to $\vec{v}_1$, the first column vector (eigenvector corresponding to $\lambda_1$) of $\mat{U}$ in the spectral decomposition of $\mat{X}^T \mat{X}$:
+\[
+\mat{X}^T \mat{X} = \mat{U} \mat{\Lambda} \mat{U}^T
+\]
+(Where $\mat{U}$ is the orthogonal matrix whose columns are the eigenvectors $\vec{v}_i$, and $\mat{\Lambda}$ is the diagonal matrix of eigenvalues $\lambda_i$).
+\end{exercise}
+
+\vspace{1em}
+{\footnotesize \textsuperscript{1} The superscript '1' might refer to a footnote or citation in the original source document.}
+
+\end{document}
