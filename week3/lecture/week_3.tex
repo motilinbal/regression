@@ -1,0 +1,339 @@
+\documentclass[12pt]{article}
+
+% Packages for mathematics and formatting
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{color}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{framed}
+\usepackage{hyperref}
+
+% Page/paragraph formatting
+\geometry{margin=1in}
+\setstretch{1.15}
+
+% Theorem environments
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\newtheorem{remark}[definition]{Remark}
+\newtheorem{example}[definition]{Example}
+
+% Custom environment for administrative announcements
+\newenvironment{administrative_note}{
+  \bigskip
+  \begin{center}
+  \fbox{\begin{minipage}{0.94\textwidth} \textbf{Administrative Announcement:}
+}{
+  \end{minipage}}
+  \end{center}
+  \bigskip
+}
+
+% Title and author info
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries Week 3 Lecture Notes}\\[2ex]
+  {\large Statistical Modeling: From Data to Random Vectors}\\[1ex]
+  \rule{\textwidth}{.5pt}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%
+% ADMINISTRATIVE BLOCK (preserve as per original)
+%%%%%%%%%%%%%%%%%%%%
+
+% (No explicit administrative info in the source; if there were, place it here in the custom box.)
+
+%%%%%%%%%%%%%%%%%%%%
+% MATHEMATICAL CONTENT
+%%%%%%%%%%%%%%%%%%%%
+
+\section{Motivation: From Observed Data to Statistical Modeling}
+
+Before we dive into the mathematics, let us pause and remember \textbf{why} we study regression. Up to now, our focus has been on fitting a line (or, more generally, a hyperplane) to a given set of data points, treating the entries of our data matrix $\boldsymbol{X}$ and response vector $\boldsymbol{y}$ as just fixed numbers. The only constraint was that the columns of $\boldsymbol{X}$ must be linearly independent (meaning $\boldsymbol{X}$ has full column rank).
+
+However, in real-world applications, we are rarely interested in just \emph{explaining} the values of the data at hand. Rather, our goal is to \emph{learn about the broader relationship} between the covariates (the $X_{ij}$) and the response ($Y$) as it exists in some population of interest. In other words, we want the line we fit to the sample to tell us as much as possible about the ``true" relationship in the population.
+
+\subsection*{Statistical Modeling: Introducing Randomness}
+
+How can we make such a leap from a single dataset to statements about a population? The answer lies in embracing statistical modeling. Specifically, we now make a fundamental assumption:
+
+\begin{center}
+  \emph{The data points $\left(1, x_{i1}, \ldots, x_{ip}, y_i\right)$ are not just arbitrary numbers, but are produced as \textbf{independent and identically distributed} (i.i.d.) samples from some underlying random process.}
+\end{center}
+
+Formally, our observed data are $n$ i.i.d. realizations of a random vector:
+\[
+\left(1, X_1, \ldots, X_p, Y\right) \sim P
+\]
+where $P$ denotes the (unknown) joint distribution governing the population.
+
+\subsection*{Regression as Decomposition: Systematic and Random Parts}
+
+Given this statistical mindset, it is always true (for any joint distribution $P$) that we can ``split" a response $Y_i$ as follows:
+\begin{equation}
+  Y_i = \underbrace{\mathbb{E}\left(Y_i \mid X_{i1}, \ldots, X_{ip}\right)}_{\text{systematic part } f(X_{i1},\ldots,X_{ip})} + 
+  \underbrace{(Y_i - \mathbb{E}[Y_i \mid X_{i1},\ldots,X_{ip}])}_{\text{random noise } \epsilon_i}
+\end{equation}
+
+Here:
+\begin{itemize}
+  \item $f(X_{i1},\ldots,X_{ip}) = \mathbb{E}[Y_i \mid X_{i1}, \ldots, X_{ip}]$ captures the (possibly complicated) \emph{systematic} relationship between the predictors and response in the population,
+  \item $\epsilon_i$ captures the \emph{unexplained variation}: how much the actual observation $Y_i$ deviates from the best prediction based on $X_{i1},\ldots,X_{ip}$.
+\end{itemize}
+
+\paragraph{A key property:} This error $\epsilon_i$ always satisfies (by the definition of conditional expectation)
+\begin{align*}
+\mathbb{E}\big[\epsilon_i\ \big|\ X_{i1},\ldots,X_{ip}\big] 
+  &= \mathbb{E}\left[ Y_i - \mathbb{E}(Y_i \mid X_{i1},\ldots,X_{ip}) \mid X_{i1},\ldots,X_{ip}\right] \\
+  &= \mathbb{E}(Y_i \mid X_{i1},\ldots,X_{ip}) - \mathbb{E}(Y_i \mid X_{i1},\ldots,X_{ip}) = 0.
+\end{align*}
+\textbf{In words:} The error $\epsilon_i$ has mean zero, once you know the predictor values (and indeed also unconditionally).
+
+\bigskip
+
+\subsection{Linear Model Assumption}
+
+While $f(X_{i1},\ldots,X_{ip})$ could be any function, \emph{we now make the crucial linearity assumption}:
+\begin{center}
+  \fbox{\parbox{0.92\textwidth}{
+    \centering
+    \textbf{The model:}
+    \[
+      f(1, X_{i1}, \ldots, X_{ip}) = \sum_{j=0}^{p} \beta_j X_{ij}
+    \]
+    That is, we assume the true conditional mean of $Y$ is an \textbf{affine} (linear plus intercept) function of the predictors.
+  }}
+\end{center}
+
+\noindent
+Putting this all together, our \textbf{general linear model} is
+\begin{align}
+Y_i &= \sum_{j=0}^p \beta_j X_{ij} + \epsilon_i, \qquad
+\mathbb{E}\big[\epsilon_i \mid X_{i1},\ldots,X_{ip}\big] = 0, \\
+&\quad \operatorname{Cov}(\epsilon_k,\epsilon_\ell \mid \text{all }X_{ij}) = 
+\begin{cases}
+\sigma^2, & k = \ell; \\
+0, & k \neq \ell.
+\end{cases}
+\end{align}
+
+\textbf{Interpretation:}
+\begin{itemize}
+    \item The \textbf{errors} $\epsilon_i$ are random, have mean $0$, variance $\sigma^2$, and are uncorrelated \emph{conditional} on all the predictors.
+    \item The parameters $\beta_j$ and $\sigma^2$ are (unknown) quantities describing the population relationship.
+\end{itemize}
+
+\subsection*{A Technical Note: Treating Predictors as Fixed}
+
+Throughout most of the course, we will usually treat the data matrix $\boldsymbol{X}$ as \emph{fixed}, not random. (This is called the ``fixed design" or ``conditional on $X$" perspective.)
+
+Thus, for the remainder, the model is written as
+\begin{align}
+Y_i &= \sum_{j=0}^{p} \beta_j x_{ij} + \epsilon_i, \quad 
+\mathbb{E}[\epsilon_i] = 0, \quad
+\operatorname{Cov}(\epsilon_k, \epsilon_\ell) =
+\begin{cases}
+\sigma^2, & k = \ell \\
+0,        & k \neq \ell
+\end{cases}
+\end{align}
+
+\paragraph{Where are we going?} Our ultimate aim is to learn about (i.e., statistically infer) the population parameters $\boldsymbol{\beta}$ \emph{and} $\sigma^2$ in this model, given our observed data.
+
+\medskip
+
+\section{Random Vectors and Random Matrices: Moments and Covariance Algebra}
+
+\subsection{Random Vectors and Matrices: Definitions}
+
+Let's now lay out some formal probability language that will be essential for rigorous inference.
+
+\begin{definition}[Random Vector and Matrix]
+\leavevmode
+\begin{itemize}
+    \item A \emph{random vector} is an $n \times 1$ column vector
+    \[
+        \boldsymbol{Z} = (Z_1, \ldots, Z_n)^\top
+    \]
+    where each $Z_i$ is a random variable and together they have some joint distribution.
+    \item A \emph{random matrix} is an $n \times m$ matrix
+    \[
+    \boldsymbol{Z} =
+    \begin{bmatrix}
+    Z_{11} & Z_{12} & \cdots & Z_{1m} \\
+    Z_{21} & Z_{22} & \cdots & Z_{2m} \\
+    \vdots & \vdots &        & \vdots \\
+    Z_{n1} & Z_{n2} & \cdots & Z_{nm}
+    \end{bmatrix}
+    \]
+    where every entry $Z_{ij}$ is a random variable, and together they have a joint distribution.
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Expectation of a Random Matrix]
+Let $\boldsymbol{Z}$ be a random $n \times m$ matrix. Its expectation (mean) $\mathbb{E}\boldsymbol{Z}$ is the $n\times m$ matrix whose $(i,j)$th entry is $\mathbb{E}Z_{ij}$:
+\[
+[\mathbb{E}\boldsymbol{Z}]_{ij} = \mathbb{E}[Z_{ij}].
+\]
+In formulas:
+\[
+\mathbb{E} \boldsymbol{Z} = 
+\begin{bmatrix}
+\mathbb{E} Z_{11} & \mathbb{E} Z_{12} & \cdots & \mathbb{E} Z_{1m} \\
+\mathbb{E} Z_{21} & \mathbb{E} Z_{22} & \cdots & \mathbb{E} Z_{2m} \\
+\vdots & \vdots & & \vdots \\
+\mathbb{E} Z_{n1} & \mathbb{E} Z_{n2} & \cdots & \mathbb{E} Z_{nm}
+\end{bmatrix}
+\]
+As a special case, when $m=1$, for a random vector $\boldsymbol{Z} = \begin{bmatrix} Z_1 \\ Z_2 \\ \vdots \\ Z_n \end{bmatrix}$,
+\[
+\mathbb{E} \boldsymbol{Z} =
+\begin{bmatrix}
+\mathbb{E} Z_1 \\
+\mathbb{E} Z_2 \\
+\vdots \\
+\mathbb{E} Z_n
+\end{bmatrix}
+\]
+\end{definition}
+
+\subsection{Properties of Expectation (Random Matrices and Vectors)}
+
+Let $\boldsymbol{Z}$ and $\boldsymbol{W}$ be random matrices (of compatible sizes), and let $\boldsymbol{A}, \boldsymbol{B}$ be fixed (deterministic) matrices of appropriate dimensions.
+
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{Linearity}: $\mathbb{E}[\boldsymbol{Z} + \boldsymbol{W}] = \mathbb{E}[\boldsymbol{Z}] + \mathbb{E}[\boldsymbol{W}]$.
+
+      \begin{proof}[Hint of Proof]
+      For a fixed entry:
+      \[
+        [\mathbb{E}(\boldsymbol{Z}+\boldsymbol{W})]_{ij} = \mathbb{E}(Z_{ij} + W_{ij}) = \mathbb{E} Z_{ij} + \mathbb{E} W_{ij} = [\mathbb{E} \boldsymbol{Z}]_{ij} + [\mathbb{E} \boldsymbol{W}]_{ij}.
+      \]
+      \end{proof}
+    \item \textbf{Compatibility with Linear Maps:} 
+      \begin{itemize}
+          \item $\mathbb{E}[\boldsymbol{A}\boldsymbol{Z}] = \boldsymbol{A}\mathbb{E}[\boldsymbol{Z}]$,
+          \item $\mathbb{E}[\boldsymbol{Z}\boldsymbol{B}] = \mathbb{E}[\boldsymbol{Z}]\boldsymbol{B}$,
+          \item $\mathbb{E}[\boldsymbol{A}\boldsymbol{Z}\boldsymbol{B}] = \boldsymbol{A} \mathbb{E}[\boldsymbol{Z}] \boldsymbol{B}$.
+      \end{itemize}
+
+      \begin{proof}[Hint of Proof]
+      This follows since expectation is computed entrywise, and all the constants (i.e., elements of $\boldsymbol{A}$ and $\boldsymbol{B}$) can be factored out.
+      \end{proof}
+    \item \textbf{Affine Linearity:} For any vector $U$ (random), matrix $A$ (fixed), constant $C$, 
+    \[
+    \mathbb{E}[A U + C] = A \, \mathbb{E}[U] + C.
+    \]
+    \emph{(Exercise: try proving this from the above.)}
+\end{enumerate}
+
+\subsection{Recap: Classical Variance and Covariance (Univariate Case)}
+
+Recall for $Z, W$ (random variables):
+\begin{itemize}
+    \item \textbf{Covariance:}
+    \[
+        \operatorname{Cov}(Z, W) := \mathbb{E}\left[ (Z - \mu_Z)(W - \mu_W) \right], \qquad \mu_Z := \mathbb{E}Z, \; \mu_W := \mathbb{E}W
+    \]
+    \item \textbf{Alternative formula:}
+    \[
+        \operatorname{Cov}(Z, W) = \mathbb{E}[Z W] - \mathbb{E}Z \cdot \mathbb{E}W
+    \]
+    \item \textbf{Variance:} $\operatorname{Cov}(Z, Z) = V(Z) = \mathbb{E}\left[(Z-\mu_Z)^2\right]$
+\end{itemize}
+
+Properties:
+\begin{itemize}
+    \item $\operatorname{Cov}(Z, W) = \operatorname{Cov}(W, Z)$
+    \item For any real $a$, $\operatorname{Cov}(a Z + R, W) = a \operatorname{Cov}(Z, W) + \operatorname{Cov}(R, W)$
+\end{itemize}
+
+\subsection{Multivariate Generalization: Covariance Matrix}
+
+\begin{definition}[Covariance Matrix of Random Vectors]
+Let $\boldsymbol{Z} \in \mathbb{R}^n$ and $\boldsymbol{W} \in \mathbb{R}^m$ be random vectors.
+The \emph{covariance matrix} $\operatorname{cov}(\boldsymbol{Z}, \boldsymbol{W})$ is the $n \times m$ matrix whose $(i,j)$ entry is
+\[
+    [\operatorname{cov}(\boldsymbol{Z}, \boldsymbol{W})]_{ij} := \operatorname{Cov}(Z_i, W_j)
+\]
+When $\boldsymbol{W} = \boldsymbol{Z}$, write
+\[
+    \operatorname{cov}(\boldsymbol{Z}) := \operatorname{cov}(\boldsymbol{Z}, \boldsymbol{Z})
+\]
+\end{definition}
+
+\noindent
+One can equivalently express (using matrix notation):
+\begin{align}
+    \operatorname{cov}(\boldsymbol{Z}, \boldsymbol{W}) 
+        &= \mathbb{E} \left[\left(\boldsymbol{Z} - \mu_{\boldsymbol{Z}}\right)\left(\boldsymbol{W} - \mu_{\boldsymbol{W}}\right)^\top \right] \in \mathbb{R}^{n \times m} \\
+    \operatorname{cov}(\boldsymbol{Z}) 
+        &= \mathbb{E}\left[ \left(\boldsymbol{Z} - \mu_{\boldsymbol{Z}}\right)\left(\boldsymbol{Z} - \mu_{\boldsymbol{Z}}\right)^\top \right] \in \mathbb{R}^{n \times n}
+\end{align}
+
+Alternatively, by distributing expectation,
+\begin{align}
+    \operatorname{cov}(\boldsymbol{Z}, \boldsymbol{W}) 
+        &= \mathbb{E}[\boldsymbol{Z} \boldsymbol{W}^\top] - \mu_{\boldsymbol{Z}}\mu_{\boldsymbol{W}}^\top \\
+    \operatorname{cov}(\boldsymbol{Z}) 
+        &= \mathbb{E}[\boldsymbol{Z}\boldsymbol{Z}^\top] - \mu_{\boldsymbol{Z}}\mu_{\boldsymbol{Z}}^\top
+\end{align}
+
+\paragraph{Intuitive Note:} The covariance matrix encodes not just the variance of each component (on the diagonal), but also how different components ``move together" (the off-diagonal entries), generalizing the familiar scalar variance to vectors.
+
+\subsubsection*{Properties of the Covariance Matrix}
+
+Let $\boldsymbol{Z}, \boldsymbol{W}, \boldsymbol{R}$ be random column vectors, and fix any matrix $\boldsymbol{A}$ (of suitable dimensions), and any deterministic vector $\boldsymbol{a}$. Then:
+\begin{enumerate}[label=\arabic*.]
+    \item $\operatorname{cov}(\boldsymbol{Z}, \boldsymbol{W}) = \operatorname{cov}(\boldsymbol{W}, \boldsymbol{Z})^\top$
+    \item $\operatorname{cov}(\boldsymbol{Z} + \boldsymbol{R}, \boldsymbol{W}) = \operatorname{cov}(\boldsymbol{Z}, \boldsymbol{W}) + \operatorname{cov}(\boldsymbol{R}, \boldsymbol{W})$
+    \item $\operatorname{cov}(\boldsymbol{A}\boldsymbol{Z}, \boldsymbol{B}\boldsymbol{W}) = \boldsymbol{A}\, \operatorname{cov}(\boldsymbol{Z},\boldsymbol{W})\, \boldsymbol{B}^\top$
+    \item $\operatorname{cov}(\boldsymbol{A}\boldsymbol{Z}) = \boldsymbol{A}\, \operatorname{cov}(\boldsymbol{Z})\, \boldsymbol{A}^\top$
+    \item $V(\boldsymbol{a}^\top \boldsymbol{Z}) = \boldsymbol{a}^\top \operatorname{cov}(\boldsymbol{Z}) \boldsymbol{a}$
+    \item $\operatorname{cov}(\boldsymbol{Z})$ is always a non-negative definite matrix\footnote{That is, for any vector $\boldsymbol{a}$, $\boldsymbol{a}^\top \operatorname{cov}(\boldsymbol{Z}) \boldsymbol{a} \geq 0$.}.
+\end{enumerate}
+
+\begin{remark}
+These properties are powerful: for example, property 4 tells us that applying a linear transformation to a random vector simply transforms its covariance in a predictable matrix way.
+\end{remark}
+
+\subsection{Application: Covariance in the Linear Model}
+
+Returning to the general linear model, in vector and matrix notation, we may write:
+\[
+    \boldsymbol{Y} = \boldsymbol{X} \boldsymbol{\beta} + \boldsymbol{\epsilon}
+\]
+with
+\[
+    \mathbb{E}\boldsymbol{\epsilon} = \mathbf{0}, \qquad \operatorname{cov}(\boldsymbol{\epsilon}) = \sigma^2 \boldsymbol{I}_n
+\]
+where:
+\begin{itemize}
+    \item $\boldsymbol{X}$ is a fixed (non-random) $n \times (p+1)$ matrix (including intercept),
+    \item $\boldsymbol{\beta}$ and $\sigma^2$ are unknown population parameters,
+    \item $\boldsymbol{\epsilon}$ is a random $n$-vector of errors, independent and identically distributed, with mean $0$ and variance $\sigma^2$.
+\end{itemize}
+
+\paragraph{Compact Notation:}
+Sometimes we write $\boldsymbol{\epsilon} \sim (\mathbf{0},\, \sigma^2 \boldsymbol{I}_n)$ as shorthand for ``mean zero and covariance $\sigma^2 \boldsymbol{I}_n.$"
+
+Thus, the full model may be compactly summarized as:
+\[
+    \boxed{
+        \boldsymbol{Y} = \boldsymbol{X} \boldsymbol{\beta} + \boldsymbol{\epsilon},\quad
+        \boldsymbol{\epsilon} \sim (\mathbf{0},\, \sigma^2 \boldsymbol{I}_n)
+    }
+\]
+
+\begin{remark}
+The framework above sets the stage for nearly all modern statistical inference in linear regression --- both for estimation and for assessing uncertainty in our estimated parameters.
+\end{remark}
+
+%%%%%%%%%%%%%
+% END OF LECTURE
+%%%%%%%%%%%%%
+\end{document}

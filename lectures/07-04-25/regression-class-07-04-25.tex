@@ -1,0 +1,502 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage[hmargin=1in, vmargin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+\usepackage{lmodern}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhead[L]{Regression, Class 07 (April 25)}
+\fancyhead[C]{}
+\fancyhead[R]{\thepage}
+
+% Administrative box environment
+\newtcolorbox{admininfo}[1][]
+{
+    sharp corners,
+    colback=gray!10,
+    colframe=black!50,
+    fonttitle=\bfseries,
+    title={\textbf{Administrative Announcements}},
+    #1
+}
+
+% Definition, Theorem, Example
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{lemma}[definition]{Lemma}
+\theoremstyle{definition}
+\newtheorem{example}[definition]{Example}
+\newtheorem{remark}[definition]{Remark}
+
+\setlength{\parskip}{1.1ex}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{center}
+    \LARGE \textbf{Regression -- Spectral Decomposition, Positive (Semi-)Definite Matrices, and the Statistical Linear Model} \\
+    \large Class 07 (April 25)
+\end{center}
+
+\vspace{1em}
+
+% ===============================
+%     ADMINISTRATIVE BLOCK
+% ===============================
+\begin{admininfo}
+\begin{itemize}
+    \item \textbf{Upcoming break:} The course will pause for Passover. Lecture material will resume \textit{after} the holiday; future meeting details will be communicated.
+    \item \textbf{Linear Algebra Review:} A supplementary linear algebra review session will be offered this week with Mick via the Aviv platform. All are encouraged to attend, especially those feeling less comfortable with concepts such as diagonalization, spectral decomposition, and coordinate transformations.
+    \item \textbf{Course Notes Clarification:} The present lecture revisits standard results from linear algebra, notably the diagonalization of symmetric matrices and properties of projection operators, as assumed background. While proofs are outlined for key results, full derivations may be omitted if previously seen in prerequisite courses; students are responsible for ensuring fluency with these results.
+    \item \textbf{Homework Assignment:} 
+        \begin{itemize}
+        \item You are required to \emph{find and write out the proof} that the eigenvalues of a projection matrix are $0$ or $1$, and that the rank equals the number of $1$s among its eigenvalues.
+        \item Additionally, as an exercise, formally verify the claim that 
+            \[
+                \mathrm{Cov}(Y_i, Y_j \mid X) = \mathrm{Cov}(\varepsilon_i, \varepsilon_j \mid X)
+            \]
+            under the model assumptions, for all $i, j$.
+        \end{itemize}
+    \item \textbf{General Advice:} Students who have not recently reviewed key results from linear algebra—spectral decomposition, diagonalization, change of basis—are \textbf{strongly} encouraged to do so. Facility with coordinate systems and basis transitions is essential as we move forward in regression theory.
+\end{itemize}
+\end{admininfo}
+
+\vspace{2em}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Motivation: The Power of Diagonalization}
+
+Why do we care about diagonalizing matrices, or about understanding the structure of symmetric or projection matrices?
+
+In linear algebra, diagonalization allows us to ``simplify'' complicated linear transformations: when a matrix can be written as a diagonal in some basis, its action becomes transparently clear. Many statistical procedures—especially those involving projections, covariances, and regression—rely on understanding how matrices like these act, both abstractly and computationally.
+
+We begin by revisiting core results from linear algebra before progressing to their implications for regression and the linear statistical model.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Spectral Decomposition and Diagonalization}
+
+\subsection{Diagonalizable Matrices: Definitions and Meaning}
+
+\begin{definition}[Diagonalizable Matrix]
+A square matrix $A \in \mathbb{R}^{n\times n}$ is \emph{diagonalizable} if there exists an invertible matrix $P$ such that
+\[
+A = P D P^{-1}
+\]
+where $D$ is a diagonal matrix.
+\end{definition}
+
+\textbf{Interpretation and Intuition:}
+
+Think of $A$ as representing a linear operator on $\mathbb{R}^n$. If $A$ is diagonalizable, then in an appropriate basis (specified by the columns of $P$), $A$ acts by \textit{scaling} each basis direction independently by the corresponding diagonal entry in $D$. All the intricate ``mixing'' seen in standard coordinates disappears—$A$ simply stretches or shrinks along separate axes.
+
+\paragraph{Explicitly:} For a vector $v$, we can express the action of $A$:
+\begin{align*}
+\text{Let } P &= [p_1\,|\,p_2\,|\,\dots|\,p_n] \text{ (columns as basis vectors)} \\
+v &= P \tilde{v} \qquad\quad (\text{express $v$ in basis $P$}) \\
+A v &= P D \tilde{v}\,.
+\end{align*}
+Then, each component $\tilde{v}_i$ effectively gets multiplied by $d_i$, the $i$th diagonal entry of $D$.
+
+\subsection{Diagonalization of Symmetric Matrices (Spectral Theorem)}
+
+\begin{theorem}[Spectral Theorem for Real Symmetric Matrices]
+Let $A \in \mathbb{R}^{n\times n}$ be symmetric, i.e., $A^T = A$. Then $A$ is diagonalizable by an orthogonal matrix; i.e., there exists an orthogonal matrix $U$ (so $U^T = U^{-1}$, columns are orthonormal) and a diagonal matrix $D$ such that:
+\[
+A = U D U^T
+\]
+where the diagonal entries of $D$ are the (real) eigenvalues of $A$.
+\end{theorem}
+
+\begin{remark}
+Diagonalization via an orthogonal matrix is much more robust numerically and conceptually: it says symmetric matrices are not only diagonalizable, but in a ``nicest possible'' way, with axes remaining orthogonal (no distortion).
+\end{remark}
+
+\vspace{0.5em}
+\noindent\textbf{Why is this useful?} Because in regression and statistics, many important matrices (covariance matrices, projection matrices, etc.) are symmetric, and their properties—like positive-definiteness—relate directly to their eigenvalues.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Positive Definite and Positive Semi-Definite Matrices}
+
+\subsection{Definitions and Key Properties}
+
+\begin{definition}[Positive Definite and Positive Semi-Definite Matrices]
+Let $A$ be a symmetric matrix in $\mathbb{R}^{n\times n}$.
+\begin{itemize}
+    \item $A$ is called \emph{positive definite} if for all $v \in \mathbb{R}^n$,
+    \[
+        v^T A v > 0 \quad\text{unless}\quad v = 0.
+    \]
+    \item $A$ is called \emph{positive semi-definite} if for all $v \in \mathbb{R}^n$,
+    \[
+        v^T A v \geq 0\,.
+    \]
+\end{itemize}
+\end{definition}
+Here, $v^T A v$ is called a \emph{quadratic form}.
+
+\begin{remark}
+Positivity is only defined for (real) symmetric matrices because otherwise $v^T A v$ may be complex or not have the right positivity properties across all $v$.
+\end{remark}
+
+\begin{theorem}[Eigenvalue Characterization]
+Let $A$ be symmetric. Then,
+\begin{itemize}
+    \item $A$ is positive definite $\iff$ all its eigenvalues are strictly positive.
+    \item $A$ is positive semi-definite $\iff$ all its eigenvalues are non-negative.
+\end{itemize}
+\end{theorem}
+
+\begin{proof}[Proof Sketch]
+Given the spectral theorem, $A = U D U^T$, and for any $v$,
+\[
+v^T A v = (U^T v)^T D (U^T v) = \sum_{i=1}^n \lambda_i (w_i)^2
+\]
+where $\lambda_i$ are the eigenvalues and $w_i$ the components of $U^T v$. Clearly, if all $\lambda_i > 0$, then $v^T A v > 0$ unless $v=0$; and similarly for the semi-definite condition.
+\end{proof}
+
+\subsection{Square Roots of Positive Definite Matrices}
+
+A fundamental property is that every positive definite matrix has a unique positive definite square root, and (less uniquely) a symmetric matrix $B$ with $B^2 = A$.
+
+\begin{theorem}[Matrix Square Root]
+If $A$ is symmetric and positive definite, then there exists a symmetric matrix $B$ such that $B^2 = A$. Moreover, if $A = U D U^T$, then $B = U D^{1/2} U^T$, where $D^{1/2}$ is the diagonal matrix whose entries are $\sqrt{d_i}$ (which are real and positive).
+\end{theorem}
+
+\begin{proof}
+Let $A = U D U^T$ as above. Define $B = U D^{1/2} U^T$. Then
+\[
+B^2 = (U D^{1/2} U^T)(U D^{1/2} U^T) = U D^{1/2} (U^T U) D^{1/2} U^T = U (D^{1/2} D^{1/2}) U^T = U D U^T = A
+\]
+since $U^T U = I$ by orthogonality.
+\end{proof}
+
+\begin{remark}
+For positive semi-definite $A$, similar constructions hold, but $D^{1/2}$ may have zeros.
+\end{remark}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Projection Matrices and Their Spectral Structure}
+
+\subsection{Definition and Core Properties}
+
+\begin{definition}[Projection Matrix]
+A matrix $Q \in \mathbb{R}^{n \times n}$ is a projection matrix if
+\begin{itemize}
+    \item $Q^2 = Q$ \hfill (idempotency)
+    \item $Q^T = Q$ \hfill (symmetry)
+\end{itemize}
+\end{definition}
+
+Such matrices arise naturally when considering orthogonal projections onto subspaces, e.g., projecting a vector onto the column space of a matrix.
+
+\subsection{Spectral Decomposition of Projection Matrices}
+
+\begin{theorem}
+Suppose $Q$ is a projection matrix of rank $k$ (i.e., it projects onto a $k$-dimensional subspace). Then:
+\begin{itemize}
+    \item $Q$ is symmetric and idempotent ($Q^2 = Q$, $Q^T = Q$).
+    \item $Q$ is diagonalizable by an orthogonal matrix $U$: $Q = U D U^T$, where $D$ is a diagonal matrix whose entries are either $0$ or $1$.
+    \item Exactly $k$ entries of $D$ are $1$; the rest (that is, $n-k$) are $0$.
+\end{itemize}
+\end{theorem}
+
+\begin{proof}[Proof Sketch (Details as Homework)]
+By the spectral theorem, any symmetric matrix is diagonalizable; the idempotency property restricts eigenvalues to satisfy $\lambda^2 = \lambda$, so $\lambda \in \{0,1\}$. The rank equals the number of $1$s among the eigenvalues.
+\end{proof}
+
+\begin{example}
+\label{projection_r3_onto_plane}
+Let $Q$ be the matrix projecting $\mathbb{R}^3$ onto the $xy$-plane (i.e., $z=0$). Then, in the standard basis, $Q$ is
+\[
+Q = \begin{pmatrix}
+1 & 0 & 0 \\
+0 & 1 & 0 \\
+0 & 0 & 0 \\
+\end{pmatrix}
+\]
+For any vector $(x, y, z)$,
+\[
+Q \begin{pmatrix}x\\y\\z\end{pmatrix} = \begin{pmatrix}x\\y\\0\end{pmatrix}
+\]
+The eigenvalues are:
+\begin{itemize}
+    \item $1$ (with multiplicity $2$): any vector in the $xy$-plane is left unchanged.
+    \item $0$ (multiplicity $1$): vectors parallel to $z$ are sent to $0$.
+\end{itemize}
+This illustrates the general structure: projection matrices have eigenvalues $0$ or $1$.
+\end{example}
+
+\begin{remark}
+More generally, in an appropriate orthogonal basis (usually given by the eigenvectors), any projection matrix appears as a diagonal matrix with $k$ ones and $n-k$ zeros, possibly after a change of coordinates (rotation).
+\end{remark}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Transition to Regression: The Statistical Setting}
+
+\subsection{From Deterministic Data to a Statistical Model}
+
+Traditionally, regression analysis begins with a set of observations, often arranged as
+\[
+\begin{aligned}
+&\text{Explanatory variables:} &&x_{i1},\ x_{i2},\ \ldots, x_{ip} \quad (i=1,\ldots,n) \\
+&\text{Outcome variable:} &&y_i \quad (i=1,\ldots,n)
+\end{aligned}
+\]
+It's natural and productive to gather these into:
+\begin{itemize}
+    \item a \emph{design matrix} $X \in \mathbb{R}^{n \times (p+1)}$ (with an initial column of $1$s for intercept),
+    \item and a response vector $Y \in \mathbb{R}^{n}$.
+\end{itemize}
+\[
+X = 
+\begin{pmatrix}
+1 & x_{11} & \ldots & x_{1p} \\
+1 & x_{21} & \ldots & x_{2p} \\
+\vdots & \vdots &  & \vdots \\
+1 & x_{n1} & \ldots & x_{np}
+\end{pmatrix}, \qquad
+Y = 
+\begin{pmatrix}
+y_1 \\ y_2 \\ \vdots \\ y_n
+\end{pmatrix}
+\]
+\begin{remark}
+We usually require the columns of $X$ to be linearly independent (i.e., $X^T X$ is invertible) for the least squares estimator to be unique.
+\end{remark}
+
+So far, all the discussion has been \emph{deterministic}: we have raw data, but \textbf{no probabilistic assumptions}.
+
+\subsection{Fitting the Least Squares Solution}
+
+The least squares estimator is
+\[
+\hat{\beta} = (X^T X)^{-1} X^T Y
+\]
+This minimizes the sum of squared residuals $\|Y - X\beta\|^2$ under the assumption that $X^T X$ is invertible.
+
+\begin{remark}
+Up to this point, our least squares solution is simply an algebraic result—no statistical model or stochastic assumption is needed.
+\end{remark}
+
+\subsection{Motivation for a Statistical Model}
+
+However, the ultimate goal of regression analysis is to make \emph{inferences} about an underlying population—not just to describe a particular sample. That is, we wish to estimate how explanatory variables $X$ relate to outcome $Y$ in the larger population from which our data were drawn.
+
+\vspace{1em}
+\textit{How can we formalize this?}
+
+We now \textbf{introduce a statistical model} in which each observed vector $(x_{i1},\ldots,x_{ip}, y_i)$ is considered as a \emph{realization} (i.e., outcome) of a random vector $(X_{i1},\ldots,X_{ip}, Y_i)$ drawn from some joint distribution $\mathbb{P}$ over $\mathbb{R}^{p+1}$.
+
+\subsubsection*{A Real-World Example (Rephrased from Class):}
+
+Suppose we sample a random person (say, a student) and record:
+\begin{itemize}
+    \item Height: $X_1$
+    \item Weight: $X_2$
+    \item Gender: $X_3$ (categorical variable)
+\end{itemize}
+Every time we sample a person, we obtain a realization—a tuple of values drawn jointly from a population distribution $\mathbb{P}$ on $(X_1,X_2,X_3,\ldots)$. The assumption is that every sample is drawn ``in the same way'' (drawn from the same joint distribution).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The General Regression Decomposition}
+
+The statistical model allows us to clarify the aims of regression. At the highest generality:
+
+\begin{definition}[Conditional Expectation Decomposition]
+Given a set of random variables $(X_{i1}, \ldots, X_{ip}, Y_i)$ drawn from a joint distribution $\mathbb{P}$, we can always write
+\[
+Y_i = \mathbb{E}[Y_i \mid X_{i1},\ldots,X_{ip}] + \big(Y_i - \mathbb{E}[Y_i \mid X_{i1},\ldots,X_{ip}]\big)
+\]
+or, to shorten notation,
+\[
+Y_i = f(X_{i1},\ldots,X_{ip}) + \varepsilon_i
+\]
+where $f(X_{i1}, ..., X_{ip})$ is the \textbf{conditional mean} of $Y_i$ given $X_{i1}, ..., X_{ip}$, and $\varepsilon_i$ is the \textbf{residual (error) term}.
+\end{definition}
+
+\textbf{Key Property:} By construction,
+\begin{align*}
+\mathbb{E}[\varepsilon_i \mid X_{i1}, \ldots, X_{ip}] &= 0
+\end{align*}
+That is, the residual is ``centered'' at zero given the values of the explanatory variables.
+
+\begin{remark}
+This decomposition always holds, whatever the (joint) distribution; the function $f(\cdots)$ may be highly nonlinear or complicated.
+\end{remark}
+
+\subsection{Interpretation and Purpose}
+
+\begin{itemize}
+    \item $f(\cdot)$ -- the part of $Y_i$ we \emph{can} explain (given $X$). This is sometimes called the \textbf{systematic} or \textbf{signal} component.
+    \item $\varepsilon_i$ -- the ``noise'' or ``error'' part, what $Y$ does that is \emph{not} explained by $X$.
+\end{itemize}
+
+\begin{remark}
+Intuitively, if you know $X$, the best prediction for $Y$ (in mean squared error) is the conditional expectation $f(X)$.
+\end{remark}
+
+\begin{example}[Motivating Example]
+Suppose $Y$ is the height of a person, and $X$ is their weight. Then $f(X)$ is the average height of all people with weight $X$, and $\varepsilon$ is the person's deviation from that average.
+\end{example}
+
+\subsection{Key Mathematical Properties}
+
+Of particular importance:
+\[
+\mathbb{E}[\varepsilon_i \mid X_{i1},...,X_{ip}] = 0\,, \qquad
+\mathbb{E}[\varepsilon_i] = 0
+\]
+where the latter holds by the law of total expectation.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Assumptions of the Linear Statistical Model}
+
+Regression analysis via the linear model proceeds by making explicit, simplifying assumptions about the structure of $f(\cdot)$ and $\varepsilon$.
+
+\subsection{Linearity Assumption}
+
+\begin{definition}[Linearity Assumption]
+We \emph{assume} that the conditional expectation of $Y$ given $X$ is a \textbf{linear function} of the predictors:
+\[
+\mathbb{E}[Y_i \mid X_{i1}, ..., X_{ip}] = \beta_0 + \sum_{j=1}^{p} \beta_j X_{ij}
+\]
+For notational convenience, we often write this as
+\[
+\mathbb{E}[Y_i \mid X_{i0}=1, X_{i1}, ..., X_{ip}] = \sum_{j=0}^p \beta_j X_{ij}
+\]
+where $X_{i0}=1$ for all $i$.
+\end{definition}
+
+\begin{remark}
+This is a \textbf{modeling assumption}: in general, the relation between $Y$ and $X$ may not be linear, but we often use linear approximation for interpretability and mathematical tractability.
+\end{remark}
+
+\subsection{Homoscedasticity \& Uncorrelated Errors}
+
+\begin{definition}[Equal Variance and Uncorrelated Errors]
+The \emph{homoscedastic (equal variance) linear model} further assumes:
+\begin{align*}
+\mathbb{E}[\varepsilon_i \mid X_{i1},...,X_{ip}] &= 0 \quad\text{(already discussed)}\\
+\mathrm{Var}(\varepsilon_i \mid X_{i1},...,X_{ip}) &= \sigma^2 \quad\text{(does not depend on $X$)}\\
+\mathrm{Cov}(\varepsilon_i, \varepsilon_j \mid X_{i1},...,X_{ip}, X_{j1},...,X_{jp}) &= 0 \qquad (i \neq j)
+\end{align*}
+\end{definition}
+
+\begin{remark}
+Uncorrelated does not necessarily mean independent (though independence \emph{implies} zero covariance).
+\end{remark}
+
+\begin{remark}[Relation to Observed Data]
+Under these assumptions,
+\[
+\mathrm{Var}(Y_i \mid X_{i1},..., X_{ip}) = \sigma^2
+\]
+and likewise,
+\[
+\mathrm{Cov}(Y_i, Y_j \mid X_{i1},...,X_{ip}, X_{j1},...,X_{jp}) = \mathrm{Cov}(\varepsilon_i, \varepsilon_j \mid X_{i1},...,X_{ip}, X_{j1},...,X_{jp}) = 0 \quad\text{for $i\neq j$}
+\]
+\end{remark}
+
+\begin{example}[Worked Example: Variance and Covariance in the Linear Model]
+Let $Y_i = f(X_{i1}, ..., X_{ip}) + \varepsilon_i$, with model assumptions as above.
+
+Then,
+\[
+\mathrm{Var}(Y_i \mid X_{i1},..., X_{ip}) = \mathrm{Var}\left(f(X_{i1},..., X_{ip}) + \varepsilon_i \mid X_{i1}, ..., X_{ip}\right)
+\]
+But since $f(\cdot)$ is deterministic given $X$, this is just
+\[
+\mathrm{Var}(\varepsilon_i \mid X_{i1},..., X_{ip}) = \sigma^2
+\]
+
+Similarly, for $i \neq j$,
+\[
+\mathrm{Cov}(Y_i, Y_j \mid X) = \mathrm{Cov}(f(X_{i}), f(X_{j})) + \mathrm{Cov}(\varepsilon_i, \varepsilon_j \mid X)
+\]
+The first term is zero (they are constants), and the second is zero by assumption. Therefore,
+\[
+\mathrm{Cov}(Y_i, Y_j \mid X) = 0
+\]
+\end{example}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Rewriting the Model in Vector-Matrix Notation}
+
+The linear statistical model is often most conveniently expressed using vector and matrix notation, mirroring our earlier data arrangement.
+
+\subsection{Random Vectors and Matrices: Basic Definitions}
+
+\begin{definition}
+A \textbf{random vector} $Z$ is a finite collection of real random variables $(Z_1, ..., Z_n)$ defined on the same probability space.
+\end{definition}
+
+\begin{definition}
+A \textbf{random matrix} $Z \in \mathbb{R}^{n\times m}$ is a collection of real random variables $Z_{ij}$, $1 \leq i \leq n$, $1 \leq j \leq m$, all defined jointly.
+\end{definition}
+
+\begin{remark}
+In practice, arranging random variables into a matrix or as a long vector makes no probabilistic difference; it simply aids in aligning mathematical notation with later algebraic manipulations.
+\end{remark}
+
+\subsection{Expectation and Covariance Matrix}
+
+\begin{definition}[Mean and Covariance]
+The expectation of a random vector $Z=(Z_1, ..., Z_n)^T$ is the vector
+\[
+\mathbb{E}[Z] = 
+\begin{pmatrix}
+\mathbb{E}[Z_1] \\
+\vdots \\
+\mathbb{E}[Z_n]
+\end{pmatrix}
+\]
+
+The (variance-)covariance matrix is the $n \times n$ matrix
+\[
+\mathrm{Cov}(Z)_{ij} = \mathrm{Cov}(Z_i, Z_j) = \mathbb{E}[(Z_i - \mathbb{E}[Z_i])(Z_j - \mathbb{E}[Z_j])]
+\]
+\end{definition}
+
+\begin{remark}
+For a random matrix $Z \in \mathbb{R}^{n \times m}$, $\mathbb{E}[Z]$ is the $n \times m$ matrix of entrywise expectations $\mathbb{E}[Z_{ij}]$.
+\end{remark}
+
+\begin{example}[Variance and Covariance of Response Vector in Regression]
+Let $Y = (Y_1, ..., Y_n)^T$ be the response vector under the linear model. Then,
+\[
+\mathbb{E}[Y] = X\beta
+\]
+where $X$ is the design matrix (now treated as constant or fixed), and $\beta$ is the parameter vector.
+
+The covariance matrix is
+\[
+\mathrm{Cov}(Y \mid X) = \mathrm{Cov}(\varepsilon \mid X) = \sigma^2 I_n
+\]
+since the errors $\varepsilon_i$ are homoscedastic and uncorrelated.
+\end{example}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary and Looking Ahead}
+
+In this lecture, we've:
+\begin{itemize}
+    \item Revisited the power of diagonalization, especially the spectral theorem for symmetric matrices.
+    \item Explored projection matrices and proved all their eigenvalues are $0$ or $1$, tightly connecting to the geometry of regression.
+    \item Transitioned from purely deterministic data to a statistical (random vector) model—the foundation for inference in regression.
+    \item Laid out the central modeling assumptions of linear regression: linearity, homoscedasticity, and uncorrelated (or independent) errors.
+    \item Recasted the model in modern vector-matrix notation, pausing for definitions
+      of random vectors, random matrices, expectation, variance, and covariance matrices.
+\end{itemize}
+
+\emph{Next steps:} We will use this formalism to analyze properties of the least squares estimator \(\hat{\beta}\) in the statistical model, study its distribution, bias, variance, and confidence intervals.
+
+\vspace{1em}
+\begin{center}
+{\large \textbf{Happy Passover! See you after the break.}}
+\end{center}
+
+\end{document}

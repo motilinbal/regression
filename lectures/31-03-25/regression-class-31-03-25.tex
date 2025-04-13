@@ -1,0 +1,337 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{hyperref} % Optional, for clickable links if needed
+\usepackage[dvipsnames]{xcolor} % For colored boxes, optional
+\usepackage{tcolorbox} % For styled boxes, optional
+
+% Define theorem-like environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{property}[theorem]{Property}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+% Custom environment for administrative notes
+\newtcolorbox{adminnote}[1][]{
+  colback=yellow!10!white,
+  colframe=BrickRed,
+  title=#1,
+  sharp corners,
+  boxrule=1pt,
+  fonttitle=\bfseries
+}
+
+% Math operators
+\DeclareMathOperator{\Image}{Im} % Image of a matrix/operator
+\DeclareMathOperator{\Span}{span} % Span of vectors
+
+% Bold vectors (optional style choice)
+\newcommand{\vect}[1]{\mathbf{#1}} % Use \mathbf for vectors
+% Or use italics (standard math style):
+% \newcommand{\vect}[1]{#1}
+
+% Set paragraph indentation and spacing
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1em}
+
+\title{Lecture Notes: Geometric Interpretation of Least Squares and Projection Matrices}
+\author{Regression Class - March 31st} % Placeholder date/course
+\date{} % No date needed if included above
+
+\begin{document}
+\maketitle
+
+% --- Administrative Notes Section ---
+\begin{adminnote}{Administrative Notes}
+\begin{itemize}
+    \item Apologies for the slight delay at the start - navigating campus can be tricky sometimes!
+    \item Reminder: Keep an eye out for information regarding an upcoming test/assessment.
+    \item We took a short break during the lecture.
+    \item The statistical model underlying regression (introducing error terms, assumptions, etc.) will be discussed in more detail starting next week. For now, our focus is algebraic and geometric.
+    \item Some proof details (like Property 10 and the end of Property 11) are elaborated upon in the supplementary course notes.
+\end{itemize}
+\end{adminnote}
+
+% --- Main Content ---
+
+\section{Introduction: Revisiting Least Squares}
+
+We've been discussing the method of least squares for fitting a linear model. Recall our multiple linear regression setup: we have response data $y_1, \dots, y_n$ and predictor data organized in a matrix $X$ (an $n \times (p+1)$ matrix, including a column of ones for the intercept). We seek coefficients $b_0, b_1, \dots, b_p$, collected in a vector $\vect{b} \in \mathbb{R}^{p+1}$, to minimize the sum of squared residuals. Today, we'll explore a powerful geometric interpretation of this minimization problem, which relies heavily on concepts from linear algebra.
+
+\section{Linear Algebra Review: Essential Concepts}
+
+Let's refresh some fundamental ideas from linear algebra. Assume we are working in the vector space $\mathbb{R}^k$ for some appropriate dimension $k$.
+
+\begin{definition}[Standard Inner Product]
+For vectors $\vect{u}, \vect{v} \in \mathbb{R}^k$, their standard inner product (or dot product) is:
+\[ \langle \vect{u}, \vect{v} \rangle = \vect{u}^T \vect{v} = \sum_{i=1}^k u_i v_i \]
+\end{definition}
+
+\begin{definition}[Norm]
+The standard Euclidean norm (or length) of a vector $\vect{u} \in \mathbb{R}^k$ is induced by the inner product:
+\[ \|\vect{u}\| = \sqrt{\langle \vect{u}, \vect{u} \rangle} = \sqrt{\vect{u}^T \vect{u}} = \sqrt{\sum_{i=1}^k u_i^2} \]
+Note that $\|\vect{u}\|^2 = \vect{u}^T \vect{u}$.
+\end{definition}
+
+\begin{definition}[Distance]
+The Euclidean distance between two vectors $\vect{u}, \vect{v} \in \mathbb{R}^k$ is the norm of their difference:
+\[ d(\vect{u}, \vect{v}) = \|\vect{u} - \vect{v}\| = \sqrt{\sum_{i=1}^k (u_i - v_i)^2} \]
+\end{definition}
+
+\begin{definition}[Orthogonality]
+Two vectors $\vect{u}, \vect{v} \in \mathbb{R}^k$ are \textbf{orthogonal} if their inner product is zero. We denote this by $\vect{u} \perp \vect{v}$.
+\[ \vect{u} \perp \vect{v} \iff \langle \vect{u}, \vect{v} \rangle = \vect{u}^T \vect{v} = 0 \]
+In $\mathbb{R}^2$ and $\mathbb{R}^3$, this corresponds to the usual geometric notion of perpendicularity.
+\end{definition}
+
+\begin{definition}[Orthogonal Complement]
+Let $M$ be a subspace of $\mathbb{R}^k$. The \textbf{orthogonal complement} of $M$, denoted $M^{\perp}$, is the set of all vectors in $\mathbb{R}^k$ that are orthogonal to *every* vector in $M$.
+\[ M^{\perp} = \{ \vect{v} \in \mathbb{R}^k \mid \vect{v}^T \vect{u} = 0 \text{ for all } \vect{u} \in M \} \]
+It can be shown that $M^{\perp}$ is also a subspace of $\mathbb{R}^k$. To check if $\vect{v} \in M^{\perp}$, it suffices to check that $\vect{v}$ is orthogonal to every vector in a basis for $M$.
+\end{definition}
+
+\begin{theorem}[Pythagorean Theorem]
+If $\vect{u}, \vect{v} \in \mathbb{R}^k$ are orthogonal ($\vect{u} \perp \vect{v}$), then:
+\[ \|\vect{u} + \vect{v}\|^2 = \|\vect{u}\|^2 + \|\vect{v}\|^2 \]
+\end{theorem}
+
+\begin{proof}
+We use the definition of the norm squared and the properties of the inner product (specifically, bilinearity and $\vect{u}^T \vect{v} = \vect{v}^T \vect{u} = 0$ due to orthogonality):
+\begin{align*}
+\|\vect{u} + \vect{v}\|^2 &= (\vect{u} + \vect{v})^T (\vect{u} + \vect{v}) \\
+&= (\vect{u}^T + \vect{v}^T) (\vect{u} + \vect{v}) \\
+&= \vect{u}^T \vect{u} + \vect{u}^T \vect{v} + \vect{v}^T \vect{u} + \vect{v}^T \vect{v} \\
+&= \|\vect{u}\|^2 + 0 + 0 + \|\vect{v}\|^2 \\
+&= \|\vect{u}\|^2 + \|\vect{v}\|^2
+\end{align*}
+\end{proof}
+
+\section{The Least Squares Objective Function Geometrically}
+
+Recall the objective function we want to minimize in ordinary least squares (OLS):
+\[ Q(\vect{b}) = \sum_{i=1}^n (y_i - (b_0 x_{i0} + b_1 x_{i1} + \dots + b_p x_{ip}))^2 \]
+where we assume $x_{i0}=1$ for all $i$.
+
+Let's rewrite this using matrix notation. Let $\vect{y} \in \mathbb{R}^n$ be the vector of responses, $X$ be the $n \times (p+1)$ design matrix, and $\vect{b} \in \mathbb{R}^{p+1}$ be the vector of coefficients. The predicted value for the $i$-th observation is the $i$-th element of the vector $X\vect{b}$. Let $(X\vect{b})_i$ denote this element. Then:
+\[ (X\vect{b})_i = \sum_{j=0}^p X_{ij} b_j = b_0 x_{i0} + b_1 x_{i1} + \dots + b_p x_{ip} \]
+So, the objective function is:
+\[ Q(\vect{b}) = \sum_{i=1}^n (y_i - (X\vect{b})_i)^2 \]
+
+Now, recognize the structure! This sum is exactly the squared Euclidean distance between the vector $\vect{y}$ and the vector $X\vect{b}$, both of which live in $\mathbb{R}^n$.
+\[ Q(\vect{b}) = \|\vect{y} - X\vect{b}\|^2 \]
+
+The problem of minimizing $Q(\vect{b})$ over all possible coefficient vectors $\vect{b} \in \mathbb{R}^{p+1}$ is therefore equivalent to finding the vector $X\vect{b}$ that is *closest* to the observed vector $\vect{y}$ in terms of squared Euclidean distance.
+
+\section{Geometric Interpretation: Projection onto a Subspace}
+
+Where do the vectors $X\vect{b}$ live? As $\vect{b}$ varies over all of $\mathbb{R}^{p+1}$, the resulting vector $X\vect{b}$ traces out the column space (or image) of the matrix $X$.
+
+\begin{definition}[Image or Column Space]
+The \textbf{image} or \textbf{column space} of an $n \times m$ matrix $A$, denoted $\Image(A)$ or $C(A)$, is the set of all possible linear combinations of its columns. Equivalently,
+\[ \Image(A) = \{ A\vect{v} \mid \vect{v} \in \mathbb{R}^m \} \]
+$\Image(A)$ is a subspace of $\mathbb{R}^n$.
+\end{definition}
+
+In our case, $X$ is $n \times (p+1)$, so $\Image(X)$ is a subspace of $\mathbb{R}^n$. The dimension of this subspace is the rank of $X$. We typically assume that the columns of $X$ are linearly independent, which means $rank(X) = p+1$. This requires $n \ge p+1$. Under this assumption, the columns of $X$ form a basis for $\Image(X)$.
+
+Our minimization problem can be rephrased:
+Find the vector $\vect{z} \in \Image(X)$ that minimizes $\|\vect{y} - \vect{z}\|^2$.
+
+Geometrically, we have the vector $\vect{y}$ in $\mathbb{R}^n$ and the subspace $\Image(X)$ (which is typically a lower-dimensional subspace, like a plane or hyperplane within $\mathbb{R}^n$ unless $p+1=n$). If $\vect{y}$ happens to already be *in* $\Image(X)$, the minimum distance is 0, achieved when $\vect{z} = \vect{y}$. This corresponds to a perfect fit with zero residuals.
+
+More commonly, $\vect{y}$ does not lie in $\Image(X)$. Our geometric intuition tells us that the point $\vect{z}$ in the subspace $\Image(X)$ that is closest to $\vect{y}$ is the \textbf{orthogonal projection} of $\vect{y}$ onto that subspace.
+
+Let $\vect{z}^*$ be this minimizing vector (the projection). Let $\hat{\vect{b}}$ be the coefficient vector such that $\vect{z}^* = X\hat{\vect{b}}$. Then $\hat{\vect{b}}$ is our least squares estimate. The vector $\hat{\vect{y}} = \vect{z}^* = X\hat{\vect{b}}$ is the vector of fitted values.
+
+What characterizes this projection $\vect{z}^*$? The key geometric insight is that the \textbf{residual vector}, $\vect{e}^* = \vect{y} - \vect{z}^* = \vect{y} - X\hat{\vect{b}}$, must be \textbf{orthogonal} to the subspace $\Image(X)$.
+\[ (\vect{y} - X\hat{\vect{b}}) \perp \Image(X) \]
+This means the residual vector must be orthogonal to *every* vector in $\Image(X)$.
+
+\subsection{Deriving the Normal Equations Geometrically}
+
+If the residual vector $\vect{e}^* = \vect{y} - X\hat{\vect{b}}$ is orthogonal to the entire subspace $\Image(X)$, it must be orthogonal to every vector that spans the subspace. In particular, it must be orthogonal to each column of $X$. Let $X_j$ denote the $j$-th column of $X$ (for $j=0, \dots, p$). Then:
+\[ \langle X_j, \vect{y} - X\hat{\vect{b}} \rangle = X_j^T (\vect{y} - X\hat{\vect{b}}) = 0 \quad \text{for all } j=0, \dots, p \]
+
+We can write these $p+1$ orthogonality conditions compactly using the full matrix $X$. The condition that all columns $X_j$ are orthogonal to $\vect{e}^*$ is equivalent to:
+\[ X^T (\vect{y} - X\hat{\vect{b}}) = \vect{0} \]
+where $\vect{0}$ is the zero vector in $\mathbb{R}^{p+1}$.
+
+Rearranging this equation gives:
+\[ X^T \vect{y} - X^T X \hat{\vect{b}} = \vect{0} \]
+\[ \boxed{X^T X \hat{\vect{b}} = X^T \vect{y}} \]
+These are precisely the \textbf{Normal Equations} we derived earlier using calculus!
+
+Assuming the columns of $X$ are linearly independent, the $(p+1) \times (p+1)$ matrix $X^T X$ is invertible. We can then solve for $\hat{\vect{b}}$:
+\[ \hat{\vect{b}} = (X^T X)^{-1} X^T \vect{y} \]
+This geometric derivation provides a beautiful alternative perspective on why the least squares solution takes this form.
+
+\section{The Projection Matrix}
+
+Let's look again at the vector of fitted values:
+\[ \hat{\vect{y}} = X\hat{\vect{b}} = X (X^T X)^{-1} X^T \vect{y} \]
+Notice that we can obtain the fitted vector $\hat{\vect{y}}$ by multiplying the original data vector $\vect{y}$ by a specific matrix.
+
+\begin{definition}[Projection Matrix]
+Let $X$ be an $n \times m$ matrix with linearly independent columns (so $n \ge m$). The \textbf{projection matrix} (or hat matrix) that projects vectors orthogonally onto the column space $\Image(X)$ is:
+\[ P_X = X(X^T X)^{-1} X^T \]
+\end{definition}
+In our regression context, $m = p+1$. $P_X$ is an $n \times n$ matrix. Using this matrix, the fitted values are simply:
+\[ \hat{\vect{y}} = P_X \vect{y} \]
+The matrix $P_X$ takes any vector $\vect{y} \in \mathbb{R}^n$ and maps it to its orthogonal projection onto the subspace spanned by the columns of $X$.
+
+\section{Properties of Projection Matrices}
+
+Let $X$ be an $n \times m$ matrix with linearly independent columns, and let $P_X = X(X^T X)^{-1} X^T$ be the projection matrix onto $\Image(X)$. $P_X$ has several important properties:
+
+\begin{property}[Symmetry]
+$P_X$ is symmetric, i.e., $P_X^T = P_X$.
+\end{property}
+\begin{proof}
+Recall that $(ABC)^T = C^T B^T A^T$ and $(A^{-1})^T = (A^T)^{-1}$. Also, $(X^T X)^T = X^T (X^T)^T = X^T X$, so $X^T X$ is symmetric.
+\begin{align*}
+P_X^T &= (X(X^T X)^{-1} X^T)^T \\
+&= (X^T)^T ((X^T X)^{-1})^T X^T \\
+&= X ((X^T X)^T)^{-1} X^T \\
+&= X (X^T X)^{-1} X^T \\
+&= P_X
+\end{align*}
+\end{proof}
+
+\begin{property}[Idempotence]
+$P_X$ is idempotent, i.e., $P_X^2 = P_X P_X = P_X$. (Projecting a second time doesn't change anything, since the vector is already in the subspace).
+\end{property}
+\begin{proof}
+\begin{align*}
+P_X^2 &= (X(X^T X)^{-1} X^T) (X(X^T X)^{-1} X^T) \\
+&= X(X^T X)^{-1} (X^T X) (X^T X)^{-1} X^T \\
+&= X(X^T X)^{-1} I (X^T X)^{-1} X^T \\
+&= X(X^T X)^{-1} X^T \\
+&= P_X
+\end{align*}
+\end{proof}
+
+\begin{property}[Action on Columns of X]
+$P_X X = X$. (Projecting the columns of $X$ onto their own span leaves them unchanged).
+\end{property}
+\begin{proof}
+\begin{align*}
+P_X X &= (X(X^T X)^{-1} X^T) X \\
+&= X(X^T X)^{-1} (X^T X) \\
+&= X I \\
+&= X
+\end{align*}
+\end{proof}
+
+\begin{property}[Orthogonality of Residual Projection]
+Let $I$ be the $n \times n$ identity matrix. The matrix $I - P_X$ projects vectors onto the orthogonal complement subspace, $(\Image(X))^{\perp}$. We have $X^T (I - P_X) = 0$. (The columns of $X$ are orthogonal to the space onto which $I - P_X$ projects).
+\end{property}
+\begin{proof}
+\begin{align*}
+X^T (I - P_X) &= X^T I - X^T P_X \\
+&= X^T - X^T (X(X^T X)^{-1} X^T) \\
+&= X^T - (X^T X) (X^T X)^{-1} X^T \\
+&= X^T - I X^T \\
+&= X^T - X^T = 0 \quad (\text{the } m \times n \text{ zero matrix})
+\end{align*}
+\end{proof}
+
+\begin{property}[Image of $P_X$]
+For any vector $\vect{v} \in \mathbb{R}^n$, the projected vector $P_X \vect{v}$ lies in the column space of $X$, i.e., $P_X \vect{v} \in \Image(X)$.
+\end{property}
+\begin{proof}
+Let $P_X \vect{v} = X(X^T X)^{-1} X^T \vect{v}$. Let $\vect{a} = (X^T X)^{-1} X^T \vect{v}$. This vector $\vect{a}$ is in $\mathbb{R}^m$. Then $P_X \vect{v} = X\vect{a}$. By definition, any vector of the form $X\vect{a}$ is a linear combination of the columns of $X$ and is therefore in $\Image(X)$.
+\end{proof}
+
+\begin{property}[Projection in Full Space]
+If $X$ is an invertible $n \times n$ matrix (so $m=n$), then $\Image(X) = \mathbb{R}^n$. In this case, $P_X = I_n$. (Projecting onto the entire space is the identity operation).
+\end{property}
+\begin{proof}
+Since $X$ is square and invertible, $X^T$ is also invertible. $(X^T X)^{-1} = X^{-1}(X^T)^{-1}$.
+\begin{align*}
+P_X &= X(X^T X)^{-1} X^T \\
+&= X (X^{-1}(X^T)^{-1}) X^T \\
+&= (X X^{-1}) ((X^T)^{-1} X^T) \\
+&= I_n I_n \\
+&= I_n
+\end{align*}
+\end{proof}
+
+\begin{property}[Projection onto Orthogonal Complement]
+For any $\vect{v} \in \mathbb{R}^n$, the vector $(I - P_X)\vect{v}$ lies in the orthogonal complement of the column space of $X$, i.e., $(I - P_X)\vect{v} \in (\Image(X))^{\perp}$. (This vector is the residual part of the projection).
+\end{property}
+\begin{proof}
+We need to show that $(I - P_X)\vect{v}$ is orthogonal to any vector $\vect{u}$ in $\Image(X)$. Any such $\vect{u}$ can be written as $\vect{u} = X\vect{a}$ for some $\vect{a} \in \mathbb{R}^m$. We compute the inner product:
+\begin{align*}
+\langle \vect{u}, (I - P_X)\vect{v} \rangle &= \vect{u}^T (I - P_X)\vect{v} \\
+&= (X\vect{a})^T (I - P_X)\vect{v} \\
+&= \vect{a}^T X^T (I - P_X)\vect{v} \\
+&= \vect{a}^T (X^T (I - P_X)) \vect{v} \\
+&= \vect{a}^T (0) \vect{v} \quad \text{(using Property 4)} \\
+&= 0
+\end{align*}
+Since the inner product is zero for any $\vect{u} \in \Image(X)$, the vector $(I - P_X)\vect{v}$ must be in $(\Image(X))^{\perp}$.
+\end{proof}
+\begin{remark}
+The vector $(I-P_X)\vect{y}$ is exactly the residual vector $\vect{e} = \vect{y} - \hat{\vect{y}}$ from the least squares fit. This property confirms geometrically that the residual vector is orthogonal to the space spanned by the predictors (including the intercept).
+\end{remark}
+
+\begin{property}[Action on Vectors in Image]
+If $\vect{w} \in \Image(X)$, then $P_X \vect{w} = \vect{w}$. (Projecting a vector already in the subspace leaves it unchanged).
+\end{property}
+\begin{proof}
+If $\vect{w} \in \Image(X)$, then $\vect{w} = X\vect{a}$ for some $\vect{a} \in \mathbb{R}^m$.
+\begin{align*}
+P_X \vect{w} &= P_X (X\vect{a}) \\
+&= (P_X X) \vect{a} \\
+&= X \vect{a} \quad \text{(using Property 3)} \\
+&= \vect{w}
+\end{align*}
+\end{proof}
+
+\begin{property}[Action on Vectors in Orthogonal Complement]
+If $\vect{w} \in (\Image(X))^{\perp}$, then $P_X \vect{w} = \vect{0}$. (Vectors orthogonal to the subspace project to the zero vector).
+\end{property}
+\begin{proof}
+If $\vect{w} \in (\Image(X))^{\perp}$, it means $\vect{w}$ is orthogonal to every column of $X$. This is equivalent to $X^T \vect{w} = \vect{0}$.
+\begin{align*}
+P_X \vect{w} &= X(X^T X)^{-1} X^T \vect{w} \\
+&= X(X^T X)^{-1} \vect{0} \\
+&= \vect{0}
+\end{align*}
+\end{proof}
+
+\begin{property}[Independence of Basis]
+If $Z$ is another $n \times m$ matrix such that $\Image(Z) = \Image(X)$ (i.e., the columns of $Z$ span the same subspace as the columns of $X$, meaning $Z$'s columns are another basis for the same subspace), then $P_Z = P_X$. The projection matrix depends only on the subspace, not on the specific basis chosen to represent it.
+\end{property}
+\begin{proof}
+(Sketch, details in course notes) Requires showing that if $\Image(Z)=\Image(X)$, then $Z = XC$ for some invertible $m \times m$ matrix $C$, and $X = ZD$ for some invertible $m \times m$ matrix $D$ (where $D=C^{-1}$). Substitute these into the formula for $P_Z$ and simplify using properties of inverses and transposes to show it equals $P_X$.
+\end{proof}
+\begin{remark}
+This is crucial: the geometric operation of projection onto a subspace is unique; the matrix representing it is unique, even though the subspace itself can be described by different sets of basis vectors (different matrices $X$ or $Z$).
+\end{remark}
+
+\begin{property}[Nested Subspaces]
+Let $M$ and $N$ be two subspaces of $\mathbb{R}^n$ such that $M \subseteq N$. Let $P_M$ and $P_N$ be the projection matrices onto $M$ and $N$, respectively. Then:
+\[ P_M P_N = P_N P_M = P_M \]
+\end{property}
+\begin{proof}
+(Intuition provided in lecture, formal proof involves basis matrices or properties like Property 8).
+Consider $P_N P_M \vect{v}$. First, $\vect{v}_M = P_M \vect{v}$ projects $\vect{v}$ onto $M$. Since $M \subseteq N$, the vector $\vect{v}_M$ is already in $N$. Projecting it again onto $N$ leaves it unchanged (by Property 8 applied to $P_N$), so $P_N (P_M \vect{v}) = P_N \vect{v}_M = \vect{v}_M = P_M \vect{v}$. Thus $P_N P_M = P_M$.
+
+Consider $P_M P_N \vect{v}$. First, $\vect{v}_N = P_N \vect{v}$ projects $\vect{v}$ onto $N$. Then we project $\vect{v}_N$ onto the subspace $M$. Since $M \subseteq N$, projecting onto $N$ first and then the smaller subspace $M$ is equivalent to just projecting onto $M$ directly. (A more formal argument is needed here, often involving showing $(P_M P_N v - P_M v)$ is zero by showing it's in $M$ and $M^\perp$). This leads to $P_M P_N = P_M$.
+Combining these gives the result.
+\end{proof}
+
+
+\section{Conclusion}
+
+Understanding least squares through the lens of orthogonal projection onto the column space of the design matrix provides deep insights. It explains the origin of the normal equations and introduces the projection matrix $P_X$ (or hat matrix), a fundamental tool in regression diagnostics and theory. The properties of $P_X$ directly reflect the geometric nature of the least squares fitting procedure.
+
+\end{document}

@@ -1,0 +1,413 @@
+\documentclass[11pt,a4paper]{article} 
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{fancybox}
+\usepackage{hyperref}
+\usepackage[most]{tcolorbox}
+% Custom environments for administrative notes and important blocks
+\newtcolorbox{administrative}[1][]{colback=yellow!10!white, colframe=black, fonttitle=\bfseries, title={#1}, boxrule=1pt, arc=2mm, left=2mm, right=2mm, top=1mm, bottom=1mm, width=0.95\linewidth, center title}
+
+% Theorem environments
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+\newtheorem{example}[definition]{Example}
+\newtheorem{exercise}[definition]{Exercise}
+
+% Formatting
+\geometry{margin=1in}
+\setlength{\parskip}{0.8em}
+\setlength{\parindent}{0em}
+
+% Load babel at the end, with english as the main language
+\usepackage[english]{babel}
+
+
+\begin{document}
+
+\begin{center}
+    {\Large\bfseries Regression and Orthogonal Projections: Lecture Notes} \\[1ex]
+    \emph{Instructor: Amit} \\
+    \today
+\end{center}
+
+\begin{administrative}
+\textbf{Course Announcements}
+\begin{itemize}
+  \item\textbf{Cameras on for Zoom lectures:} If you are comfortable, please turn on your cameras during classes; I would greatly appreciate it. If not, there is no obligation.
+  \item\textbf{Upcoming Review:} There will be a linear algebra review session on Monday, at 10:00 AM, held over Zoom. This will be the only review for linear algebra in the course.
+  \item\textbf{Independent Study:} From now until the end of the course, material will focus on statistics (especially multivariate statistical modeling) and its connections to linear algebra. Please take advantage of the term break to consolidate your understanding and fill in any gaps from previous tutorials, lessons, and exercises.
+  \item\textbf{Practice and Review:} It is crucial that you can prove all core properties related to projection matrices as these are central to both the course and the final exam (as per last year's format).
+  \item\textbf{Exercise Solutions:} Additional worked solutions and explanations will be provided soon. Please review them carefully and revisit concepts as needed.
+  \item\textbf{Contact and Support:} Should you have any unresolved questions, please reach out. Your success is a top priority!
+\end{itemize}
+\end{administrative}
+
+\tableofcontents
+
+\section{Introduction and Motivation}
+
+In modern statistical modeling and data analysis—regression in particular—geometry and linear algebra underlie everything. Understanding \emph{projections}, especially onto subspaces spanned by the columns of a matrix, allows us to analyze how best to ``approximate'' data with models, how to decompose errors, and much, much more.
+
+But why projection matrices? At its core, projection lets us answer questions such as:
+\begin{quote}
+    Given a large space of possible data (say, $\mathbb{R}^n$) and a subspace (for instance, all linear combinations of features in $X$), how do we find the \emph{closest} point in this subspace to an arbitrary observation $y$?
+\end{quote}
+
+Projection matrices provide the machinery to make this idea precise, to decompose vectors, and, as we'll see, to give beautiful geometric and statistical interpretations to regression.
+
+\section{The Geometry of Projection}
+
+\subsection{Warm-Up: Projection in Lower Dimensions}
+
+Recall from high school or basic linear algebra: projecting a vector onto another vector in $\mathbb{R}^2$ or $\mathbb{R}^3$ is finding the closest point on a line to a given point.
+
+Now imagine that instead of projecting onto a line, we're projecting onto a plane, or more generally, a subspace spanned by multiple vectors.
+
+\medskip
+
+\textbf{Key question}: Given a vector $y \in \mathbb{R}^n$, and a subspace $V \subseteq \mathbb{R}^n$ (say, the column space of $X$), how do we find the point in $V$ closest to $y$?
+
+\subsection{Projection onto Subspaces: The Basic Idea}
+
+Let $X$ be an $n \times p$ matrix, with columns $x_1, x_2, \ldots, x_p$. Suppose $V = \operatorname{im}(X)$, the span of the columns.
+
+Given any $y \in \mathbb{R}^n$, the \emph{projection of $y$ onto $V$} (denoted $P_V y$) is the vector in $V$ which minimizes the distance to $y$:
+\[
+P_V y = \operatorname*{argmin}_{v \in V} \| y - v \|_2.
+\]
+
+\textbf{Visualization:} Draw the subspace $V$ as a plane (when possible) in $\mathbb{R}^n$, $y$ somewhere in space. The projection $P_V y$ is the ``shadow'' of $y$ dropped perpendicularly onto $V$.
+
+The error (or residual) is $e = y - P_V y$. Geometrically, $e$ is orthogonal to $V$.
+
+\begin{center}
+[Insert here, if possible, a diagram: a plane $V \subset \mathbb{R}^3$, a vector $y$ above it, $P_V y$ as the foot of the perpendicular, $e$ as the difference.]
+\end{center}
+
+\begin{example}[Geometric Projection and Orthogonality]
+Suppose $y$ is a point not in $V$. When we project $y$ onto $V$, we are seeking the vector in $V$ that is \emph{closest} in Euclidean distance to $y$. By the Pythagorean Theorem (generalized), the difference $e$ is at a right angle to all of $V$.
+
+This geometric fact will yield powerful algebraic consequences!
+\end{example}
+
+\section{Projection Matrices: Definition and Properties}
+
+\subsection{Definition and Basic Properties}
+
+\begin{definition}[Projection Matrix]
+Let $V$ be a subspace of $\mathbb{R}^n$, and let $P$ be a linear operator on $\mathbb{R}^n$ (i.e., a matrix). $P$ is called a \emph{projection operator (matrix) onto $V$} if, for all $y$,
+\[
+P y = \operatorname{argmin}_{v \in V} \| y - v \|_2.
+\]
+$P$ is called an \emph{orthogonal projection} if the minimization uses the standard dot product.
+\end{definition}
+
+A projection matrix enjoys two beautiful properties:
+
+\begin{itemize}
+    \item \textbf{Idempotence:} $P^2 = P$. Projecting twice does nothing more than projecting once.
+    \item \textbf{Symmetry:} $P^T = P$ (for the orthogonal case). Projection respects the inner product structure.
+\end{itemize}
+
+\begin{remark}
+Idempotence is a geometric necessity: Once a vector is projected onto a subspace, applying the projection again does nothing—it's already in the subspace.
+\end{remark}
+
+\subsection{Construction: The Projection Matrix onto the Column Space of $X$}
+
+Suppose $X$ is an $n \times p$ matrix with linearly independent columns.
+
+Then the (orthogonal) projection matrix onto $\operatorname{im}(X)$ is:
+\begin{equation}
+    P_X = X (X^T X)^{-1} X^T
+\end{equation}
+Here, $X^T X$ is assumed invertible (i.e., $X$ has full column rank).
+
+\begin{example}[Projection in the Simple Case]
+If $X$ is $n \times 1$, i.e., a column vector $x$, then
+\[
+P_X = \frac{x x^T}{x^T x}
+\]
+This projects onto the line spanned by $x$.
+
+\textbf{Check for yourself:} For $y \in \mathbb{R}^n$, $P_X y$ is the scalar multiple of $x$ closest to $y$.
+\end{example}
+
+\subsection{Key Properties of Orthogonal Projection Matrices}
+
+Let $P_X = X (X^T X)^{-1} X^T$.
+
+\begin{itemize}
+    \item $P_X^2 = P_X$ \hfill (Idempotent)
+    \item $P_X^T = P_X$ \hfill (Symmetric)
+    \item $P_X X = X$ \hfill (Projection acts as identity on the image of $X$)
+    \item If $w \in \operatorname{im}(X)$, then $P_X w = w$.
+    \item If $v \in (\operatorname{im}(X))^\perp$ (orthogonal complement), then $P_X v = 0$, and $v$ is not changed by projection onto $(\operatorname{im}(X))^\perp$.
+\end{itemize}
+
+\subsection{Eigenvalues of Projection Matrices}
+
+\begin{theorem}[Eigenvalues of Projection Matrices]
+Let $P$ be an orthogonal projection matrix. Then all eigenvalues of $P$ are either $0$ or $1$. The multiplicity of $1$ equals $\operatorname{rank}(P) = \dim(\operatorname{im} P)$, and the multiplicity of $0$ is $n - \operatorname{rank}(P)$.
+\end{theorem}
+
+\begin{proof}[Proof Outline (with Insights)]
+Recall that $P$ is symmetric and idempotent.
+
+Let $u$ be an eigenvector: $P u = \lambda u$. Applying $P$ again (idempotence):
+\[
+P^2 u = P(P u) = P(\lambda u) = \lambda P u = \lambda^2 u
+\]
+But also, $P^2 u = P u = \lambda u$. Thus,
+\[
+\lambda u = \lambda^2 u \implies (\lambda^2 - \lambda) u = 0
+\]
+Since $u \neq 0$, either $\lambda = 0$ or $\lambda = 1$.
+
+\textbf{Multiplicity:} The number of $\lambda = 1$ equals the rank of $P$ (the dimension of the image), and the number of $\lambda = 0$ equals the dimension of the kernel.
+\end{proof}
+
+\section{The Spectral Perspective and Diagonalization}
+
+Orthogonal projection matrices, being real symmetric, can be diagonalized using an orthonormal basis of eigenvectors. That is:
+\[
+P = U \Lambda U^T
+\]
+where $U$ is an orthogonal matrix whose columns are eigenvectors (basis), and $\Lambda$ is diagonal with only $1$s and $0$s on the diagonal (positions corresponding to the subspace and its orthogonal complement).
+
+\begin{remark}
+This means that, in an appropriate basis, the action of the projection is simply to keep the coordinates associated with the subspace, and zero out the rest!
+\end{remark}
+
+\begin{example}[Geometric Interpretation]
+Imagine projecting onto a plane in $\mathbb{R}^3$. In a basis aligned with the plane and its orthogonal direction, the projection matrix simply leaves the in-plane components and zeros the perpendicular one.
+\end{example}
+
+\section{Direct Sums, Orthogonal Complements, and Decomposition}
+
+\subsection{Fundamental Theorem: Orthogonal Decomposition}
+
+Let $V$ be a subspace of $\mathbb{R}^n$, and $V^{\perp}$ its orthogonal complement.
+
+\begin{theorem}[Direct Sum Decomposition]
+\label{thm:directsum}
+For every $y \in \mathbb{R}^n$ there exist unique $v \in V$ and $w \in V^\perp$ such that
+\[
+y = v + w
+\]
+Moreover, $v = P y$ and $w = (I - P) y$, where $P$ is the orthogonal projection onto $V$.
+\end{theorem}
+
+\begin{proof}[Sketch]
+The existence follows from Gram–Schmidt or via projection. Uniqueness by observing that $V \cap V^\perp = \{ 0 \}$, since if $z$ is in both, $z^T z = 0 \implies z=0$.
+\end{proof}
+
+\begin{example}[Regression Decomposition]
+In regression, for any $y$, writing
+\[
+y = \hat{y} + e = P_X y + (I - P_X) y
+\]
+gives a decomposition into the fitted value (\emph{the projection onto the model space}) and the residual (\emph{the error, orthogonal to the model space!}).
+\end{example}
+
+\subsection{Image and Kernel Duality}
+
+A particularly elegant result is the following:
+
+\begin{theorem}
+For any square matrix $A$,
+\[
+\operatorname{im}(A^T) = (\ker A)^\perp
+\]
+That is, the image (column space) of $A^T$ equals the orthogonal complement of the kernel of $A$.
+\end{theorem}
+\begin{proof}[Proof Outline]
+For any $w \in \operatorname{im}(A^T)$, $w = A^T k$ for some $k$. For $v \in \ker A$, $A v = 0$, so
+\[
+v^T w = v^T A^T k = (A v)^T k = 0.
+\]
+Therefore, $w$ is orthogonal to all elements of $\ker A$.
+For the other direction, a similar argument applies.
+\end{proof}
+
+\section{Statistical Modeling: Connecting Linear Algebra and Probability}
+
+\subsection{Why Models Matter: Differentiating Math from Statistics}
+
+Mathematical and geometric observations about projections (e.g., the residual is orthogonal to the model space) are always true, regardless of where the data come from.
+
+\emph{Statistical} results, however, rely on assumptions about distributions (e.g., unbiasedness or optimality may depend on data being iid normal). It is crucial to distinguish between universally valid results and those which hinge on model assumptions.
+
+\subsection{Random Vectors, Expectations, and Covariances}
+
+Let $z$ and $w$ be random vectors of length $n$, with $z = (z_1, ..., z_n)^T$.
+
+\begin{definition}[Expectation of a Random Vector]
+The expectation $\mathbb{E}[z]$ is the vector whose entries are $\mathbb{E}[z_i]$ individually.
+\end{definition}
+
+Similarly, for a random matrix, expectation is entrywise.
+
+\begin{definition}[Covariance Matrix]
+The covariance matrix of two random vectors $z, w \in \mathbb{R}^n$ is:
+\[
+\operatorname{Cov}(z, w) = \mathbb{E}[ (z - \mathbb{E}[z]) (w - \mathbb{E}[w])^T ]
+\]
+If $z = w$, this is called the (variance-)covariance matrix of $z$.
+\end{definition}
+
+\begin{itemize}
+    \item The diagonal entries are the variances of $z_i$.
+    \item The off-diagonal entries are the covariances between $z_i$ and $z_j$.
+    \item The covariance matrix is always symmetric: $\operatorname{Cov}(z_i, z_j) = \operatorname{Cov}(z_j, z_i)$.
+\end{itemize}
+
+\begin{theorem}[Linearity and Transformation]
+Let $A, B$ be deterministic matrices and $z$ a random vector. Then:
+\[
+\operatorname{Cov}(A z, B z) = A \operatorname{Cov}(z) B^T
+\]
+This is essential when analyzing the variability of linear combinations of random vectors.
+\end{theorem}
+
+\begin{remark}
+For a deterministic row vector $a$,
+\[
+\operatorname{Var}(a^T z) = a^T \operatorname{Cov}(z) a
+\]
+This gives the variance of any linear combination of the entries of $z$.
+\end{remark}
+
+\subsection{Worked Example: Bernoulli Random Vectors}
+
+\begin{example}[Covariances in a Simple Bernoulli Model]
+Let $z = (x, y, m)$, where:
+\begin{itemize}
+    \item $x$ is Bernoulli with parameter $p$,
+    \item $y$ is Bernoulli with parameter $q$,
+    \item $m = x y$.
+\end{itemize}
+What is the support, expectation, and covariance matrix?
+
+\underline{Support:}
+\[
+\operatorname{supp} = \{ 0, 1 \} \times \{ 0, 1 \} \times \{ 0, 1 \}
+\]
+\underline{Expectation:}
+\[
+\mathbb{E}[x] = p, \quad \mathbb{E}[y] = q, \quad \mathbb{E}[m] = \mathbb{E}[x y] = p q
+\]
+\underline{Covariance Matrix:} Let us compute each entry.
+
+\begin{align*}
+\operatorname{Var}(x) &= p(1-p) \\
+\operatorname{Cov}(x, y) &= \mathbb{E}[xy] - \mathbb{E}[x]\mathbb{E}[y] = p q - p q = 0 \\
+\operatorname{Cov}(x, m) &= \mathbb{E}[x m] - \mathbb{E}[x]\mathbb{E}[m] = \mathbb{E}[x^2 y] - p (p q) \\
+    &= \mathbb{E}[x y] - p^2 q = p q - p^2 q = p q (1 - p) \\
+\operatorname{Var}(y) &= q(1-q) \\
+\operatorname{Cov}(y, m) &= \mathbb{E}[y m] - \mathbb{E}[y] \mathbb{E}[m] = \mathbb{E}[x y^2] - q (p q) \\
+    &= \mathbb{E}[x y] - p q^2 = p q - p q^2 = p q (1 - q) \\
+\operatorname{Var}(m) &= p q (1 - p q)
+\end{align*}
+Hence the covariance matrix is:
+\[
+\operatorname{Cov}(z) =
+\begin{pmatrix}
+p(1-p) & 0 & p q (1-p) \\
+0 & q(1-q) & p q (1-q) \\
+p q (1-p) & p q (1-q) & p q (1 - p q)
+\end{pmatrix}
+\]
+
+\end{example}
+
+\begin{remark}
+Notice how dependent variables (like $m = x y$) create interesting covariance patterns even if $x$ and $y$ themselves are independent.
+\end{remark}
+
+\section{The Linear Statistical Model}
+
+Let us now rigorously introduce the core statistical model underpinning regression and projections.
+
+\begin{definition}[Linear Model]
+We observe $y \in \mathbb{R}^n$ (\emph{response vector}), an $n \times p$ matrix $X$ of predictors, and seek to model $y$ as a linear combination:
+
+\[
+y = X \beta + \varepsilon
+\]
+
+where:
+\begin{itemize}
+    \item $X$ is the \emph{design matrix}, entries fixed (can be random in other contexts).
+    \item $\beta \in \mathbb{R}^p$ is the unknown vector of coefficients/parameters.
+    \item $\varepsilon \in \mathbb{R}^n$ is the vector of errors/noise.
+\end{itemize}
+We typically assume:
+\begin{itemize}
+    \item $\mathbb{E}[\varepsilon|X] = 0$
+    \item $\operatorname{Cov}(\varepsilon_i, \varepsilon_j | X) = 
+    \begin{cases}
+        \sigma^2, & i = j \\
+        0, & i \neq j
+    \end{cases}$
+\end{itemize}
+The errors are uncorrelated with equal variance (\emph{homoskedasticity}).
+\end{definition}
+
+\emph{Why is this useful?} This model supports the inference and estimation of the "true" relationship between predictors $X$ and the response $y$, acknowledging randomness/noise.
+
+\begin{example}[Regression Setup]
+Suppose we are predicting salary $y$ based on education, parents' income, and number of children. Each variable is a column in $X$, and $\beta$ encodes the effect size of each variable. The error vector $\varepsilon$ absorbs all variation not explained linearly by these predictors.
+\end{example}
+
+\begin{remark}[Implications of Model Assumptions]
+If the errors $\varepsilon$ are correlated, or have non-constant variance, the effective information in the data is reduced (some observations are redundant), invalidating standard inferential procedures.
+\end{remark}
+
+\section{Properties and Interpretation of Projection in the Regression Model}
+
+\subsection{Fitted Values and Residuals}
+
+Given the linear model $y = X\beta + \varepsilon$ and the projection matrix $P_X$,
+\begin{itemize}
+    \item The vector of fitted values is $\hat{y} = P_X y = X (X^T X)^{-1} X^T y$.
+    \item The vector of residuals is $e = y - \hat{y} = (I - P_X) y$.
+    \item By construction, $e$ is orthogonal to $\operatorname{im}(X)$.
+\end{itemize}
+
+\subsection{Summary of Key Points}
+\begin{itemize}
+    \item The geometry of projection is at the heart of regression theory.
+    \item Projection matrices decompose data vectors into components explained by the model and pure error (residual).
+    \item Statistical properties (like variance, unbiasedness) depend on additional assumptions about distributions.
+    \item Full understanding of projections involves skill in both linear algebra and statistical reasoning.
+\end{itemize}
+
+\section{Further Directions and Preparation}
+
+\begin{administrative}
+\textbf{Next Steps and Recommendations}
+
+\begin{itemize}
+    \item \textbf{Review core properties and proofs}: Being able to prove the key results around projections and their application to regression is essential.
+    \item \textbf{Revisit previous exercises and solutions}, especially examples involving projections, decomposition, and interpretation of statistical models.
+    \item \textbf{Prepare for the next session:} We will deepen the statistical modeling (including random vectors, distributions, and the connection to regression) and will discuss the assumptions underlying statistical inference in linear contexts.
+    \item \textbf{Administrative follow-up:} View all updated practice solutions and plan accordingly for (i) completing open assignments, (ii) course requirements, and (iii) lecture participation.
+\end{itemize}
+\end{administrative}
+
+\vspace{1cm}
+
+\begin{center}
+\textbf{Thank you, and have an enjoyable and productive break!}
+\end{center}
+
+\end{document}

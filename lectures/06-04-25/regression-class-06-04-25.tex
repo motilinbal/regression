@@ -1,0 +1,319 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb, amsthm, mathtools, geometry, enumitem, tcolorbox}
+\geometry{a4paper,margin=2.5cm}
+\usepackage{lmodern}
+\setlength{\parskip}{0.9\baselineskip}
+\usepackage{hyperref}
+
+% Admin block
+\newtcolorbox{administrativenote}[1][]{colback=gray!12!white, colframe=black, fonttitle=\bfseries, title=Administrative Note, #1}
+
+% Theorem etc. environments
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{claim}[definition]{Claim}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\theoremstyle{remark}
+\newtheorem{example}[definition]{Example}
+\newtheorem{remark}[definition]{Remark}
+\newtheorem{nonexample}[definition]{Non-Example}
+
+% Title, etc.
+\begin{document}
+
+\begin{center}
+    {\LARGE\bfseries Linear Algebra and Regression: Projections, Subspaces, and Diagonalization}\\[1.2ex]
+    {\large Lecture Synthesis and Commentary}\\[0.8ex]
+    {\large Instructor: [Your Name]}\\[0.8ex]
+    \today 
+\end{center}
+
+\hrule
+\vspace{1ex}
+%-------------------------
+% ADMIN ANNOUNCEMENTS
+%-------------------------
+\begin{administrativenote}
+    \textbf{Administrative Announcements:}
+    \begin{itemize}
+        \item \textbf{Supplementary Instruction Session:} We are scheduling an additional review/recitation (minimum two hours). The plan is for Niv to conduct and record this session, likely taking place this week before Passover, preferably in-person if logistics allow. \emph{If you have expressed interest, please make every effort to attend.}
+        \item \textbf{Assignments:} Current assignments will be discussed in upcoming sessions. Due to the current material's density and technical nature, there is a deliberate pacing to ensure understanding. You will also have a brief period without other courses to consolidate your linear algebra knowledge.
+        \item \textbf{General Note:} This class is uniquely positioned, as you are the first to have completed two linear algebra courses before this one. Expect an intensive, compressed review now, but be assured that the quantity of new essential results is manageable---much of what appears "overwhelming" will soon integrate into your broader understanding.
+        \item \textbf{Other Logistics:} Administrative details regarding assignment timing, project opportunities (AMS), and TAs' responsibilities are coordinated as needed. Further announcements will be provided as scheduling solidifies.
+    \end{itemize}
+\end{administrativenote}
+
+\vspace{1.5em}
+%
+% MAIN MATHEMATICAL CONTENT
+%
+\section{Introduction and Motivation}
+
+The topics discussed in this synthesis form the mathematical backbone of the statistical linear model and, more broadly, reveal some of the most elegant structures in linear algebra. Our focus will be on:
+
+\begin{itemize}
+    \item Projection matrices, their properties, and their geometric meaning.
+    \item Decomposition of vectors into subspaces and their orthogonal complements.
+    \item The uniqueness and characterization of least-squares projections.
+    \item Diagonalization of matrices---both general and orthogonal (with an emphasis on symmetric and positive-definite matrices).
+\end{itemize}
+
+Why study projections so carefully? The answer is twofold: in statistics, projections arise naturally in regression as estimators; mathematically, projections expose the interplay between operators and geometry in vector spaces.
+
+\section{Projection Matrices and Their Properties}
+
+\subsection{Notation and Setup}
+
+Let $X \in \mathbb{R}^{n \times m}$ be a matrix with \emph{linearly independent columns}. This condition is crucial: it guarantees that $X^T X$ is invertible (full rank), which in turn ensures that the projection matrix is well-defined.
+
+\begin{definition}[Projection Matrix onto the Column Space]
+    Let $X \in \mathbb{R}^{n \times m}$ with linearly independent columns. The \emph{projection matrix} onto the column space of $X$ (denoted by $\operatorname{Im}(X)$) is defined as
+    \[
+        P_X := X (X^T X)^{-1} X^T \in \mathbb{R}^{n \times n}.
+    \]
+\end{definition}
+
+\begin{remark}
+    It is always prudent to check the dimensions: $X$ is $n \times m$, so $X^T$ is $m \times n$, and $(X^T X)^{-1}$ is $m \times m$ (since $X^T X$ is square). Thus, $P_X$ is $n \times n$, mapping $\mathbb{R}^n$ to itself.
+\end{remark}
+
+\subsection{Key Properties of Projection Matrices}
+
+Let us proceed to understand the core properties of $P_X$:
+
+\begin{enumerate}[label=\textbf{Property \arabic*:}, leftmargin=3.6em]
+    \item \textbf{$P_X$ is symmetric:} $P_X^T = P_X$.
+    \item \textbf{$P_X$ is idempotent:} $P_X^2 = P_X$.
+    \item \textbf{$P_X$ acts as the identity on columns of $X$:} $P_X X = X$.
+    \item \textbf{$X^T (I - P_X) = 0$:} The columns of $X$ are orthogonal to the residuals after projection.
+    \item \textbf{Image containment:} For any $v \in \mathbb{R}^n$, $P_X v \in \operatorname{Im}(X)$.
+    \item \textbf{Full rank, square case:} If $n = m$ and $X$ is invertible, then $P_X = I_n$.
+    \item \textbf{Orthogonality of residuals:} For all $v \in \mathbb{R}^n$, $(I - P_X)v \in \operatorname{Im}(X)^\perp$.
+    \item \textbf{Projection fixes image vectors:} If $w \in \operatorname{Im}(X)$, then $P_X w = w$.
+    \item \textbf{Projection annihilates orthogonal complement:} If $z \in \operatorname{Im}(X)^\perp$, then $P_X z = 0$.
+\end{enumerate}
+
+\vspace{-1.2em}
+\paragraph{Geometric Intuition:}
+The projection operator $P_X$ ``drops'' any vector $v \in \mathbb{R}^n$ perpendicularly onto the subspace $\operatorname{Im}(X)$. The difference $v - P_X v$ (called the \emph{residual}) belongs to the orthogonal complement. If $v$ already lies in $\operatorname{Im}(X)$, projecting it changes nothing; if $v$ is orthogonal, the projection is zero.
+
+\begin{example}[Action of $P_X$ on the basis vectors]
+    Suppose $X$ has columns $X_1, \ldots, X_m$. Then $P_X X_j = X_j$ for any $j=1,\ldots,m$. To see this, recall that $P_X$ projects onto their span---any $X_j$ is already there.
+\end{example}
+
+\begin{example}[Effect in the square, full-rank case]
+    If $X$ is $n \times n$ and invertible, then the columns of $X$ form a basis for $\mathbb{R}^n$; so the projection matrix $P_X$ is the identity:
+    \[
+        P_X = X (X^T X)^{-1} X^T = I_n
+    \]
+    because projecting onto the full space leaves any vector unchanged.
+\end{example}
+
+\section{Projections and Decomposition of Vectors}
+
+\subsection{Decomposition Theorem}
+
+The most fundamental application of orthogonal projections is that \emph{every vector can be uniquely decomposed} as a sum of a vector in the subspace and a vector in its orthogonal complement.
+
+\begin{theorem}[Orthogonal Decomposition]
+    Let $M$ be a subspace of $\mathbb{R}^n$. For every $v \in \mathbb{R}^n$, there exists a unique decomposition
+    \[
+        v = w + z
+    \]
+    where $w \in M$ and $z \in M^\perp$. In particular, $w = P_M v$.
+\end{theorem}
+
+\begin{proof}
+    \textsf{(Existence)} Let $w = P_M v = X (X^T X)^{-1} X^T v$ for any matrix $X$ with columns forming a basis for $M$; define $z = v - w$. Property 5 ensures $w \in M$, and Properties 7 and 9 give $z \in M^\perp$.
+
+    \textsf{(Uniqueness)} Suppose also $v = w' + z'$ with $w' \in M$, $z' \in M^\perp$. Then $(w-w') = (z'-z)$ lies in $M \cap M^\perp = \{0\}$. Thus $w = w'$ and $z = z'$.
+\end{proof}
+
+\begin{example}[Orthogonal decomposition in $\mathbb{R}^2$]
+    Let $M = \text{span}\{e_1\}$, the $x$-axis. For $v = (a, b)^T$, the projection is $w = (a, 0)^T$ and $z = (0, b)^T$; clearly $v = w + z$, $w \in M$, $z \in M^\perp$.
+\end{example}
+
+\subsection{Least Squares Characterization}
+
+A powerful property of orthogonal projection is its solution to the \emph{closest vector problem}:
+
+\begin{theorem}[Best Approximation (Least Squares)]
+    Let $M$ be a subspace of $\mathbb{R}^n$. For any $v \in \mathbb{R}^n$,
+    \[
+        w := P_M v = \operatorname*{argmin}_{y \in M} \|v - y\|^2.
+    \]
+\end{theorem}
+
+\begin{proof}[Proof Sketch \& Intuition]
+    By the previous theorem, $v = w + z$, with $z$ orthogonal to $M$. For any $y \in M$,
+    \[
+        \|v - y\|^2 = \|w + z - y\|^2 = \|z\|^2 + \|w - y\|^2
+    \]
+    by the Pythagorean theorem. This is minimized when $y = w$.
+\end{proof}
+
+\section{Advanced Properties and Uniqueness of the Projection Map}
+
+\subsection{Dependence on the Subspace Only}
+
+\textbf{Key Insight:} The projection matrix onto a subspace $M$ depends solely on $M$ \emph{itself} and not on the specific matrix $X$ used to represent it (as long as $X$'s columns form a basis for $M$).
+
+\begin{theorem}[Projection Matrix Uniqueness]
+    Let $X, Z \in \mathbb{R}^{n \times m}$ both have linearly independent columns and span the same subspace: $\operatorname{Im}(X) = \operatorname{Im}(Z) = M$. Then $P_X = P_Z$.
+\end{theorem}
+
+\begin{proof}
+    Since both $X$ and $Z$ span $M$, there exists an invertible $m \times m$ matrix $H$ such that $Z = X H$. Then,
+    \begin{align*}
+        P_Z &= Z (Z^T Z)^{-1} Z^T \\
+            &= X H (H^T X^T X H)^{-1} H^T X^T \\
+            &= X (X^T X)^{-1} X^T = P_X
+    \end{align*}
+    where we used the invertibility of $H$.
+\end{proof}
+
+\begin{remark}
+    This result justifies defining $P_M$ as the projection operator onto $M$ (well-defined regardless of basis).
+\end{remark}
+
+\section{Intersections, Complements, and Further Identities}
+
+\begin{theorem}[Projection onto an Intersection]
+    Let $L, M$ be subspaces of $\mathbb{R}^n$. Then
+    \[
+        P_L P_M = P_{L \cap M}
+    \]
+    That is, projecting onto $M$, then onto $L$, is the same as projecting onto the intersection $L \cap M$.
+\end{theorem}
+\begin{proof}[Intuition]
+  Each projection successively reduces the vector to reside in both subspaces; by uniqueness of the orthogonal decomposition, this is the same as a one-step orthogonal projection onto their intersection.
+\end{proof}
+
+\begin{theorem}[Projections onto Orthogonal Complements]
+    For any subspace $M \subseteq \mathbb{R}^n$,
+    \[
+        I - P_M = P_{M^{\perp}}
+    \]
+\end{theorem}
+\begin{proof}[Idea]
+    The residual left after orthogonal projection onto $M$ is exactly the orthogonal projection onto $M^{\perp}$.
+\end{proof}
+
+\section{Characterization of Projection Matrices}
+
+\begin{theorem}[Symmetric Idempotents are Projections]
+    Let $Q \in \mathbb{R}^{n \times n}$ be a symmetric matrix ($Q^T = Q$) satisfying $Q^2 = Q$ (idempotent). Then $Q$ is the orthogonal projection operator onto $W = \operatorname{Im}(Q)$, i.e.
+    \[
+        Q = P_W.
+    \]
+\end{theorem}
+
+\begin{remark}
+    The two essential axioms for a projection matrix are:
+    \begin{itemize}
+        \item \textbf{Symmetry:} $Q^T = Q$
+        \item \textbf{Idempotency:} $Q^2 = Q$
+    \end{itemize}
+    Any operator with these properties is an orthogonal projection onto its range.
+\end{remark}
+
+\begin{example}[Non-example]
+    The matrix $A = \begin{pmatrix}1 & 1\\ 0 & 1\end{pmatrix}$ is idempotent ($A^2 = A$), but not symmetric. Hence, not an orthogonal projection.
+\end{example}
+
+\section{Diagonalization and Positive (Semi-)Definite Matrices}
+
+\subsection{Motivation \& Connection}
+
+Diagonalization is a powerful technique that ``simplifies'' matrices: in the right basis, a matrix can often be represented as diagonal, turning complicated linear operations into simple scaling along orthogonal directions (eigenvectors). This underlies much of matrix computation and theory.
+
+\begin{definition}[Diagonalizability]
+    A square matrix $A \in \mathbb{R}^{n \times n}$ is \emph{diagonalizable} over $\mathbb{R}$ if there exists an invertible $P$ and a diagonal matrix $D$ such that
+    \[
+        A = P D P^{-1}.
+    \]
+\end{definition}
+
+\subsection{Interpretation and Mechanics}
+
+The transition matrix $P$ represents a change of basis. Diagonalization tells us that, for a suitable choice of basis, $A$ acts by stretching each coordinate by its respective \emph{eigenvalue}.
+
+\begin{example}[Effect of Diagonal Matrices]
+    \label{ex:diagonal-action}
+    If $D = \operatorname{diag}(d_1, \dots, d_n)$, then $D$ acts on $v = (v_1,\dots, v_n)^T$ via $D v = (d_1 v_1, \dots, d_n v_n)^T$.
+\end{example}
+
+\begin{definition}[Orthogonal Diagonalization]
+    $A \in \mathbb{R}^{n \times n}$ is called \emph{orthogonally diagonalizable} if there exists an orthogonal matrix $U$ ($U^T U = I$) and a diagonal $D$ such that $A = U D U^T$.
+\end{definition}
+
+\begin{theorem}[Spectral Theorem (Finite-Dimensional Real Case)]
+    Every real symmetric matrix $A \in \mathbb{R}^{n \times n}$ is orthogonally diagonalizable: there exists an orthogonal $U$ and real diagonal $D$ such that $A = U D U^T$.
+\end{theorem}
+
+\begin{remark}
+    Eigenvectors corresponding to distinct eigenvalues of a symmetric matrix are orthogonal.
+\end{remark}
+
+\subsection{Positive (Semi-)Definite Matrices}
+
+\begin{definition}[Positive (Semi-)Definite]
+    A real symmetric matrix $A$ is \textbf{positive definite} if for all $v \in \mathbb{R}^n$,
+    \[
+        v^T A v > 0
+    \]
+    and \textbf{positive semi-definite} if
+    \[
+        v^T A v \geq 0 \qquad \text{for all } v \in \mathbb{R}^n.
+    \]
+\end{definition}
+
+\begin{theorem}[Eigenvalues and Positive (Semi-)Definiteness]
+    Let $A$ be a real symmetric $n \times n$ matrix. Then:
+    \begin{itemize}
+        \item $A$ is positive definite $\iff$ all its eigenvalues are $> 0$.
+        \item $A$ is positive semi-definite $\iff$ all its eigenvalues are $\geq 0$.
+    \end{itemize}
+\end{theorem}
+
+\begin{example}[Matrix Passing/Failing Positive Definiteness]
+    $A = \operatorname{diag}(1,1,\dots,1,-1)$: since $-1$ is an eigenvalue, $A$ is \emph{not} positive definite. For vectors aligned with the last coordinate, $v^T A v < 0$.
+\end{example}
+
+\begin{remark}
+    Positive definiteness is only defined for symmetric matrices.
+\end{remark}
+
+\subsection{Square Roots and Cholesky-like Decompositions}
+
+\begin{theorem}
+    Let $A \in \mathbb{R}^{n \times n}$ be symmetric and positive definite. Then:
+    \begin{enumerate}
+        \item There exists $B \in \mathbb{R}^{n \times n}$ such that $B^2 = A$ (a symmetric square root).
+        \item There exists $C \in \mathbb{R}^{n \times n}$ such that $C^T C = A$ (Cholesky factorization).
+    \end{enumerate}
+\end{theorem}
+
+\begin{proof}[Sketch]
+    Diagonalize: $A = U D U^T$ with $D$ diagonal, $U$ orthogonal; $D$ has strictly positive diagonal entries.
+    \begin{itemize}
+        \item $B = U D^{1/2} U^T$ satisfies $B^2 = U D U^T = A$.
+        \item $C = U D^{1/2}$ gives $C^T C = U D^{1/2} U^T U D^{1/2} = U D U^T = A$.
+    \end{itemize}
+\end{proof}
+
+\section{Concluding Remarks}
+
+These foundational results on projection matrices, orthogonal decompositions, and diagonalization provide essential tools for understanding the geometry of least-squares problems, statistical modeling, and much more. While technical at times, investing effort now will pay major dividends throughout your mathematical and applied studies.
+
+\begin{administrativenote}
+    \begin{itemize}
+        \item \textbf{Upcoming:} We will soon transition to analyzing the linear statistical model in earnest, leveraging the machinery developed here. Please review the key properties above and bring questions to the next meeting.
+        \item \textbf{Clarifications and Project Discussions:} Those interested in further projects, or encountering scheduling conflicts (seminars, TA meetings, etc.), reach out early---we will accommodate as best as possible.
+    \end{itemize}
+\end{administrativenote}
+
+\end{document}
