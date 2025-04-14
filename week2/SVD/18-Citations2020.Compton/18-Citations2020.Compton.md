@@ -88,23 +88,20 @@ $$
 We could clearly extend this computation to an $n \times n$ matrix as needed. For our example, we compute the determinant of $A^{T} A-\lambda I$ which is:
 
 $$
-\begin{aligned}
-& {\left[\begin{array}{llll}
-13 & 8 & 11 \\
-8 & 5 & 6 \\
-11 & 6 & 17
-\end{array}\right] \quad\left[\begin{array}{lll}
-1 & 0 & 0 \\
-0 & 1 & 0 \\
-0 & 0 & 1
-\end{array}\right]=\left[\begin{array}{rrrr}
+A^T A - \lambda I =
+\begin{bmatrix}
 13-\lambda & 8 & 11 \\
 8 & 5-\lambda & 6 \\
-11 & 6 & 17-\lambda \\
-(13-\lambda) \mid(5-\lambda)(17-\lambda)-(6)(6) \mid-8 \mid 8)(17-\lambda)-(11)(6) \mid+ \\
-& 11 \mid(8)(6)-(11)(5-\lambda) \mid \\
-& =\lambda^{2}+35 \lambda^{2}+150 \lambda \\
-& =\lambda(\lambda-5)(\lambda-30) .
+11 & 6 & 17-\lambda
+\end{bmatrix}
+
+\begin{aligned}
+\det(A^T A - \lambda I)
+&= (13-\lambda)\left[(5-\lambda)(17-\lambda) - 6 \times 6\right] \\
+&\quad - 8\left[8(17-\lambda) - 11 \times 6\right] \\
+&\quad + 11\left[8 \times 6 - 11(5-\lambda)\right] \\
+&= \lambda^3 - 35\lambda^2 + 150\lambda \\
+&= \lambda(\lambda-5)(\lambda-30)
 \end{aligned}
 $$
 
@@ -225,19 +222,19 @@ understanding that large images are formed by correspondingly large matrices, he
 ## Implementation in Grayscale
 
 In MATLAB, we use and modify existing code from Dr. Brady Matthews' paper "Image Compression using Singular Value Decomposition" to load an image, isolate the corresponding saturation matrix, and then modify the matrix based on its singular values [2]. As an example, we use a high-contrast grayscale image of a feather seen in Figure 1.
-![img-0.jpeg](img-0.jpeg)
+![img-0.jpeg](img-0.jpeg.jpeg)
 
 Figure 1: Original high-contrast grayscale image [5]
 We consider the individual saturation levels of each pixel in the original image as the numerical entries in a matrix. We compute the SVD of that matrix and remove the singular values (from smallest to largest), converting the modified matrices (with removed values) back into a series of images. This process of decomposition can reduce the image storage size without losing the quality needed to fully represent the image.
 
 In Figure 2 we can see that as more singular values are included in the image matrix, the clarity of the image improves.
-![img-1.jpeg](img-1.jpeg)
+![img-1.jpeg](img-1.jpeg.jpeg)
 
 Figure 2: Number of Singular Values: $\{1,2,5,10\}\{15,18,24,30\}\{35,60,120,680\}$
 
 # Page 3
 
-![img-2.jpeg](img-2.jpeg)
+![img-2.jpeg](img-2.jpeg.jpeg)
 
 Figure 3: Error in compression when applied to the grayscale feather image.
 The original image has approximately 680 singular values, but we were able to see a close resemblance to the original image using only 120 singular values [5]. The amount of storage space is not as significant in our example here as it would be in practice, because of our emphasis on image clarity. Our current process is to compress while still retaining the original number of pixels in order to show the details of the loss of image quality. In practice, we would see a more significant change in storage of an image if we allowed the overall image size (the number of pixels) to reduce as we removed the small singular values. For example, we can see this relation in photos that have been initially taken on a phone and then sent via text, often appear more course since they have been compressed along the way.
@@ -250,13 +247,13 @@ decreases. This means that the rate of change of the error loss is less signific
 We now extend this concept to the initial removal of larger singular values from an image instead of smaller singular values. We intuitively know that this would not be useful in retaining image quality but are curious as to the extreme nature of the image without the largest singular values. Originally the MATLAB code computed the SVD of the matrix of the image and removed the singular values (from smallest to largest). Then this process would convert the modified matrices (with removed values) back into images as shown in Figure 2. Through careful manipulation we redeveloped the code to build a series of matrices by instead starting with only the smallest values. Then these matrices were converted into images that have the same number of pixels as in the original image. This visualization is shown in Figure 4.
 
 Through careful evaluation we are able to observe the same trend from Figure 2 that as more singular values are included in the image, the corresponding image clarity increases. However, where in the prior example we only required a few large singular values to produce a reasonable image, here we see that we need a very large number of singular values to produce a similar quality image since we are only using the smaller singular values first. In Figure 4 we can see that there are nearly 625 singular values needed for anything visible upon the black landscape. As we reintroduce
-![img-3.jpeg](img-3.jpeg)
+![img-3.jpeg](img-3.jpeg.jpeg)
 
 Figure 4: Number of Singular Values: $\{1,250,500,550\}\{575,600,625,650\}\{665,678,679,680\}$
 
 # Page 4
 
-![img-4.jpeg](img-4.jpeg)
+![img-4.jpeg](img-4.jpeg.jpeg)
 
 Figure 5: Error using this particular model.
 the larger singular values, the corresponding quality of the images drastically increase.
@@ -268,26 +265,26 @@ Through this investigation of singular values, we have observed the significance
 ## Implementation to full color images
 
 We have been able to observe that the process of SVD can be used to compress images to conserve storage space by removing the singular values that contribute the least to the information contained in the image matrix. Thus far we have only demonstrated compression for a grayscale image, but we will now expand this process to full color images. For this simulation we will choose a full color detailed image that celebrates our favorite mathematical holiday, Pi Day, as seen in Figure 7.
-![img-5.jpeg](img-5.jpeg)
+![img-5.jpeg](img-5.jpeg.jpeg)
 
 Figure 7: Original Pi Day image [6]
 Recall that each pixel in full color image has color saturation representation values of 0 to 255 for red, green, and blue. This adds complexity to the image, which requires a greater amount of storage space used to save a particular image. By showing the representation of each color relative to the full color image, we are able to see the amount of contribution each color has to each pixel as shown in Figure 8. In order to implement the SVD process we will have to first separate the full color image into its red, green, and blue layers, as each of these three colors has its own matrix of information for the image. We will remove the smallest singular values from each of the color matrices, and then we will reconstruct the full color image using the modified color matrices.
 
 This decomposition is shown in a simplistic form in Figure 8. As we compute the SVD and only reintroduce specific singular values, we see the image quality increase within Figure 9. With only one singular value, there is very little we can recognize from the original image. As singular values are reintroduced, we are able to see the image more clearly to be a celebration of Pi Day. For this particular image, this compression process was able to save a considerable
-![img-6.jpeg](img-6.jpeg)
+![img-6.jpeg](img-6.jpeg.jpeg)
 
 Figure 6: Importance of the Largest Singular Value
 Figure 8: Pi Day image with red, green, and blue saturation layers isolated
 
 # Page 5
 
-![img-7.jpeg](img-7.jpeg)
+![img-7.jpeg](img-7.jpeg.jpeg)
 
 Figure 9: Number of singular values per row: $\{1,10,25,100\}$
 amount of space compared to our grayscale example observed in Figure 2.
 
 The error for full color images is more complex to observe than the error corresponding to a grayscale image, due to the fact that we separated the color image into three separate color saturation matrices. The error curves in Figure 10 represent the accumulated error when comparing each modified color saturation matrix to the corresponding color saturation matrix from the original image. We are again able to notice a considerable change in clarity from the images compressed using a relatively low number of singular values. In addition to the obvious reduction of error with the addition of more singular values, we also observe a noticeable difference between the error curves within each pixel color. This original image in Figure 7 has a considerable amount of green which contributes largely to the image clarity when represented only with the green pixel contribution. In an opposing manner, there is not much representation from the
-![img-8.jpeg](img-8.jpeg)
+![img-8.jpeg](img-8.jpeg.jpeg)
 
 Figure 10: Error curves for the red, green, and blue pixel saturation levels from the Pi Day image
 
@@ -296,7 +293,7 @@ Figure 10: Error curves for the red, green, and blue pixel saturation levels fro
 blue or red pixel saturation layers, and hence in Figure 10 we can see that the error changes more significantly in the green saturation layer than with the other two layers.
 
 We consider our initial challenge of saving storage space using the SVD when applied to image processing, and we note that for this small full color image we were able to see a noticeable difference in storage size. The original image had 574 singular values for each of the color layers, and when we compare this image to the full color image with 100 singular values, we use approximately $50 \%$ of the original storage space. We can see in Figure 11 that they look almost identical when compared side to side, but the storage size and information matrices are much smaller. Recall that for the sake of direct comparison we have retained the original number of pixels in these comparisons, instead of naturally reducing the number of pixels as we removed each unimportant singular value. The corresponding storage size would drastically decrease if we allowed this to occur.
-![img-9.jpeg](img-9.jpeg)
+![img-9.jpeg](img-9.jpeg.jpeg)
 
 Figure 11: Original image and the compressed image
 
