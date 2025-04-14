@@ -94,7 +94,9 @@ A^T A - \lambda I =
 8 & 5-\lambda & 6 \\
 11 & 6 & 17-\lambda
 \end{bmatrix}
+$$
 
+$$
 \begin{aligned}
 \det(A^T A - \lambda I)
 &= (13-\lambda)\left[(5-\lambda)(17-\lambda) - 6 \times 6\right] \\
