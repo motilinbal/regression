@@ -1,0 +1,632 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[T1]{fontenc} % Added for better font encoding
+\usepackage[utf8]{inputenc}
+\usepackage[hebrew, english]{babel} % Load English first, then Hebrew for RTL support
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{bm} % For bold math symbols
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{hyperref} % Optional: for clickable links if needed
+\usepackage{enumitem} % Added for custom enumerate labels
+
+% --- Basic Math Operator Definitions ---
+\DeclareMathOperator{\E}{\mathbb{E}}             % Expectation
+\DeclareMathOperator{\Var}{\mathrm{Var}}         % Variance
+\DeclareMathOperator{\Cov}{\mathrm{Cov}}         % Covariance
+\DeclareMathOperator{\tr}{\mathrm{tr}}           % Trace
+\DeclareMathOperator{\rank}{\mathrm{rank}}       % Rank
+\DeclareMathOperator{\Image}{\mathrm{Im}}        % Image (column space)
+\DeclareMathOperator{\Ker}{\mathrm{Ker}}         % Kernel (null space)
+\DeclareMathOperator{\Span}{\mathrm{span}}       % Span
+\DeclareMathOperator{\argmin}{\mathrm{arg\,min}} % Argmin
+
+% --- Theorem Environments ---
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{claim}[theorem]{Claim} % Added for Page 0 claim
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{question}[theorem]{Question} % Added for questions in the text
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% --- Custom Commands ---
+\newcommand{\RR}{\mathbb{R}}             % Real numbers (Changed from \R)
+\newcommand{\mat}[1]{\mathbf{#1}}       % Matrix notation (bold upright)
+\newcommand{\vect}[1]{\bm{#1}}          % Vector notation (bold italic) - using bm package
+\newcommand{\transpose}{^{\top}}        % Transpose symbol
+\newcommand{\norm}[1]{\left\| #1 \right\|} % Norm symbol
+\newcommand{\abs}[1]{\left| #1 \right|}   % Absolute value
+
+% --- Title Box ---
+\newcommand{\coursetitle}[1]{%
+  \begin{center}
+  \fbox{\parbox{0.9\textwidth}{\centering\selectlanguage{hebrew} #1 \selectlanguage{english}}}
+  \end{center}
+  \vspace{1em}
+}
+
+\begin{document}
+\selectlanguage{english} % Default language
+
+\coursetitle{רגרסיה - תרגול 3}
+
+\begin{center}
+\Large\textbf{Regression - Tutorial 3} \\
+\vspace{0.5em}
+\large Projection Matrices, The Linear Model, and Joint Distributions
+\end{center}
+\vspace{1.5em}
+
+\section{Orthogonal Projection Matrices}
+
+We begin by revisiting some fundamental concepts from linear algebra, crucial for understanding the geometry of least squares estimation.
+
+\begin{definition}[Idempotent Matrix]
+A square matrix $\mat{A}$ is called \textbf{idempotent} if $\mat{A}^2 = \mat{A}$.
+\end{definition}
+Think of an idempotent matrix as an operation that, once performed, has no further effect if applied again. Projecting a vector onto a subspace is a prime example: projecting the already projected vector doesn't change it.
+
+\begin{definition}[Orthogonal Projection Matrix]
+A square matrix $\mat{P}$ is called an \textbf{orthogonal projection matrix} if it is both:
+\begin{enumerate}
+    \item \textbf{Symmetric}: $\mat{P}\transpose = \mat{P}$.
+    \item \textbf{Idempotent}: $\mat{P}^2 = \mat{P}$.
+\end{enumerate}
+\end{definition}
+
+Why these two properties? Symmetry ensures that the projection is orthogonal (we'll see this more clearly later), and idempotency captures the "projecting once is enough" idea.
+
+\begin{claim}
+The eigenvalues of an orthogonal projection matrix $\mat{P}$ are either 0 or 1. The multiplicity of the eigenvalue 1 is equal to the rank of $\mat{P}$, $\rank(\mat{P})$, and the multiplicity of the eigenvalue 0 is equal to the dimension of the kernel (null space) of $\mat{P}$, $\dim(\Ker(\mat{P}))$.
+\end{claim}
+
+\begin{proof}[Proof Sketch]
+Let $\lambda$ be an eigenvalue of $\mat{P}$ with corresponding eigenvector $\vect{v} \neq \vect{0}$, so $\mat{P}\vect{v} = \lambda\vect{v}$.
+Applying $\mat{P}$ again, and using idempotency:
+\[ \mat{P}^2 \vect{v} = \mat{P}(\mat{P}\vect{v}) = \mat{P}(\lambda\vect{v}) = \lambda(\mat{P}\vect{v}) = \lambda(\lambda\vect{v}) = \lambda^2 \vect{v} \]
+But $\mat{P}^2 = \mat{P}$, so $\mat{P}^2 \vect{v} = \mat{P}\vect{v} = \lambda \vect{v}$.
+Therefore, we must have $\lambda \vect{v} = \lambda^2 \vect{v}$. Since $\vect{v} \neq \vect{0}$, this implies $\lambda = \lambda^2$, which means $\lambda(\lambda - 1) = 0$. Thus, the only possible eigenvalues are $\lambda = 0$ or $\lambda = 1$.
+
+Since $\mat{P}$ is symmetric, it is diagonalizable. Its trace equals the sum of its eigenvalues, and its rank equals the number of non-zero eigenvalues. Let $r = \rank(\mat{P})$. Since the only non-zero eigenvalue is 1, there must be $r$ eigenvalues equal to 1. The remaining $n-r$ eigenvalues must be 0, where $n$ is the dimension of the matrix. The dimension of the eigenspace corresponding to $\lambda=0$ is $\dim(\Ker(\mat{P}))$, which is $n-r$.
+\end{proof}
+
+\subsection{Projection onto the Column Space of \texorpdfstring{$\mat{X}$}{X}}
+
+A particularly important projection matrix in regression is the one that projects vectors onto the subspace spanned by the columns of the design matrix $\mat{X}$.
+
+\begin{definition}[Projection Matrix onto $\Image(\mat{X})$]
+Let $\mat{X}$ be an $n \times m$ matrix with \textbf{full column rank} (i.e., its columns are linearly independent, implying $m \leq n$). The \textbf{projection matrix onto the column space (image) of $\mat{X}$} is defined as:
+\[ \mat{P}_{\mat{X}} = \mat{X} (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \]
+\end{definition}
+
+\begin{remark}
+The condition that $\mat{X}$ has full column rank ensures that the $m \times m$ matrix $\mat{X}\transpose \mat{X}$ (often called the Gram matrix) is invertible. Why? If $\mat{X}\transpose \mat{X} \vect{u} = \vect{0}$ for some $\vect{u} \in \RR^m$, then $\vect{u}\transpose \mat{X}\transpose \mat{X} \vect{u} = 0$, which means $(\mat{X}\vect{u})\transpose (\mat{X}\vect{u}) = \norm{\mat{X}\vect{u}}^2 = 0$. This implies $\mat{X}\vect{u} = \vect{0}$. Since the columns of $\mat{X}$ are linearly independent, the only solution is $\vect{u} = \vect{0}$. Thus, $\mat{X}\transpose \mat{X}$ is invertible.
+\end{remark}
+
+Let's verify that $\mat{P}_{\mat{X}}$ is indeed an orthogonal projection matrix and projects onto the intended space.
+
+\begin{claim}
+$\mat{P}_{\mat{X}} = \mat{X} (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose$ is an orthogonal projection matrix onto $\Image(\mat{X})$.
+\end{claim}
+
+\begin{proof} We need to show three things:
+\begin{enumerate}
+    \item \textbf{Symmetry:} We check if $\mat{P}_{\mat{X}}\transpose = \mat{P}_{\mat{X}}$.
+    \begin{align*} \mat{P}_{\mat{X}}\transpose &= \left( \mat{X} (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \right)\transpose \\ &= (\mat{X}\transpose)\transpose \left( (\mat{X}\transpose \mat{X})^{-1} \right)\transpose \mat{X}\transpose \\ &= \mat{X} \left( (\mat{X}\transpose \mat{X})\transpose \right)^{-1} \mat{X}\transpose \quad \text{(since } (A^{-1})\transpose = (A\transpose)^{-1} \text{)} \\ &= \mat{X} \left( \mat{X}\transpose (\mat{X}\transpose)\transpose \right)^{-1} \mat{X}\transpose \\ &= \mat{X} (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \\ &= \mat{P}_{\mat{X}} \end{align*}
+    Thus, $\mat{P}_{\mat{X}}$ is symmetric.
+
+    \item \textbf{Idempotency:} We check if $\mat{P}_{\mat{X}}^2 = \mat{P}_{\mat{X}}$.
+    \begin{align*} \mat{P}_{\mat{X}}^2 &= \left( \mat{X} (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \right) \left( \mat{X} (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \right) \\ &= \mat{X} (\mat{X}\transpose \mat{X})^{-1} (\mat{X}\transpose \mat{X}) (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \\ &= \mat{X} \mat{I}_m (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \\ &= \mat{X} (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \\ &= \mat{P}_{\mat{X}} \end{align*}
+    Thus, $\mat{P}_{\mat{X}}$ is idempotent.
+
+    \item \textbf{Projection onto $\Image(\mat{X})$:} We need to show that for any vector $\vect{v} \in \RR^n$, the result $\mat{P}_{\mat{X}}\vect{v}$ lies in the column space of $\mat{X}$, i.e., $\mat{P}_{\mat{X}}\vect{v} \in \Image(\mat{X})$.
+    Let $\vect{v} \in \RR^n$. Consider $\mat{P}_{\mat{X}}\vect{v} = \mat{X} [(\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \vect{v}]$.
+    Let $\vect{u} = (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \vect{v}$. Note that $\vect{u}$ is an $m \times 1$ vector (a vector of coefficients).
+    Then $\mat{P}_{\mat{X}}\vect{v} = \mat{X} \vect{u}$. This is, by definition, a linear combination of the columns of $\mat{X}$ with coefficients given by the entries of $\vect{u}$. Therefore, $\mat{P}_{\mat{X}}\vect{v}$ must be in the column space (image) of $\mat{X}$.
+\end{enumerate}
+Since $\mat{P}_{\mat{X}}$ is symmetric and idempotent, it is an orthogonal projection matrix. Since its output always lies in $\Image(\mat{X})$, it projects onto a subspace of $\Image(\mat{X})$. We will see in Property 8 below that it actually projects onto the entirety of $\Image(\mat{X})$.
+\end{proof}
+
+\subsection{Key Properties of Projection Matrices}
+
+The following properties are fundamental for understanding least squares and related concepts. They are likely among the most important results in this course.
+
+\begin{proposition}[Properties of $\mat{P}_{\mat{X}}$]
+\label{prop:Px_properties}
+Let $\mat{X}$ be an $n \times m$ matrix with full column rank ($m \leq n$). Then the projection matrix $\mat{P}_{\mat{X}} = \mat{X}(\mat{X}\transpose \mat{X})^{-1}\mat{X}\transpose$ has the following properties:
+\begin{enumerate}
+    \item $\mat{P}_{\mat{X}}$ is symmetric. (Proven above)
+    \item $\mat{P}_{\mat{X}}$ is idempotent, $\mat{P}_{\mat{X}}^2 = \mat{P}_{\mat{X}}$. (Proven above)
+    \item $\mat{P}_{\mat{X}} \mat{X} = \mat{X}$.
+        \begin{proof} $\mat{P}_{\mat{X}} \mat{X} = \left( \mat{X} (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \right) \mat{X} = \mat{X} (\mat{X}\transpose \mat{X})^{-1} (\mat{X}\transpose \mat{X}) = \mat{X} \mat{I}_m = \mat{X}$.
+        (Interpretation: Projecting the columns of $\mat{X}$ onto their own span leaves them unchanged.)
+        \end{proof}
+    \item $\mat{X}\transpose (\mat{I} - \mat{P}_{\mat{X}}) = \mat{0} \in \RR^{m \times n}$.
+        \begin{proof} $\mat{X}\transpose (\mat{I} - \mat{P}_{\mat{X}}) = \mat{X}\transpose \mat{I} - \mat{X}\transpose \mat{P}_{\mat{X}} = \mat{X}\transpose - \mat{X}\transpose (\mat{X} (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose) = \mat{X}\transpose - (\mat{X}\transpose \mat{X}) (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose = \mat{X}\transpose - \mat{I}_m \mat{X}\transpose = \mat{X}\transpose - \mat{X}\transpose = \mat{0}$.
+        (Interpretation: The columns of $\mat{X}$ are orthogonal to the "residual projection" $\mat{I} - \mat{P}_{\mat{X}}$. We'll see this matrix projects onto the orthogonal complement space.)
+        \end{proof}
+    \item $\mat{P}_{\mat{X}} \vect{v} \in \Image(\mat{X})$ for all $\vect{v} \in \RR^n$. (Proven above)
+    \item If $m=n$ and $\mat{X}$ is invertible, then $\mat{P}_{\mat{X}} = \mat{I}$.
+        \begin{proof} If $\mat{X}$ is $n \times n$ and invertible, then $\mat{X}\transpose$ is also invertible.
+        $\mat{P}_{\mat{X}} = \mat{X} (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose = \mat{X} \mat{X}^{-1} (\mat{X}\transpose)^{-1} \mat{X}\transpose = \mat{I} \mat{I} = \mat{I}$.
+        (Interpretation: If the columns of $\mat{X}$ span the entire space $\RR^n$, projecting onto that space leaves every vector unchanged.)
+        \end{proof}
+    \item $(\mat{I} - \mat{P}_{\mat{X}}) \vect{v} \in \Image(\mat{X})^{\perp}$ for all $\vect{v} \in \RR^n$. (See Proposition \ref{prop:complement_projection} below.)
+    \item If $\vect{w} \in \Image(\mat{X})$, then $\mat{P}_{\mat{X}} \vect{w} = \vect{w}$.
+        \begin{proof} % Corrected environment
+        If $\vect{w} \in \Image(\mat{X})$, then $\vect{w} = \mat{X}\vect{a}$ for some $\vect{a} \in \RR^m$. Then $\mat{P}_{\mat{X}}\vect{w} = \mat{P}_{\mat{X}}(\mat{X}\vect{a}) = (\mat{P}_{\mat{X}}\mat{X})\vect{a}$. By Property 3, $\mat{P}_{\mat{X}}\mat{X} = \mat{X}$. So, $\mat{P}_{\mat{X}}\vect{w} = \mat{X}\vect{a} = \vect{w}$.
+        (Interpretation: Vectors already in the subspace are unaffected by the projection.)
+        \end{proof} % Corrected environment
+    \item If $\vect{w} \in \Image(\mat{X})^{\perp}$, then $\mat{P}_{\mat{X}} \vect{w} = \vect{0}$.
+        \begin{proof} If $\vect{w} \in \Image(\mat{X})^{\perp}$, then $\vect{w}$ is orthogonal to every column of $\mat{X}$. This means $\mat{X}\transpose \vect{w} = \vect{0}$. Then $\mat{P}_{\mat{X}}\vect{w} = \mat{X} (\mat{X}\transpose \mat{X})^{-1} (\mat{X}\transpose \vect{w}) = \mat{X} (\mat{X}\transpose \mat{X})^{-1} \vect{0} = \vect{0}$.
+        (Interpretation: Vectors orthogonal to the subspace are projected to the zero vector.)
+        \end{proof}
+    \item If $\mat{Z}$ is another $n \times k$ matrix such that $\Image(\mat{Z}) = \Image(\mat{X})$, then $\mat{P}_{\mat{Z}} = \mat{P}_{\mat{X}}$. This means that $\mat{P}_{\mat{X}}$ depends on $\mat{X}$ only through the subspace spanned by its columns. Hence, for an arbitrary linear subspace $M \subseteq \RR^n$, we can define the projection matrix $\mat{P}_{M}$ onto $M$. An explicit form for $\mat{P}_{M}$ can be obtained by taking any basis of $M$, stacking its elements as columns in a matrix $\mat{X}$, then forming $\mat{P}_{M} := \mat{X}(\mat{X}\transpose \mat{X})^{-1}\mat{X}\transpose$.
+    \item If $L$ and $M$ are two subspaces with $L \subseteq M$, then $\mat{P}_{M} \mat{P}_{L} = \mat{P}_{L} \mat{P}_{M} = \mat{P}_{L}$.
+        \begin{proof} % Corrected environment
+        If $\vect{v} \in \RR^n$, then $\mat{P}_L \vect{v} \in L$. Since $L \subseteq M$, we have $\mat{P}_L \vect{v} \in M$. By Property 8 applied to $\mat{P}_M$, if $\vect{w} = \mat{P}_L \vect{v} \in M$, then $\mat{P}_M \vect{w} = \vect{w}$. Thus, $\mat{P}_M (\mat{P}_L \vect{v}) = \mat{P}_L \vect{v}$. Since this holds for all $\vect{v}$, $\mat{P}_M \mat{P}_L = \mat{P}_L$.
+        For the other equality, $\mat{P}_L \mat{P}_M$: take transpose $\left(\mat{P}_M \mat{P}_L\right)\transpose = \mat{P}_L\transpose \mat{P}_M\transpose = \mat{P}_L \mat{P}_M$. Since $\mat{P}_L$ is symmetric, $(\mat{P}_L)\transpose = \mat{P}_L$. Thus $\mat{P}_L \mat{P}_M = \mat{P}_L$.
+        (Interpretation: Projecting onto a smaller subspace $L$ and then onto a larger subspace $M$ containing $L$ is the same as just projecting onto $L$. Projecting onto $M$ first and then $L$ is also just projecting onto $L$.)
+        \end{proof} % Corrected environment
+\end{enumerate}
+\end{proposition}
+
+\subsection{The Orthogonal Complement Space}
+
+\begin{definition}[Orthogonal Complement]
+Let $V$ be an inner product space (e.g., $\RR^n$ with the standard dot product) and let $U \subseteq V$ be a subspace. The \textbf{orthogonal complement} of $U$, denoted $U^{\perp}$, is defined as:
+\[ U^{\perp} = \{ \vect{v} \in V \mid \vect{u}\transpose \vect{v} = 0 \text{ for all } \vect{u} \in U \} \]
+$U^{\perp}$ is the set of all vectors in $V$ that are orthogonal to every vector in $U$. It is also a subspace of $V$.
+\end{definition}
+
+\begin{theorem}[Direct Sum Decomposition]
+Let $U$ be a subspace of a finite-dimensional inner product space $V$. Then $V$ can be written as the direct sum of $U$ and its orthogonal complement $U^{\perp}$:
+\[ V = U \oplus U^{\perp} \]
+This means that every vector $\vect{v} \in V$ can be uniquely written as $\vect{v} = \vect{u} + \vect{w}$, where $\vect{u} \in U$ and $\vect{w} \in U^{\perp}$. Furthermore, $\vect{u}$ is the orthogonal projection of $\vect{v}$ onto $U$, and $\vect{w}$ is the orthogonal projection of $\vect{v}$ onto $U^{\perp}$.
+\end{theorem}
+\begin{proof}
+Omitted (standard result from linear algebra, often proven using Gram-Schmidt orthogonalization).
+\end{proof}
+
+This theorem is geometrically intuitive: any vector can be uniquely decomposed into a component lying within a subspace and a component orthogonal to that subspace. The matrix $\mat{P}_{\mat{X}}$ finds the component in $U = \Image(\mat{X})$. What finds the component in $U^{\perp}$?
+
+\begin{proposition}[Projection onto the Orthogonal Complement]
+\label{prop:complement_projection}
+Let $\mat{P}_{\mat{X}}$ be the orthogonal projection matrix onto $M = \Image(\mat{X})$. Then:
+\begin{enumerate}
+    \item $\mat{I} - \mat{P}_{\mat{X}}$ is the orthogonal projection matrix onto the orthogonal complement $M^{\perp} = \Image(\mat{X})^{\perp}$. We denote this $\mat{P}_{M^{\perp}} = \mat{I} - \mat{P}_{\mat{X}}$.
+    \item If $L$ and $M$ are two subspaces of $\RR^n$ with $L \subseteq M$, then $\mat{P}_{M} - \mat{P}_{L}$ is the orthogonal projection matrix onto the subspace $M \cap L^{\perp}$ (the part of $M$ that is orthogonal to $L$). We denote this $\mat{P}_{M \cap L^{\perp}} = \mat{P}_M - \mat{P}_L$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}[Proof Sketch for Part 1]
+Let $\mat{Q} = \mat{I} - \mat{P}_{\mat{X}}$.
+\begin{itemize}
+    \item Symmetry: $\mat{Q}\transpose = (\mat{I} - \mat{P}_{\mat{X}})\transpose = \mat{I}\transpose - \mat{P}_{\mat{X}}\transpose = \mat{I} - \mat{P}_{\mat{X}} = \mat{Q}$. (Since $\mat{P}_{\mat{X}}$ is symmetric).
+    \item Idempotency: $\mat{Q}^2 = (\mat{I} - \mat{P}_{\mat{X}})(\mat{I} - \mat{P}_{\mat{X}}) = \mat{I} - \mat{P}_{\mat{X}} - \mat{P}_{\mat{X}} + \mat{P}_{\mat{X}}^2 = \mat{I} - 2\mat{P}_{\mat{X}} + \mat{P}_{\mat{X}} = \mat{I} - \mat{P}_{\mat{X}} = \mat{Q}$. (Since $\mat{P}_{\mat{X}}$ is idempotent).
+\end{itemize}
+So $\mat{Q}$ is an orthogonal projection matrix. Onto which space does it project?
+Let $\vect{v} \in \RR^n$. We know $\vect{v} = \mat{P}_{\mat{X}}\vect{v} + (\mat{I} - \mat{P}_{\mat{X}})\vect{v} = \vect{u} + \vect{w}$.
+Here $\vect{u} = \mat{P}_{\mat{X}}\vect{v} \in \Image(\mat{X})$ (by Prop \ref{prop:Px_properties}.5).
+We need to show that $\vect{w} = (\mat{I} - \mat{P}_{\mat{X}})\vect{v}$ lies in $\Image(\mat{X})^{\perp}$. To show this, we must show $\vect{w}$ is orthogonal to any vector in $\Image(\mat{X})$. Any vector in $\Image(\mat{X})$ can be written as $\mat{X}\vect{a}$ for some $\vect{a}$. We check the dot product:
+\[ (\mat{X}\vect{a})\transpose \vect{w} = (\mat{X}\vect{a})\transpose (\mat{I} - \mat{P}_{\mat{X}})\vect{v} = \vect{a}\transpose \mat{X}\transpose (\mat{I} - \mat{P}_{\mat{X}}) \vect{v} \]
+By Prop \ref{prop:Px_properties}.4, $\mat{X}\transpose (\mat{I} - \mat{P}_{\mat{X}}) = \mat{0}$. So the dot product is $\vect{a}\transpose \mat{0} \vect{v} = 0$.
+Thus, $\vect{w} = (\mat{I} - \mat{P}_{\mat{X}})\vect{v}$ is orthogonal to all vectors in $\Image(\mat{X})$, meaning $\vect{w} \in \Image(\mat{X})^{\perp}$.
+Since $\mat{Q}$ is an orthogonal projection matrix and its image is contained in $\Image(\mat{X})^{\perp}$, it must be the projection onto $\Image(\mat{X})^{\perp}$.
+\end{proof}
+
+\begin{proposition}
+Let $\mat{Q}$ be an $n \times n$ matrix of rank $m \leq n$ which is symmetric ($\mat{Q}\transpose = \mat{Q}$) and idempotent ($\mat{Q}^2 = \mat{Q}$). Then $\mat{Q}$ is the orthogonal projection matrix onto its own image, i.e., $\mat{Q} = \mat{P}_{M}$ where $M := \Image(\mat{Q})$.
+\end{proposition}
+\begin{proof}
+Exercise. (Hint: Show that any vector $\vect{v}$ can be written as $\mat{Q}\vect{v} + (\mat{I}-\mat{Q})\vect{v}$, show $\mat{Q}\vect{v} \in \Image(\mat{Q})$ and $(\mat{I}-\mat{Q})\vect{v} \in \Image(\mat{Q})^{\perp}$.)
+\end{proof}
+
+\section{Connections to Linear Algebra and OLS}
+
+Let's explore some further connections.
+
+\begin{question} \label{q:ker_im_relation}
+\begin{enumerate}
+    \item Assume $\mat{A}$ is a square matrix. Prove that $\Image(\mat{A}\transpose) = \Ker(\mat{A})^{\perp}$. (This is a fundamental theorem of linear algebra).
+    \item Claim (without proof): A matrix $\mat{A}$ is non-diagonalizable if and only if there exists at least one eigenvalue $\lambda_i$ of $\mat{A}$ for which the minimal polynomial has a factor $(x-\lambda_i)^k$ with $k \geq 2$. Equivalently, for some $k \geq 2$, $(A-\lambda_i I)^k = 0$ but $(A-\lambda_i I)^{k-1} \neq 0$. Use this claim to argue that if $\mat{A}$ is a symmetric matrix, then it must be diagonalizable.
+    \item Use these results to show that $\mat{Q} = \mat{I} - \mat{P}_{\mat{X}}$ is the projection matrix onto the orthogonal complement of the column space of $\mat{X}$, i.e., $\Image(\mat{X})^{\perp}$. Write the spectral decomposition of $\mat{Q}$ in terms of the eigenvalues and eigenvectors of $\mat{P}_{\mat{X}}$.
+    \item Deduce from this that the Ordinary Least Squares (OLS) estimator $\hat{\vect{\beta}}_{OLS}$ minimizes the squared norm $\norm{\vect{Y} - \mat{X}\vect{\beta}}^2$. Also argue that as the rank of $\mat{X}$ increases (e.g., by adding more linearly independent predictors), this minimum norm value generally decreases (or stays the same).
+\end{enumerate}
+\end{question}
+
+\begin{proof}[Solution Sketches]
+\begin{enumerate}
+    \item \textbf{Proof of $\Image(\mat{A}\transpose) = \Ker(\mat{A})^{\perp}$}:
+    We need to show two inclusions:
+    (a) $\Image(\mat{A}\transpose) \subseteq \Ker(\mat{A})^{\perp}$: Let $\vect{y} \in \Image(\mat{A}\transpose)$. Then $\vect{y} = \mat{A}\transpose \vect{x}$ for some $\vect{x}$. Let $\vect{z} \in \Ker(\mat{A})$, meaning $\mat{A}\vect{z} = \vect{0}$. We need to show $\vect{y}$ is orthogonal to $\vect{z}$. Consider their dot product: $\vect{y}\transpose \vect{z} = (\mat{A}\transpose \vect{x})\transpose \vect{z} = \vect{x}\transpose \mat{A} \vect{z} = \vect{x}\transpose (\vect{0}) = 0$. Since this holds for any $\vect{z} \in \Ker(\mat{A})$, we have $\vect{y} \in \Ker(\mat{A})^{\perp}$.
+    (b) $\Ker(\mat{A})^{\perp} \subseteq \Image(\mat{A}\transpose)$: This relies on the dimension theorem: $\dim(\Image(\mat{A}\transpose)) = \rank(\mat{A}\transpose) = \rank(\mat{A})$. Also, $\dim(\Ker(\mat{A})) + \rank(\mat{A}) = n$ (where $\mat{A}$ is $n \times n$). Furthermore, $\dim(\Ker(\mat{A})^{\perp}) = n - \dim(\Ker(\mat{A}))$. Combining these gives $\dim(\Image(\mat{A}\transpose)) = \dim(\Ker(\mat{A})^{\perp})$. Since we already showed $\Image(\mat{A}\transpose)$ is a subspace of $\Ker(\mat{A})^{\perp}$, and they have the same dimension, they must be equal.
+
+    \item \textbf{Symmetric matrices are diagonalizable}: The Spectral Theorem for symmetric matrices states they are always diagonalizable (over $\RR$) with an orthonormal basis of eigenvectors. The provided claim gives a condition for non-diagonalizability related to the minimal polynomial. For a symmetric matrix $\mat{A}$, its minimal polynomial has only distinct linear factors $(x-\lambda_i)$, meaning $k=1$ for all eigenvalues. Thus, the condition for non-diagonalizability is never met. Alternatively, one can show directly that if $(\mat{A}-\lambda \mat{I})^2 \vect{v} = \vect{0}$, then for symmetric $\mat{A}$, it must be that $(\mat{A}-\lambda \mat{I}) \vect{v} = \vect{0}$, preventing $k \ge 2$.
+
+    \item \textbf{$\mat{Q} = \mat{I} - \mat{P}_{\mat{X}}$ projects onto $\Image(\mat{X})^{\perp}$}:
+    We already proved this in Proposition \ref{prop:complement_projection}. Let $M = \Image(\mat{X})$. We showed $\mat{Q} = \mat{I} - \mat{P}_{\mat{X}}$ is the projection matrix onto $M^{\perp}$.
+    \textbf{Spectral Decomposition}: Since $\mat{P}_{\mat{X}}$ is symmetric, it is diagonalizable. Its eigenvalues are 1 (with multiplicity $r = \rank(\mat{X})$) and 0 (with multiplicity $n-r$). Let $\{\vect{v}_1, \dots, \vect{v}_r\}$ be an orthonormal basis for the eigenspace of $\lambda=1$ (which is $\Image(\mat{X})$), and $\{\vect{v}_{r+1}, \dots, \vect{v}_n\}$ be an orthonormal basis for the eigenspace of $\lambda=0$ (which is $\Ker(\mat{P}_{\mat{X}}) = \Image(\mat{X})^{\perp}$).
+    The spectral decomposition of $\mat{P}_{\mat{X}}$ is $\mat{P}_{\mat{X}} = \sum_{i=1}^{r} 1 \cdot \vect{v}_i \vect{v}_i\transpose + \sum_{i=r+1}^{n} 0 \cdot \vect{v}_i \vect{v}_i\transpose = \sum_{i=1}^{r} \vect{v}_i \vect{v}_i\transpose$.
+    Now consider $\mat{Q} = \mat{I} - \mat{P}_{\mat{X}}$. Since $\mat{I} = \sum_{i=1}^{n} \vect{v}_i \vect{v}_i\transpose$ (using the full orthonormal basis of eigenvectors):
+    \[ \mat{Q} = \sum_{i=1}^{n} \vect{v}_i \vect{v}_i\transpose - \sum_{i=1}^{r} \vect{v}_i \vect{v}_i\transpose = \sum_{i=r+1}^{n} \vect{v}_i \vect{v}_i\transpose \]
+    This is the spectral decomposition of $\mat{Q}$. We can also see its eigenvalues:
+    If $\mat{P}_{\mat{X}}\vect{v} = \lambda \vect{v}$, then $\mat{Q}\vect{v} = (\mat{I} - \mat{P}_{\mat{X}})\vect{v} = \vect{v} - \lambda \vect{v} = (1-\lambda)\vect{v}$.
+    So, if $\lambda=1$ for $\mat{P}_{\mat{X}}$, the eigenvalue for $\mat{Q}$ is $1-1=0$.
+    If $\lambda=0$ for $\mat{P}_{\mat{X}}$, the eigenvalue for $\mat{Q}$ is $1-0=1$.
+    Thus, $\mat{Q}$ has eigenvalue 1 with multiplicity $n-r$ (corresponding to the basis of $\Image(\mat{X})^{\perp}$) and eigenvalue 0 with multiplicity $r$ (corresponding to the basis of $\Image(\mat{X})$).
+
+    \item \textbf{OLS Minimization and Rank}: We want to minimize $S(\vect{\beta}) = \norm{\vect{Y} - \mat{X}\vect{\beta}}^2$. The vector $\mat{X}\vect{\beta}$ is always in the column space $\Image(\mat{X})$. The problem asks to find the vector $\hat{\vect{Y}} = \mat{X}\vect{\beta}$ within $\Image(\mat{X})$ that is closest to $\vect{Y}$. From geometry (or the projection theorem), we know this closest vector is the orthogonal projection of $\vect{Y}$ onto $\Image(\mat{X})$. That is, $\hat{\vect{Y}} = \mat{P}_{\mat{X}}\vect{Y}$.
+    So, we need $\mat{X}\hat{\vect{\beta}} = \mat{P}_{\mat{X}}\vect{Y}$. Pre-multiplying by $\mat{X}\transpose$:
+    $\mat{X}\transpose \mat{X} \hat{\vect{\beta}} = \mat{X}\transpose \mat{P}_{\mat{X}} \vect{Y} = \mat{X}\transpose (\mat{X}(\mat{X}\transpose \mat{X})^{-1}\mat{X}\transpose) \vect{Y} = (\mat{X}\transpose \mat{X})(\mat{X}\transpose \mat{X})^{-1}\mat{X}\transpose \vect{Y} = \mat{X}\transpose \vect{Y}$.
+    This gives the normal equations $\mat{X}\transpose \mat{X} \hat{\vect{\beta}} = \mat{X}\transpose \vect{Y}$, whose solution is $\hat{\vect{\beta}}_{OLS} = (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \vect{Y}$ (assuming full rank).
+    The minimum value of the squared norm is $\norm{\vect{Y} - \hat{\vect{Y}}}^2 = \norm{\vect{Y} - \mat{P}_{\mat{X}}\vect{Y}}^2 = \norm{(\mat{I} - \mat{P}_{\mat{X}})\vect{Y}}^2$. This is the squared norm of the projection of $\vect{Y}$ onto the orthogonal complement space $\Image(\mat{X})^{\perp}$.
+    Now, suppose we augment $\mat{X}$ to $\mat{X}^*$ by adding more linearly independent columns, such that $\Image(\mat{X}) \subset \Image(\mat{X}^*)$. Let $M = \Image(\mat{X})$ and $M^* = \Image(\mat{X}^*)$. Since $M \subseteq M^*$, their orthogonal complements satisfy $(M^*)^{\perp} \subseteq M^{\perp}$. Projecting $\vect{Y}$ onto these complement spaces, the norm of the projection onto the smaller space $(M^*)^{\perp}$ must be less than or equal to the norm of the projection onto the larger space $M^{\perp}$. That is, $\norm{(\mat{I} - \mat{P}_{\mat{X}^*})\vect{Y}}^2 \leq \norm{(\mat{I} - \mat{P}_{\mat{X}})\vect{Y}}^2$. The residual sum of squares (the minimized norm) decreases (or stays the same) as we add more predictors (increase the rank of $\mat{X}$).
+\end{enumerate}
+\end{proof}
+
+\section{Expectation and Covariance of Random Vectors}
+
+We now shift focus to probability, specifically the properties of random vectors and matrices.
+
+\begin{definition}[Expectation of a Random Matrix/Vector]
+Let $\mat{Z}$ be an $n \times p$ random matrix, where each element $Z_{ij}$ is a random variable. The \textbf{expectation} of $\mat{Z}$ is the $n \times p$ matrix of expectations:
+\[ \E[\mat{Z}] = \begin{pmatrix} \E[Z_{11}] & \cdots & \E[Z_{1p}] \\ \vdots & \ddots & \vdots \\ \E[Z_{n1}] & \cdots & \E[Z_{np}] \end{pmatrix} \]
+If $\mat{Z}$ is a random vector ($p=1$), $\E[\vect{Z}]$ is the vector of the expectations of its components.
+\end{definition}
+
+\begin{proposition}[Properties of Expectation]
+Let $\mat{Z}, \mat{W}$ be random matrices of compatible dimensions, and let $\mat{A}, \mat{B}, \mat{C}$ be constant (non-random, deterministic) matrices of compatible dimensions.
+\begin{enumerate}
+    \item Linearity: $\E[\mat{Z} + \mat{W}] = \E[\mat{Z}] + \E[\mat{W}]$
+    \item Constant Multiplication: $\E[\mat{A} \mat{Z} \mat{B}] = \mat{A} \E[\mat{Z}] \mat{B}$
+    \item Affine Transformation: $\E[\mat{A} \mat{Z} + \mat{C}] = \mat{A} \E[\mat{Z}] + \mat{C}$ (Follows from 1 and 2)
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+These follow directly from the linearity of the expectation operator applied element-wise. For example, $(\E[\mat{A}\mat{Z}\mat{B}])_{ik} = \E[(\mat{A}\mat{Z}\mat{B})_{ik}] = \E[\sum_j \sum_l A_{ij} Z_{jl} B_{lk}]$. By linearity of scalar expectation, this is $\sum_j \sum_l A_{ij} \E[Z_{jl}] B_{lk} = (\mat{A} \E[\mat{Z}] \mat{B})_{ik}$.
+\end{proof}
+
+\begin{definition}[Covariance and Variance Matrices]
+Let $\vect{Z} \in \RR^p$ and $\vect{W} \in \RR^q$ be random vectors.
+\begin{enumerate}
+    \item The \textbf{covariance matrix} between $\vect{Z}$ and $\vect{W}$ is the $p \times q$ matrix:
+    \[ \Cov(\vect{Z}, \vect{W}) = \E\left[ (\vect{Z} - \E[\vect{Z}]) (\vect{W} - \E[\vect{W}])\transpose \right] \]
+    The $(i, j)$-th element of this matrix is $\Cov(Z_i, W_j) = \E[(Z_i - \E[Z_i])(W_j - \E[W_j])]$.
+
+    \item The \textbf{variance-covariance matrix} (or simply variance matrix) of $\vect{Z}$ is the $p \times p$ matrix:
+    \[ \Var(\vect{Z}) = \Cov(\vect{Z}, \vect{Z}) = \E\left[ (\vect{Z} - \E[\vect{Z}]) (\vect{Z} - \E[\vect{Z}])\transpose \right] \]
+\end{enumerate}
+\end{definition}
+
+\begin{claim}
+The $(i, j)$-th element of $\Var(\vect{Z})$ is $\Cov(Z_i, Z_j)$. In particular, the diagonal elements $(\Var(\vect{Z}))_{ii}$ are the variances $\Var(Z_i)$, and the off-diagonal elements $(\Var(\vect{Z}))_{ij}$ are the covariances $\Cov(Z_i, Z_j)$. Since $\Cov(Z_i, Z_j) = \Cov(Z_j, Z_i)$, the variance matrix $\Var(\vect{Z})$ is symmetric.
+\end{claim}
+\begin{proof}
+Let $\vect{\mu} = \E[\vect{Z}]$.
+\[ \Var(\vect{Z}) = \E \left[ (\vect{Z} - \vect{\mu}) (\vect{Z} - \vect{\mu})\transpose \right] = \E \left[ \begin{pmatrix} Z_1 - \mu_1 \\ \vdots \\ Z_p - \mu_p \end{pmatrix} \begin{pmatrix} Z_1 - \mu_1 & \cdots & Z_p - \mu_p \end{pmatrix} \right] \]
+\[ = \E \left[ \begin{pmatrix} (Z_1 - \mu_1)^2 & (Z_1 - \mu_1)(Z_2 - \mu_2) & \cdots & (Z_1 - \mu_1)(Z_p - \mu_p) \\ (Z_2 - \mu_1)(Z_1 - \mu_1) & (Z_2 - \mu_2)^2 & \cdots & (Z_2 - \mu_2)(Z_p - \mu_p) \\ \vdots & \vdots & \ddots & \vdots \\ (Z_p - \mu_p)(Z_1 - \mu_1) & (Z_p - \mu_p)(Z_2 - \mu_2) & \cdots & (Z_p - \mu_p)^2 \end{pmatrix} \right] \]
+Taking the expectation inside the matrix element-wise:
+\[ (\Var(\vect{Z}))_{ij} = \E[(Z_i - \mu_i)(Z_j - \mu_j)] = \Cov(Z_i, Z_j) \]
+The diagonal elements are $(\Var(\vect{Z}))_{ii} = \Cov(Z_i, Z_i) = \Var(Z_i)$.
+Since $\Cov(Z_i, Z_j) = \E[(Z_i - \mu_i)(Z_j - \mu_j)] = \E[(Z_j - \mu_j)(Z_i - \mu_i)] = \Cov(Z_j, Z_i)$, we have $(\Var(\vect{Z}))_{ij} = (\Var(\vect{Z}))_{ji}$, so the matrix is symmetric.
+\end{proof}
+
+\begin{proposition}[Properties of Covariance Matrices]
+Let $\vect{Z}, \vect{W}, \vect{R}$ be random vectors (with appropriate dimensions), $\mat{A}, \mat{B}$ be constant matrices, and $\vect{a}$ be a constant vector.
+\begin{enumerate}
+    \item $\Cov(\vect{Z}, \vect{W}) = \Cov(\vect{W}, \vect{Z})\transpose$
+    \item $\Cov(\vect{Z} + \vect{R}, \vect{W}) = \Cov(\vect{Z}, \vect{W}) + \Cov(\vect{R}, \vect{W})$
+    \item $\Cov(\mat{A} \vect{Z}, \mat{B} \vect{W}) = \mat{A} \Cov(\vect{Z}, \vect{W}) \mat{B}\transpose$
+    \item $\Var(\mat{A} \vect{Z}) = \Cov(\mat{A}\vect{Z}, \mat{A}\vect{Z}) = \mat{A} \Cov(\vect{Z}, \vect{Z}) \mat{A}\transpose = \mat{A} \Var(\vect{Z}) \mat{A}\transpose$ (from 3)
+    \item $\Var(\vect{a}\transpose \vect{Z}) = \vect{a}\transpose \Var(\vect{Z}) \vect{a}$ (from 4, noting $\vect{a}\transpose$ is $1 \times p$ and the result is $1 \times 1$)
+    \item $\Var(\vect{Z})$ is a symmetric positive semi-definite matrix. (Symmetry shown above. Positive semi-definiteness follows from 5, since $\Var(\vect{a}\transpose \vect{Z})$ is the variance of a scalar random variable, which must be $\geq 0$. So, $\vect{a}\transpose \Var(\vect{Z}) \vect{a} \geq 0$ for all $\vect{a}$.)
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}[Proof of Property 3]
+Let $\E[\vect{Z}] = \vect{\mu}_Z$ and $\E[\vect{W}] = \vect{\mu}_W$.
+Then $\E[\mat{A}\vect{Z}] = \mat{A}\vect{\mu}_Z$ and $\E[\mat{B}\vect{W}] = \mat{B}\vect{\mu}_W$.
+\begin{align*} \Cov(\mat{A} \vect{Z}, \mat{B} \vect{W}) &= \E\left[ (\mat{A}\vect{Z} - \mat{A}\vect{\mu}_Z) (\mat{B}\vect{W} - \mat{B}\vect{\mu}_W)\transpose \right] \\ &= \E\left[ \mat{A}(\vect{Z} - \vect{\mu}_Z) ( \mat{B}(\vect{W} - \vect{\mu}_W) )\transpose \right] \\ &= \E\left[ \mat{A}(\vect{Z} - \vect{\mu}_Z) (\vect{W} - \vect{\mu}_W)\transpose \mat{B}\transpose \right] \\ &= \mat{A} \E\left[ (\vect{Z} - \vect{\mu}_Z) (\vect{W} - \vect{\mu}_W)\transpose \right] \mat{B}\transpose \quad \text{(Using } \E[\mat{C}\mat{U}\mat{D}] = \mat{C}\E[\mat{U}]\mat{D} \text{)} \\ &= \mat{A} \Cov(\vect{Z}, \vect{W}) \mat{B}\transpose \end{align*}
+The other properties can be proven similarly using the definitions and properties of expectation.
+\end{proof}
+
+\begin{question}[Bernoulli Example - Original from Page 4]
+Let $X \sim \operatorname{Ber}(p)$ and $Y \sim \operatorname{Ber}(q)$ be Bernoulli random variables. Define $M = XY$. Suppose we know $M \sim \operatorname{Ber}(r)$. Note that $M=1$ if and only if $X=1$ and $Y=1$, so $P(M=1) = P(X=1, Y=1) = r$.
+Let $\vect{Z} = (X, Y, M)\transpose$.
+\begin{enumerate}[label=(\alph*)]
+    \item Find the expectation vector $\E[\vect{Z}]$ and the covariance matrix $\Var(\vect{Z})$.
+    \item Define the map $A: \RR^3 \to \RR$ by $A(\vect{v}) = 2v_1 - 3v_2 + 4v_3 + 7$. Is this map linear? Calculate the expectation and variance of the random variable $W = A(\vect{Z})$.
+    \item Now assume $X$ and $Y$ are independent. Calculate the probability $P(X=1, Y=1, M=1)$.
+\end{enumerate}
+\end{question}
+
+\begin{proof}
+\begin{enumerate}[label=(\alph*)]
+    \item \textbf{Expectation Vector $\E[\vect{Z}]$}:
+    We need $\E[X]$, $\E[Y]$, and $\E[M]$.
+    Since $X \sim \operatorname{Ber}(p)$, $\E[X] = p$.
+    Since $Y \sim \operatorname{Ber}(q)$, $\E[Y] = q$.
+    Since $M \sim \operatorname{Ber}(r)$, $\E[M] = r$.
+    Therefore,
+    \[ \E[\vect{Z}] = \begin{pmatrix} p \\ q \\ r \end{pmatrix} \]
+
+    \textbf{Covariance Matrix $\Var(\vect{Z})$}:
+    This is a $3 \times 3$ symmetric matrix:
+    \[ \Var(\vect{Z}) = \begin{pmatrix} \Var(X) & \Cov(X, Y) & \Cov(X, M) \\ \Cov(Y, X) & \Var(Y) & \Cov(Y, M) \\ \Cov(M, X) & \Cov(M, Y) & \Var(M) \end{pmatrix} \]
+    We calculate the components:
+    \begin{itemize}
+        \item $\Var(X) = p(1-p)$
+        \item $\Var(Y) = q(1-q)$
+        \item $\Var(M) = r(1-r)$
+        \item $\Cov(X, Y) = \E[XY] - \E[X]\E[Y] = \E[M] - pq = r - pq$.
+        \item $\Cov(X, M) = \E[XM] - \E[X]\E[M]$. Since $X$ is 0 or 1, $X^2=X$. $M=XY$. So $XM = X(XY) = X^2Y = XY = M$. Thus, $\Cov(X, M) = \E[M] - \E[X]\E[M] = r - pr = r(1-p)$.
+        \item $\Cov(Y, M) = \E[YM] - \E[Y]\E[M]$. Similarly, $Y^2=Y$. $YM = Y(XY) = XY^2 = XY = M$. Thus, $\Cov(Y, M) = \E[M] - \E[Y]\E[M] = r - qr = r(1-q)$.
+    \end{itemize}
+    Using symmetry ($\Cov(A, B) = \Cov(B, A)$), the covariance matrix is:
+    \[ \Var(\vect{Z}) = \begin{pmatrix} p(1-p) & r - pq & r(1-p) \\ r - pq & q(1-q) & r(1-q) \\ r(1-p) & r(1-q) & r(1-r) \end{pmatrix} \]
+
+    \item \textbf{Map $A(\vect{v})$ and $W = A(\vect{Z})$}:
+    The map $A(\vect{v}) = 2v_1 - 3v_2 + 4v_3 + 7$ is an \textbf{affine map}, not strictly linear because of the constant term +7. A linear map requires $A(\vect{0}) = \vect{0}$. However, we can write $A(\vect{v}) = \vect{a}\transpose \vect{v} + c$, where $\vect{a} = (2, -3, 4)\transpose$ and $c = 7$.
+    Let $W = A(\vect{Z}) = 2X - 3Y + 4M + 7$.
+    \textbf{Expectation of W}:
+    Using linearity of expectation:
+    \[ \E[W] = \E[2X - 3Y + 4M + 7] = 2\E[X] - 3\E[Y] + 4\E[M] + 7 = 2p - 3q + 4r + 7 \]
+    Alternatively, using the property $\E[\vect{a}\transpose \vect{Z} + c] = \vect{a}\transpose \E[\vect{Z}] + c$:
+    \[ \E[W] = \begin{pmatrix} 2 & -3 & 4 \end{pmatrix} \begin{pmatrix} p \\ q \\ r \end{pmatrix} + 7 = (2p - 3q + 4r) + 7 \]
+
+    \textbf{Variance of W}:
+    The constant term does not affect variance: $\Var(W) = \Var(2X - 3Y + 4M)$.
+    Using the property $\Var(\vect{a}\transpose \vect{Z}) = \vect{a}\transpose \Var(\vect{Z}) \vect{a}$:
+    \begin{align*} \Var(W) &= \begin{pmatrix} 2 & -3 & 4 \end{pmatrix} \Var(\vect{Z}) \begin{pmatrix} 2 \\ -3 \\ 4 \end{pmatrix} \\ &= \begin{pmatrix} 2 & -3 & 4 \end{pmatrix} \begin{pmatrix} p(1-p) & r - pq & r(1-p) \\ r - pq & q(1-q) & r(1-q) \\ r(1-p) & r(1-q) & r(1-r) \end{pmatrix} \begin{pmatrix} 2 \\ -3 \\ 4 \end{pmatrix} \end{align*}
+    Expanding this matrix multiplication gives the variance. For example, the (1,1) term of the result is $4 \Var(X) + 9 \Var(Y) + 16 \Var(M)$, plus cross-terms involving covariances: $2 \times (2)(-3) \Cov(X,Y) + 2 \times (2)(4) \Cov(X,M) + 2 \times (-3)(4) \Cov(Y,M)$.
+    \[ \Var(W) = 4\Var(X) + 9\Var(Y) + 16\Var(M) - 12\Cov(X,Y) + 16\Cov(X,M) - 24\Cov(Y,M) \]
+    Substituting the expressions for variances and covariances gives the final answer in terms of $p, q, r$.
+
+    \item \textbf{Independence Assumption}:
+    If $X$ and $Y$ are independent, then $P(X=1, Y=1) = P(X=1)P(Y=1) = pq$.
+    We know $P(M=1) = P(X=1, Y=1)$, so under independence, $r = pq$.
+    The question asks for $P(X=1, Y=1, M=1)$.
+    Since $M=XY$, the event $\{M=1\}$ is exactly the same as the event $\{X=1 \text{ and } Y=1\}$.
+    Therefore, $P(X=1, Y=1, M=1) = P(X=1, Y=1)$.
+    Under independence, this probability is $pq$.
+\end{enumerate}
+\end{proof}
+
+\begin{question}[Variance Comparison - Original from Page 4]
+Let $\vect{Z}, \vect{W} \in \RR^p$ be random vectors. Show that the following are equivalent:
+\begin{enumerate}
+    \item For all constant vectors $\vect{v} \in \RR^p$, $\Var(\vect{v}\transpose \vect{Z}) \geq \Var(\vect{v}\transpose \vect{W})$.
+    \item The matrix $\mat{B} := \Var(\vect{Z}) - \Var(\vect{W})$ is positive semi-definite (psd).
+    \item The matrix square root $\mat{B}^{1/2}$ exists. (Assuming $\mat{B}$ is symmetric, which it is since $\Var(\vect{Z})$ and $\Var(\vect{W})$ are symmetric).
+\end{enumerate}
+\end{question}
+
+\begin{proof}
+We will show (1) $\iff$ (2). The equivalence (2) $\iff$ (3) is a standard result from linear algebra for symmetric matrices: a symmetric matrix is positive semi-definite if and only if its (unique, positive semi-definite) square root exists.
+
+\textbf{(1) $\implies$ (2)}:
+Assume $\Var(\vect{v}\transpose \vect{Z}) \geq \Var(\vect{v}\transpose \vect{W})$ for all $\vect{v} \in \RR^p$.
+Using Property 5 of covariance matrices, $\Var(\vect{v}\transpose \vect{Z}) = \vect{v}\transpose \Var(\vect{Z}) \vect{v}$ and $\Var(\vect{v}\transpose \vect{W}) = \vect{v}\transpose \Var(\vect{W}) \vect{v}$.
+The assumption becomes:
+\[ \vect{v}\transpose \Var(\vect{Z}) \vect{v} \geq \vect{v}\transpose \Var(\vect{W}) \vect{v} \quad \text{for all } \vect{v} \in \RR^p \]
+Rearranging gives:
+\[ \vect{v}\transpose \Var(\vect{Z}) \vect{v} - \vect{v}\transpose \Var(\vect{W}) \vect{v} \geq 0 \]
+\[ \vect{v}\transpose (\Var(\vect{Z}) - \Var(\vect{W})) \vect{v} \geq 0 \]
+Let $\mat{B} = \Var(\vect{Z}) - \Var(\vect{W})$. We have shown that $\vect{v}\transpose \mat{B} \vect{v} \geq 0$ for all $\vect{v} \in \RR^p$.
+This is the definition of the matrix $\mat{B}$ being positive semi-definite.
+
+\textbf{(2) $\implies$ (1)}:
+Assume $\mat{B} = \Var(\vect{Z}) - \Var(\vect{W})$ is positive semi-definite.
+By definition, this means $\vect{v}\transpose \mat{B} \vect{v} \geq 0$ for all $\vect{v} \in \RR^p$.
+Substituting back $\mat{B}$:
+\[ \vect{v}\transpose (\Var(\vect{Z}) - \Var(\vect{W})) \vect{v} \geq 0 \]
+\[ \vect{v}\transpose \Var(\vect{Z}) \vect{v} - \vect{v}\transpose \Var(\vect{W}) \vect{v} \geq 0 \]
+Using Property 5 again:
+\[ \Var(\vect{v}\transpose \vect{Z}) - \Var(\vect{v}\transpose \vect{W}) \geq 0 \]
+\[ \Var(\vect{v}\transpose \vect{Z}) \geq \Var(\vect{v}\transpose \vect{W}) \]
+This holds for all $\vect{v} \in \RR^p$.
+
+Thus, (1) and (2) are equivalent. As noted, (2) is equivalent to (3) for symmetric matrices.
+\end{proof}
+
+\section{The Linear Model}
+
+We now introduce the standard linear regression model.
+
+\begin{definition}[Linear Model]
+The relationship between a response variable $Y_i$ and a set of predictors $X_{i1}, \dots, X_{ip}$ for observation $i$ ($i=1, \dots, n$) is modeled as:
+\[ Y_i = \beta_0 + \beta_1 X_{i1} + \dots + \beta_p X_{ip} + \epsilon_i = \sum_{j=0}^{p} \beta_j X_{ij} + \epsilon_i \]
+where $X_{i0} = 1$ for all $i$. The terms $\epsilon_i$ are random errors, typically assumed to satisfy:
+\begin{itemize}
+    \item Zero mean: $\E[\epsilon_i] = 0$ for all $i$.
+    \item Constant variance (homoscedasticity): $\Var(\epsilon_i) = \sigma^2$ for all $i$.
+    \item Uncorrelated errors: $\Cov(\epsilon_i, \epsilon_{i'}) = 0$ for $i \neq i'$.
+\end{itemize}
+These assumptions can be summarized as $\E[\vect{\epsilon}] = \vect{0}$ and $\Cov(\vect{\epsilon}) = \sigma^2 \mat{I}_n$, where $\vect{\epsilon} = (\epsilon_1, \dots, \epsilon_n)\transpose$.
+
+The model parameters are the coefficients $\vect{\beta} = (\beta_0, \beta_1, \dots, \beta_p)\transpose$ and the error variance $\sigma^2$.
+\end{definition}
+
+\textbf{Matrix Notation}:
+The model for all $n$ observations can be written compactly using matrices. Let:
+\[ \vect{Y} = \begin{pmatrix} Y_1 \\ \vdots \\ Y_n \end{pmatrix}, \quad \mat{X} = \begin{pmatrix} 1 & X_{11} & \cdots & X_{1p} \\ 1 & X_{21} & \cdots & X_{2p} \\ \vdots & \vdots & \ddots & \vdots \\ 1 & X_{n1} & \cdots & X_{np} \end{pmatrix}, \quad \vect{\beta} = \begin{pmatrix} \beta_0 \\ \beta_1 \\ \vdots \\ \beta_p \end{pmatrix}, \quad \vect{\epsilon} = \begin{pmatrix} \epsilon_1 \\ \vdots \\ \epsilon_n \end{pmatrix} \]
+Here, $\vect{Y}$ is $n \times 1$, $\mat{X}$ is $n \times (p+1)$, $\vect{\beta}$ is $(p+1) \times 1$, and $\vect{\epsilon}$ is $n \times 1$.
+The model becomes:
+\[ \vect{Y} = \mat{X} \vect{\beta} + \vect{\epsilon}, \quad \text{with } \E[\vect{\epsilon}] = \vect{0}, \quad \Cov(\vect{\epsilon}) = \sigma^2 \mat{I}_n \]
+
+\textbf{Assumptions vs. Results}:
+It's crucial to distinguish between the assumptions we make about the model and the mathematical results derived from those assumptions or from estimation procedures.
+
+Consider the following statements related to the linear model and the Ordinary Least Squares (OLS) estimator $\hat{\vect{\beta}} = (\mat{X}\transpose \mat{X})^{-1} \mat{X}\transpose \vect{Y}$. Identify each as primarily an assumption of the model or a mathematical result/definition.
+
+\begin{enumerate}
+    \item $\hat{\vect{\beta}} = \argmin_{\vect{b}} \norm{\vect{Y} - \mat{X}\vect{b}}^2$.
+        \textbf{Result/Definition}. This is the definition of the OLS estimator - it's the vector that minimizes the sum of squared residuals. It's derived from the principle of least squares, not assumed about the underlying reality.
+    \item $\mat{X}\vect{\beta} = \E[\vect{Y} | \mat{X}]$.
+        \textbf{Assumption}. This assumes that the conditional expectation of the response vector $\vect{Y}$, given the predictors $\mat{X}$, is a linear function of the parameters $\vect{\beta}$, defined by the matrix $\mat{X}$. This is the core "linearity" assumption. If $\mat{X}$ is considered fixed/deterministic, this simplifies to $\E[\vect{Y}] = \mat{X}\vect{\beta}$.
+    \item $\E[\epsilon_i] = 0$.
+        \textbf{Assumption}. This is a standard assumption about the error terms, implying that the model $\mat{X}\vect{\beta}$ correctly captures the systematic part of $\vect{Y}$ on average.
+    \item $\E[\hat{\epsilon}_i] = 0$ (where $\hat{\vect{\epsilon}} = \vect{Y} - \mat{X}\hat{\vect{\beta}}$ are the residuals).
+        \textbf{Result}. Let $\mat{P}_{\mat{X}} = \mat{X}(\mat{X}\transpose \mat{X})^{-1}\mat{X}\transpose$. Then $\hat{\vect{\epsilon}} = \vect{Y} - \mat{P}_{\mat{X}}\vect{Y} = (\mat{I} - \mat{P}_{\mat{X}})\vect{Y}$. Assuming $\E[\vect{Y} | \mat{X}] = \mat{X}\vect{\beta}$ (or $\E[\vect{Y}] = \mat{X}\vect{\beta}$ if $\mat{X}$ is fixed), then $\E[\hat{\vect{\epsilon}} | \mat{X}] = \E[(\mat{I} - \mat{P}_{\mat{X}})\vect{Y} | \mat{X}] = (\mat{I} - \mat{P}_{\mat{X}}) \E[\vect{Y} | \mat{X}] = (\mat{I} - \mat{P}_{\mat{X}}) \mat{X}\vect{\beta}$. Since $\mat{P}_{\mat{X}}\mat{X} = \mat{X}$, this becomes $(\mat{X} - \mat{P}_{\mat{X}}\mat{X})\vect{\beta} = (\mat{X} - \mat{X})\vect{\beta} = \vect{0}$. Taking further expectation if $\mat{X}$ is random, $\E[\hat{\vect{\epsilon}}] = \E[\E[\hat{\vect{\epsilon}} | \mat{X}]] = \E[\vect{0}] = \vect{0}$. Note: The average of the residuals $\frac{1}{n} \sum \hat{\epsilon}_i$ is exactly zero if the model includes an intercept.
+    \item $\mat{X}\transpose \hat{\vect{\epsilon}} = \vect{0}$.
+        \textbf{Result}. This is a direct consequence of the normal equations used to derive $\hat{\vect{\beta}}$. $\mat{X}\transpose(\vect{Y} - \mat{X}\hat{\vect{\beta}}) = \mat{X}\transpose \hat{\vect{\epsilon}} = \vect{0}$. Geometrically, it means the residual vector is orthogonal to the column space of $\mat{X}$.
+    \item $\Cov(\vect{Y}) = \sigma^2 \mat{I}$.
+        \textbf{Depends/Result under fixed X}. If $\mat{X}$ is treated as a fixed, deterministic matrix, then $\vect{Y} = \mat{X}\vect{\beta} + \vect{\epsilon}$, where $\mat{X}\vect{\beta}$ is a constant vector. Then $\Cov(\vect{Y}) = \Cov(\mat{X}\vect{\beta} + \vect{\epsilon}) = \Cov(\vect{\epsilon}) = \sigma^2 \mat{I}$ (using the assumption on $\Cov(\vect{\epsilon})$). However, if $\mat{X}$ is random, $\Cov(\vect{Y}) = \Var(\mat{X}\vect{\beta} + \vect{\epsilon})$ is more complex. Often, the key assumption is about the conditional covariance: $\Cov(\vect{Y} | \mat{X}) = \Cov(\mat{X}\vect{\beta} + \vect{\epsilon} | \mat{X}) = \Cov(\vect{\epsilon} | \mat{X})$. If we assume $\vect{\epsilon}$ is independent of $\mat{X}$ (or just uncorrelated with mean zero conditional on $\mat{X}$), then $\Cov(\vect{\epsilon} | \mat{X}) = \Cov(\vect{\epsilon}) = \sigma^2 \mat{I}$. So, $\Cov(\vect{Y} | \mat{X}) = \sigma^2 \mat{I}$ is often considered a consequence of the assumptions when $\mat{X}$ is random.
+\end{enumerate}
+
+\begin{question}[Scenarios for the Linear Model - Original from Page 6]
+For each scenario below, describe the distributions (or nature) of $\mat{X}$, $\vect{\epsilon}$, $\vect{Y}$, and $\vect{Y}|\mat{X}$. State which assumptions of the standard linear model ($\E[\vect{Y}|\mat{X}]=\mat{X}\vect{\beta}$, $\Cov(\vect{Y}|\mat{X})=\sigma^2\mat{I}$, errors often normal) hold. Assume $\vect{\beta}$ is a fixed, unknown vector and $\sigma^2$ is a fixed, unknown positive scalar. Let $Y_i = \mat{X}_i\transpose \vect{\beta} + \epsilon_i$ where $\mat{X}_i\transpose$ is the $i$-th row of $\mat{X}$ (potentially including the intercept '1').
+
+\begin{enumerate}
+    \item $\mat{X}$ consists of pre-determined constants. $\epsilon_i \sim N(0, \sigma^2)$ i.i.d.
+    \item $X_i$ are i.i.d. random vectors, e.g., $X_i \sim N(\vect{\mu}_X, \Sigma_X)$. $\epsilon_i \sim N(0, \sigma^2)$ i.i.d., and $\vect{\epsilon}$ is independent of $\mat{X}$.
+    \item $X_i \sim U(-1, 1)$ i.i.d. (scalar predictor). Model is $Y_i = \beta_0 + \beta_1 X_i^2 + \epsilon_i$. $\epsilon_i \sim N(0, \sigma^2)$ i.i.d., and $\vect{\epsilon}$ is independent of $\mat{X}$.
+    \item $\mat{X}_{it}$ represents fixed measurements for individual $i$ at time $t$. $\epsilon_{it} \sim N(0, \sigma^2)$ i.i.d. (Panel data).
+    \item $X_i$ are i.i.d. random vectors $N(\vect{0}, \mat{I})$. $\epsilon_i \sim N(0, \sigma^2)$ i.i.d., and $\vect{\epsilon}$ is independent of $\mat{X}$. (This seems like a specific instance of case 2).
+\end{enumerate}
+\end{question} % Corrected: Added \end{question} here
+
+\begin{proof}[Analysis of Scenarios]
+\begin{enumerate}
+    \item \textbf{Fixed X, Normal errors}:
+        \begin{itemize}
+            \item $\mat{X}$: Deterministic $n \times (p+1)$ matrix of constants.
+            \item $\vect{\epsilon}$: Random vector $\vect{\epsilon} \sim N(\vect{0}, \sigma^2 \mat{I}_n)$.
+            \item $\vect{Y}$: Random vector. $\vect{Y} = \mat{X}\vect{\beta} + \vect{\epsilon}$. Since $\mat{X}\vect{\beta}$ is constant, $\vect{Y}$ is a linear transformation of a normal vector, hence normal. $\E[\vect{Y}] = \mat{X}\vect{\beta} + \E[\vect{\epsilon}] = \mat{X}\vect{\beta}$. $\Cov(\vect{Y}) = \Cov(\vect{\epsilon}) = \sigma^2 \mat{I}$. So $\vect{Y} \sim N(\mat{X}\vect{\beta}, \sigma^2 \mat{I}_n)$.
+            \item $\vect{Y}|\mat{X}$: Since $\mat{X}$ is fixed, conditioning on it doesn't change anything. $\vect{Y}|\mat{X} \sim N(\mat{X}\vect{\beta}, \sigma^2 \mat{I}_n)$.
+            \item Assumptions: All standard assumptions hold. Linearity $\E[\vect{Y}|\mat{X}] = \mat{X}\vect{\beta}$ holds. Homoscedasticity/Uncorrelated errors $\Cov(\vect{Y}|\mat{X}) = \sigma^2 \mat{I}$ holds. Errors are normal.
+        \end{itemize}
+    \item \textbf{Random X, Normal errors, Independent}:
+        \begin{itemize}
+            \item $\mat{X}$: Random $n \times (p+1)$ matrix, rows $X_i\transpose$ are i.i.d. $N(\vect{\mu}_X, \Sigma_X)$.
+            \item $\vect{\epsilon}$: Random vector $\vect{\epsilon} \sim N(\vect{0}, \sigma^2 \mat{I}_n)$, independent of $\mat{X}$.
+            \item $\vect{Y}$: Random vector $\vect{Y} = \mat{X}\vect{\beta} + \vect{\epsilon}$. Its marginal distribution is generally complex (not necessarily normal). $\E[\vect{Y}] = \E[\mat{X}\vect{\beta} + \vect{\epsilon}] = \E[\mat{X}]\vect{\beta} + \E[\vect{\epsilon}] = (\text{matrix of } \mu_{X,j})\vect{\beta} + \vect{0}$. $\Cov(\vect{Y})$ involves variance of $\mat{X}\vect{\beta}$ and $\vect{\epsilon}$.
+            \item $\vect{Y}|\mat{X}$: Given a specific realization of $\mat{X}$, the matrix $\mat{X}$ is now fixed. $\vect{Y}|\mat{X} = \mat{X}\vect{\beta} + \vect{\epsilon}|\mat{X}$. Since $\vect{\epsilon}$ is independent of $\mat{X}$, its distribution doesn't change upon conditioning. So $\vect{\epsilon}|\mat{X} \sim N(\vect{0}, \sigma^2 \mat{I}_n)$. Thus, $\vect{Y}|\mat{X} \sim N(\mat{X}\vect{\beta}, \sigma^2 \mat{I}_n)$.
+            \item Assumptions: The key assumptions $\E[\vect{Y}|\mat{X}] = \mat{X}\vect{\beta}$ and $\Cov(\vect{Y}|\mat{X}) = \sigma^2 \mat{I}$ hold. The errors are also normal. The difference from case 1 is that $\mat{X}$ is random. Inference is often done conditional on $\mat{X}$.
+        \end{itemize}
+    \item \textbf{Random X (Uniform), Model with $X^2$, Normal errors}:
+        \begin{itemize}
+            \item $\mat{X}$: Here, the model is $Y_i = \beta_0 + \beta_1 X_i^2 + \epsilon_i$. We should define the design matrix relative to the model being fitted. Let $Z_i = X_i^2$. The effective design matrix $\mat{Z}$ has $i$-th row $(1, Z_i) = (1, X_i^2)$. $X_i \sim U(-1, 1)$ are i.i.d. Thus $\mat{Z}$ is a random matrix.
+            \item $\vect{\epsilon}$: Random vector $\vect{\epsilon} \sim N(\vect{0}, \sigma^2 \mat{I}_n)$, independent of $\mat{X}$ (and hence of $\mat{Z}$).
+            \item $\vect{Y}$: Random vector $\vect{Y} = \mat{Z}\vect{\beta}^* + \vect{\epsilon}$, where $\vect{\beta}^* = (\beta_0, \beta_1)\transpose$. Marginal distribution is complex.
+            \item $\vect{Y}|\mat{X}$ (or $\vect{Y}|\mat{Z}$): Given $\mat{X}$ (and thus $\mat{Z}$), $\vect{Y}|\mat{Z} \sim N(\mat{Z}\vect{\beta}^*, \sigma^2 \mat{I}_n)$.
+            \item Assumptions: If we define the model in terms of $Z_i=X_i^2$, then the assumptions $\E[\vect{Y}|\mat{Z}] = \mat{Z}\vect{\beta}^*$ and $\Cov(\vect{Y}|\mat{Z}) = \sigma^2 \mat{I}$ hold. The errors are normal. Note the linearity is in the parameters $\beta_0, \beta_1$, even though the relationship with the original $X_i$ is quadratic.
+        \end{itemize}
+    \item \textbf{Fixed X (Panel), Normal errors}:
+        \begin{itemize}
+            \item $\mat{X}$: Deterministic $N \times (p+1)$ matrix (where $N = \sum n_i$ or $N \times T$), containing fixed predictor values for individuals over time.
+            \item $\vect{\epsilon}$: Random vector $\vect{\epsilon} \sim N(\vect{0}, \sigma^2 \mat{I}_N)$. (Note: Panel data often has more complex error structures, e.g., correlation within individuals, but here i.i.d. is stated).
+            \item $\vect{Y}$: Random vector $\vect{Y} \sim N(\mat{X}\vect{\beta}, \sigma^2 \mat{I}_N)$.
+            \item $\vect{Y}|\mat{X}$: Same as $\vect{Y}$, $\vect{Y}|\mat{X} \sim N(\mat{X}\vect{\beta}, \sigma^2 \mat{I}_N)$.
+            \item Assumptions: Same as case 1. Standard assumptions hold under the stated i.i.d. error structure.
+        \end{itemize}
+    \item \textbf{Random X (Std Normal), Normal errors, Independent}:
+        \begin{itemize}
+            \item This is a specific case of scenario 2, with $\vect{\mu}_X = \vect{0}$ and $\Sigma_X = \mat{I}$.
+            \item $\mat{X}$: Random matrix, rows $X_i\transpose$ are i.i.d. $N(\vect{0}, \mat{I})$.
+            \item $\vect{\epsilon}$: Random vector $\vect{\epsilon} \sim N(\vect{0}, \sigma^2 \mat{I}_n)$, independent of $\mat{X}$.
+            \item $\vect{Y}$: Random vector. $\E[\vect{Y}] = \E[\mat{X}]\vect{\beta} + \vect{0} = \mat{0}\vect{\beta} + \vect{0} = \vect{0}$.
+            \item $\vect{Y}|\mat{X}$: $\vect{Y}|\mat{X} \sim N(\mat{X}\vect{\beta}, \sigma^2 \mat{I}_n)$.
+            \item Assumptions: Same as case 2. The key conditional assumptions hold. $\E[\vect{Y}|\mat{X}] = \mat{X}\vect{\beta}$ and $\Cov(\vect{Y}|\mat{X}) = \sigma^2 \mat{I}$. Errors are normal.
+        \end{itemize}
+\end{enumerate}
+\end{proof}
+
+\section{Miscellaneous Results and Proofs}
+
+\begin{question}[Rank-1 Projection Matrix - Original from Page 6]
+Let $\vect{v} \in \RR^n$ be a non-zero vector ($\vect{v} \neq \vect{0}$). Show that the matrix $\mat{P} = \frac{\vect{v}\vect{v}\transpose}{\norm{\vect{v}}^2}$ is an orthogonal projection matrix. What is its rank?
+\end{question}
+
+\begin{proof}
+Recall $\norm{\vect{v}}^2 = \vect{v}\transpose \vect{v}$. The matrix is $\mat{P} = \frac{1}{\vect{v}\transpose \vect{v}} \vect{v}\vect{v}\transpose$.
+\begin{enumerate}
+    \item \textbf{Symmetry}:
+    \[ \mat{P}\transpose = \left( \frac{1}{\vect{v}\transpose \vect{v}} \vect{v}\vect{v}\transpose \right)\transpose = \frac{1}{\vect{v}\transpose \vect{v}} (\vect{v}\vect{v}\transpose)\transpose = \frac{1}{\vect{v}\transpose \vect{v}} (\vect{v}\transpose)\transpose \vect{v}\transpose = \frac{1}{\vect{v}\transpose \vect{v}} \vect{v}\vect{v}\transpose = \mat{P} \]
+    So $\mat{P}$ is symmetric.
+
+    \item \textbf{Idempotency}:
+    \begin{align*} \mat{P}^2 &= \left( \frac{1}{\vect{v}\transpose \vect{v}} \vect{v}\vect{v}\transpose \right) \left( \frac{1}{\vect{v}\transpose \vect{v}} \vect{v}\vect{v}\transpose \right) \\ &= \frac{1}{(\vect{v}\transpose \vect{v})^2} \vect{v}(\vect{v}\transpose \vect{v})\vect{v}\transpose \\ &= \frac{1}{(\vect{v}\transpose \vect{v})^2} \vect{v}(\norm{\vect{v}}^2)\vect{v}\transpose \\ &= \frac{\norm{\vect{v}}^2}{(\norm{\vect{v}}^2)^2} \vect{v}\vect{v}\transpose \\ &= \frac{1}{\norm{\vect{v}}^2} \vect{v}\vect{v}\transpose = \mat{P} \end{align*}
+    So $\mat{P}$ is idempotent.
+\end{enumerate}
+Since $\mat{P}$ is symmetric and idempotent, it is an orthogonal projection matrix.
+
+\textbf{Rank}: The matrix $\vect{v}\vect{v}\transpose$ is an $n \times n$ matrix. Any column of this matrix is a multiple of $\vect{v}$. For example, column $j$ is $v_j \vect{v}$. Since $\vect{v} \neq \vect{0}$, the columns are non-zero (unless $v_j=0$) and are all multiples of $\vect{v}$. Thus, the column space is spanned by the single non-zero vector $\vect{v}$. The dimension of the column space (the rank) is 1.
+Alternatively, the image of $\mat{P}$ is $\Image(\mat{P}) = \{ \mat{P}\vect{x} \mid \vect{x} \in \RR^n \} = \{ \frac{\vect{v}(\vect{v}\transpose\vect{x})}{\norm{\vect{v}}^2} \mid \vect{x} \in \RR^n \}$. Since $\vect{v}\transpose\vect{x}$ is a scalar, any vector in the image is a scalar multiple of $\vect{v}$. Thus $\Image(\mat{P}) = \Span\{\vect{v}\}$. Since $\vect{v} \neq \vect{0}$, the dimension of this space is 1.
+So, $\rank(\mat{P}) = 1$. It projects vectors onto the line spanned by $\vect{v}$.
+\end{proof}
+
+\begin{question}[Unbiased Sample Variance - Original from Page 6]
+Let $Y_1, \dots, Y_n$ be i.i.d. random variables with mean $\mu$ and variance $\sigma^2$ (parameters unknown). Show that the sample variance $S_n^2 = \frac{1}{n-1} \sum_{i=1}^n (Y_i - \bar{Y})^2$, where $\bar{Y} = \frac{1}{n}\sum Y_i$, is an unbiased estimator for $\sigma^2$, i.e., $\E[S_n^2] = \sigma^2$.
+\end{question}
+
+\begin{proof}
+We need to compute $\E[\sum_{i=1}^n (Y_i - \bar{Y})^2]$. Let's expand the term inside the sum:
+\begin{align*} \sum_{i=1}^n (Y_i - \bar{Y})^2 &= \sum_{i=1}^n (Y_i - \mu - (\bar{Y} - \mu))^2 \\ &= \sum_{i=1}^n [ (Y_i - \mu)^2 - 2(Y_i - \mu)(\bar{Y} - \mu) + (\bar{Y} - \mu)^2 ] \\ &= \sum_{i=1}^n (Y_i - \mu)^2 - 2(\bar{Y} - \mu) \sum_{i=1}^n (Y_i - \mu) + \sum_{i=1}^n (\bar{Y} - \mu)^2 \\ &= \sum_{i=1}^n (Y_i - \mu)^2 - 2(\bar{Y} - \mu) (n\bar{Y} - n\mu) + n(\bar{Y} - \mu)^2 \\ &= \sum_{i=1}^n (Y_i - \mu)^2 - 2n(\bar{Y} - \mu)^2 + n(\bar{Y} - \mu)^2 \\ &= \sum_{i=1}^n (Y_i - \mu)^2 - n(\bar{Y} - \mu)^2 \end{align*}
+Now, take the expectation:
+\[ \E\left[ \sum_{i=1}^n (Y_i - \bar{Y})^2 \right] = \E\left[ \sum_{i=1}^n (Y_i - \mu)^2 \right] - n \E\left[ (\bar{Y} - \mu)^2 \right] \]
+By linearity of expectation:
+\[ = \sum_{i=1}^n \E[(Y_i - \mu)^2] - n \E[(\bar{Y} - \mu)^2] \]
+We know $\E[(Y_i - \mu)^2] = \Var(Y_i) = \sigma^2$.
+And $\E[(\bar{Y} - \mu)^2] = \Var(\bar{Y})$. Since $Y_i$ are i.i.d., $\Var(\bar{Y}) = \Var(\frac{1}{n}\sum Y_i) = \frac{1}{n^2} \sum \Var(Y_i) = \frac{1}{n^2} (n \sigma^2) = \frac{\sigma^2}{n}$.
+Substituting these back:
+\[ \E\left[ \sum_{i=1}^n (Y_i - \bar{Y})^2 \right] = \sum_{i=1}^n \sigma^2 - n \left( \frac{\sigma^2}{n} \right) = n\sigma^2 - \sigma^2 = (n-1)\sigma^2 \]
+Therefore,
+\[ \E[S_n^2] = \E\left[ \frac{1}{n-1} \sum_{i=1}^n (Y_i - \bar{Y})^2 \right] = \frac{1}{n-1} \E\left[ \sum_{i=1}^n (Y_i - \bar{Y})^2 \right] = \frac{1}{n-1} (n-1)\sigma^2 = \sigma^2 \]
+Thus, $S_n^2$ is an unbiased estimator for $\sigma^2$. The division by $n-1$ (Bessel's correction) is necessary for unbiasedness.
+\end{proof}
+
+\begin{theorem}[Distribution of Sample Variance under Normality]
+Assume $Y_1, \dots, Y_n \sim N(\mu, \sigma^2)$ i.i.d. Then the random variable
+\[ \frac{(n-1)S_n^2}{\sigma^2} = \frac{\sum_{i=1}^n (Y_i - \bar{Y})^2}{\sigma^2} \]
+follows a Chi-squared distribution with $n-1$ degrees of freedom, denoted $\chi_{n-1}^2$. Furthermore, $S_n^2$ is independent of $\bar{Y}$.
+\end{theorem}
+\begin{proof}
+This is a standard result, often proven using Cochran's Theorem or properties of orthogonal transformations (like the Helmert transformation) preserving normality and independence. The proof is beyond the scope of this summary but is fundamental in statistical inference (e.g., for t-tests and confidence intervals for $\mu$).
+\end{proof}
+
+\begin{question}[Expected Squared Norm - Original from Page 7]
+Let $\vect{Z} \in \RR^m$ be a random vector.
+\begin{enumerate}
+    \item Show that $\E[\norm{\vect{Z}}^2] = \tr(\E[\vect{Z}\vect{Z}\transpose])$.
+    \item Deduce that if $\E[\vect{Z}] = \vect{0}$, then $\E[\norm{\vect{Z}}^2] = \tr(\Var(\vect{Z}))$.
+\end{enumerate}
+Justify each step.
+\end{question}
+
+\begin{proof}
+\begin{enumerate}
+    \item We start with the definition of the squared Euclidean norm:
+    \[ \norm{\vect{Z}}^2 = \sum_{i=1}^m Z_i^2 \]
+    Taking the expectation, and using linearity of expectation:
+    \[ \E[\norm{\vect{Z}}^2] = \E\left[ \sum_{i=1}^m Z_i^2 \right] = \sum_{i=1}^m \E[Z_i^2] \]
+    Now consider the matrix $\mat{M} = \E[\vect{Z}\vect{Z}\transpose]$. This is an $m \times m$ matrix.
+    The $(i, j)$-th element of the random matrix $\vect{Z}\vect{Z}\transpose$ is $Z_i Z_j$.
+    The $(i, j)$-th element of $\mat{M}$ is $M_{ij} = \E[Z_i Z_j]$.
+    The trace of $\mat{M}$ is the sum of its diagonal elements:
+    \[ \tr(\mat{M}) = \tr(\E[\vect{Z}\vect{Z}\transpose]) = \sum_{i=1}^m M_{ii} = \sum_{i=1}^m \E[Z_i Z_i] = \sum_{i=1}^m \E[Z_i^2] \]
+    Comparing the results, we see that:
+    \[ \E[\norm{\vect{Z}}^2] = \tr(\E[\vect{Z}\vect{Z}\transpose]) \]
+
+    \item Now, assume $\E[\vect{Z}] = \vect{0}$.
+    Recall the definition of the variance-covariance matrix:
+    \[ \Var(\vect{Z}) = \E[ (\vect{Z} - \E[\vect{Z}]) (\vect{Z} - \E[\vect{Z}])\transpose ] \]
+    If $\E[\vect{Z}] = \vect{0}$, this simplifies to:
+    \[ \Var(\vect{Z}) = \E[ (\vect{Z} - \vect{0}) (\vect{Z} - \vect{0})\transpose ] = \E[\vect{Z}\vect{Z}\transpose] \]
+    Substituting this into the result from part (1):
+    \[ \E[\norm{\vect{Z}}^2] = \tr(\E[\vect{Z}\vect{Z}\transpose]) = \tr(\Var(\vect{Z})) \]
+    This relationship is useful, for instance, in calculating expected prediction errors. The expected squared norm of a zero-mean random vector is the sum of the variances of its components (since $\tr(\Var(\vect{Z})) = \sum \Var(Z_i)$).
+\end{enumerate}
+\end{proof}
+
+\end{document}
