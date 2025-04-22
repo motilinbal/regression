@@ -1,0 +1,495 @@
+\documentclass[11pt, letterpaper]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+ 
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{property}[theorem]{Property}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{assumption}[theorem]{Assumption}
+
+% Custom commands
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\text{Var}}
+\newcommand{\Cov}{\text{Cov}}
+\newcommand{\Trace}{\text{Trace}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\mat}[1]{\mathbf{#1}} % Matrix
+\newcommand{\vect}[1]{\boldsymbol{#1}} % Vector (using bm package might be better if available)
+\newcommand{\T}{^T} % Transpose
+
+\title{Lecture Notes: Covariance Matrices and the Linear Model}
+\author{Undergraduate Mathematics Educator}
+\date{Based on Lecture Transcript}
+
+\begin{document}
+\maketitle
+
+%--------------------------------------------------------------------------
+\section*{Administrative Notes and Announcements}
+%--------------------------------------------------------------------------
+
+\begin{itemize}
+    \item \textbf{Recitation Material:} Please note that the properties of covariance matrices discussed at the beginning of this lecture were covered thoroughly, including proofs. I have asked Niv (the TA) *not* to repeat this specific material in the recitation sections to allow more time for problem-solving. If you have further questions on these properties after reviewing your notes, please utilize office hours (either mine or Niv's).
+    \item \textbf{Office Hours:} Please make use of office hours if you have questions about the material or homework. Thinking through the concepts at home first and then bringing specific questions is often very productive.
+    \item \textbf{Context from Previous Lecture:} We are picking up directly from where we left off before the Passover break, returning to the linear statistical model.
+    \item \textbf{Assumption on Regressors:} A point clarified during the lecture: Throughout this course, unless explicitly stated otherwise, we will treat the predictor variables (the entries in the matrix $\mat{X}$) as \textbf{fixed, non-random constants}. The randomness in our model comes entirely from the error term $\vect{\epsilon}$. This is a standard assumption in many regression contexts. It means our $X$ values are considered given data points, not outcomes of a random process.
+\end{itemize}
+\vspace{1em}
+\hrule
+\vspace{1em}
+
+%--------------------------------------------------------------------------
+\section{Properties of Covariance Matrices: Revisited}
+%--------------------------------------------------------------------------
+
+We began by revisiting some key properties of covariance matrices for random vectors, picking up exactly where we left off last time. We had already established the first few properties. Let's focus on Properties 3 through 6, paying special attention to an alternative proof for Property 3.
+
+Let $\vect{Z}$ and $\vect{W}$ be random vectors, and let $\mat{A}$ and $\mat{B}$ be constant (non-random) matrices of appropriate dimensions.
+
+\begin{property}[Covariance of Linear Transformations - Property 3 Revisited]
+\[
+\Cov(\mat{A}\vect{Z}, \mat{B}\vect{W}) = \mat{A} \Cov(\vect{Z}, \vect{W}) \mat{B}\T
+\]
+\end{property}
+
+\begin{proof}[Alternative Proof using Matrix Identity]
+Recall the definition of the covariance matrix:
+\[
+\Cov(\vect{U}, \vect{V}) = \E[(\vect{U} - \E[\vect{U}])(\vect{V} - \E[\vect{V}])\T] = \E[\vect{U}\vect{V}\T] - \E[\vect{U}]\E[\vect{V}]\T
+\]
+Let $\vect{U} = \mat{A}\vect{Z}$ and $\vect{V} = \mat{B}\vect{W}$. We need to compute the two terms on the right-hand side for these specific $\vect{U}$ and $\vect{V}$.
+
+\textit{First Term:} $\E[\vect{U}\vect{V}\T]$
+\begin{align*}
+\E[(\mat{A}\vect{Z})(\mat{B}\vect{W})\T] &= \E[\mat{A}\vect{Z}\vect{W}\T\mat{B}\T] \\
+&= \mat{A} \E[\vect{Z}\vect{W}\T] \mat{B}\T
+\end{align*}
+Here, we used the linearity of expectation and the property that constant matrices can be factored out. Remember, $\mat{A}$ and $\mat{B}$ are constant matrices, while $\vect{Z}$ and $\vect{W}$ are random vectors, making $\vect{Z}\vect{W}\T$ a random matrix.
+
+\textit{Second Term:} $\E[\vect{U}]\E[\vect{V}]\T$
+\begin{align*}
+\E[\mat{A}\vect{Z}] (\E[\mat{B}\vect{W}])\T &= (\mat{A}\E[\vect{Z}]) (\mat{B}\E[\vect{W}])\T \\
+&= (\mat{A}\E[\vect{Z}]) (\E[\vect{W}]\T \mat{B}\T) \\
+&= \mat{A} \E[\vect{Z}] \E[\vect{W}]\T \mat{B}\T
+\end{align*}
+Again, we used the linearity of expectation. Let $\E[\vect{Z}] = \vect{\mu}_Z$ and $\E[\vect{W}] = \vect{\mu}_W$.
+
+\textit{Combining Terms:}
+\begin{align*}
+\Cov(\mat{A}\vect{Z}, \mat{B}\vect{W}) &= \E[(\mat{A}\vect{Z})(\mat{B}\vect{W})\T] - \E[\mat{A}\vect{Z}]\E[\mat{B}\vect{W}]\T \\
+&= (\mat{A} \E[\vect{Z}\vect{W}\T] \mat{B}\T) - (\mat{A} \vect{\mu}_Z \vect{\mu}_W\T \mat{B}\T) \\
+&= \mat{A} (\E[\vect{Z}\vect{W}\T] - \vect{\mu}_Z \vect{\mu}_W\T) \mat{B}\T \\
+&= \mat{A} \Cov(\vect{Z}, \vect{W}) \mat{B}\T
+\end{align*}
+This completes the alternative proof using the matrix identity. It's a valuable exercise to work through this algebra to become comfortable with manipulating expectations and transposes involving matrices and vectors.
+\end{proof}
+
+\begin{remark}
+Understanding both the entry-wise proof (from the previous lecture) and this matrix-based proof deepens our understanding of covariance.
+\end{remark}
+
+\begin{property}[Variance of a Linear Transformation - Property 4]
+If $\Var(\vect{Z})$ denotes the covariance matrix $\Cov(\vect{Z}, \vect{Z})$, then
+\[
+\Var(\mat{A}\vect{Z}) = \mat{A} \Var(\vect{Z}) \mat{A}\T
+\]
+\end{property}
+
+\begin{proof}
+This is a direct special case of Property 3 where we set $\mat{B} = \mat{A}$ and $\vect{W} = \vect{Z}$.
+\[
+\Cov(\mat{A}\vect{Z}, \mat{A}\vect{Z}) = \mat{A} \Cov(\vect{Z}, \vect{Z}) \mat{A}\T = \mat{A} \Var(\vect{Z}) \mat{A}\T
+\]
+\end{proof}
+
+\begin{remark}[The "Butterfly Formula"]
+Informally, Property 4 is sometimes called the "butterfly formula" because the matrix $\mat{A}$ appears on the left and its transpose $\mat{A}\T$ appears on the right, like wings around the original variance matrix $\Var(\vect{Z})$. This transformation rule is extremely useful.
+\end{remark}
+
+\begin{property}[Variance of an Inner Product - Property 5]
+Let $\vect{a}$ be a constant vector. Then $\vect{a}\T\vect{Z}$ is a scalar random variable, and its variance is given by:
+\[
+\Var(\vect{a}\T\vect{Z}) = \vect{a}\T \Var(\vect{Z}) \vect{a}
+\]
+\end{property}
+
+\begin{proof}
+First, note that $\vect{a}\T\vect{Z}$ is indeed a scalar random variable, as it's the inner product of a constant vector $\vect{a}$ and a random vector $\vect{Z}$.
+We can view the row vector $\vect{a}\T$ as a $1 \times n$ matrix (if $\vect{Z}$ is $n$-dimensional). Applying Property 4 with $\mat{A} = \vect{a}\T$:
+\[
+\Var(\vect{a}\T\vect{Z}) = (\vect{a}\T) \Var(\vect{Z}) (\vect{a}\T)\T = \vect{a}\T \Var(\vect{Z}) \vect{a}
+\]
+Note that the result $\vect{a}\T \Var(\vect{Z}) \vect{a}$ is a $1 \times 1$ matrix, which is equivalent to a scalar, as expected for a variance.
+\end{proof}
+
+\begin{remark}[Quadratic Forms]
+The expression $\vect{a}\T \Var(\vect{Z}) \vect{a}$ is an example of a \textbf{quadratic form}. If $\mat{\Sigma} = \Var(\vect{Z})$ is an $n \times n$ matrix, then for a vector $\vect{x} \in \R^n$, the function $f(\vect{x}) = \vect{x}\T \mat{\Sigma} \vect{x}$ is called a quadratic form. Explicitly,
+\[
+\vect{x}\T \mat{\Sigma} \vect{x} = \sum_{i=1}^n \sum_{j=1}^n \Sigma_{ij} x_i x_j
+\]
+Ensure you are comfortable with this expansion; it involves basic matrix multiplication.
+\end{remark}
+
+\begin{property}[Positive Semidefiniteness - Property 6]
+The covariance matrix $\Var(\vect{Z})$ is always positive semidefinite.
+\end{property}
+
+\begin{proof}
+A matrix $\mat{\Sigma}$ is positive semidefinite if it is symmetric and $\vect{a}\T \mat{\Sigma} \vect{a} \ge 0$ for all conformable vectors $\vect{a}$.
+
+First, we establish symmetry. $\Var(\vect{Z}) = \Cov(\vect{Z}, \vect{Z})$. From Property 1 (which stated $\Cov(\vect{U}, \vect{V}) = \Cov(\vect{V}, \vect{U})\T$), we have $\Var(\vect{Z}) = \Cov(\vect{Z}, \vect{Z}) = \Cov(\vect{Z}, \vect{Z})\T = \Var(\vect{Z})\T$. So, $\Var(\vect{Z})$ is symmetric. (Note: Covariance $\Cov(\vect{Z}, \vect{W})$ is generally not square or symmetric unless $\vect{Z}$ and $\vect{W}$ have the same dimension).
+
+Second, we need to show $\vect{a}\T \Var(\vect{Z}) \vect{a} \ge 0$ for any constant vector $\vect{a}$. From Property 5, we know:
+\[
+\vect{a}\T \Var(\vect{Z}) \vect{a} = \Var(\vect{a}\T\vect{Z})
+\]
+Since the variance of any scalar random variable (like $\vect{a}\T\vect{Z}$) must be non-negative, we have:
+\[
+\Var(\vect{a}\T\vect{Z}) \ge 0
+\]
+Therefore, $\vect{a}\T \Var(\vect{Z}) \vect{a} \ge 0$ for all $\vect{a}$, confirming that $\Var(\vect{Z})$ is positive semidefinite.
+\end{proof}
+
+%--------------------------------------------------------------------------
+\section{The Linear Statistical Model}
+%--------------------------------------------------------------------------
+
+Having refreshed these essential properties of covariance matrices, let's return to the primary object of study: the linear statistical model. We introduced this before the break, but let's restate it carefully.
+
+\begin{definition}[Linear Model - Scalar Form]
+For $n$ observations, indexed by $i = 1, \dots, n$, the model is given by:
+\[
+Y_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \dots + \beta_p x_{ip} + \epsilon_i
+\]
+Or, more compactly using summation notation and letting $x_{i0} = 1$:
+\[
+Y_i = \sum_{j=0}^{p} \beta_j x_{ij} + \epsilon_i \quad \text{for } i = 1, \dots, n
+\]
+Where:
+\begin{itemize}
+    \item $Y_i$ is the response variable for the $i$-th observation.
+    \item $x_{ij}$ is the value of the $j$-th predictor variable for the $i$-th observation (with $x_{i0}=1$ for the intercept).
+    \item $\beta_j$ are the unknown model parameters (coefficients).
+    \item $\epsilon_i$ is the random error term for the $i$-th observation.
+\end{itemize}
+The key assumptions on the error terms $\epsilon_i$ are:
+\begin{enumerate}
+    \item \textbf{Zero Mean:} $\E[\epsilon_i] = 0$ for all $i$.
+    \item \textbf{Constant Variance (Homoscedasticity):} $\Var(\epsilon_i) = \sigma^2$ for all $i$, where $\sigma^2 > 0$ is an unknown parameter.
+    \item \textbf{Uncorrelated Errors:} $\Cov(\epsilon_i, \epsilon_k) = 0$ for all $i \neq k$.
+\end{enumerate}
+\end{definition}
+
+\begin{assumption}[Fixed Regressors]
+As mentioned in the administrative notes, we assume the predictor values $x_{ij}$ (for $j=1,\dots,p$ and $i=1,\dots,n$) are \textbf{fixed, known constants}. They are not random variables. The only source of randomness in $Y_i$ comes from the error term $\epsilon_i$.
+\end{assumption}
+
+\begin{remark}
+Under the fixed regressors assumption, the conditioning on $X$ values we discussed previously becomes implicit. The properties of the errors (mean 0, variance $\sigma^2$, uncorrelated) hold unconditionally in this framework.
+\end{remark}
+
+\begin{definition}[Linear Model - Matrix Form]
+The scalar equations for all $n$ observations can be written elegantly in matrix form:
+\[
+\vect{Y} = \mat{X}\vect{\beta} + \vect{\epsilon}
+\]
+Where:
+\begin{itemize}
+    \item $\vect{Y} = \begin{pmatrix} Y_1 \\ Y_2 \\ \vdots \\ Y_n \end{pmatrix}$ is the $n \times 1$ vector of responses.
+    \item $\mat{X} = \begin{pmatrix} 1 & x_{11} & \dots & x_{1p} \\ 1 & x_{21} & \dots & x_{2p} \\ \vdots & \vdots & \ddots & \vdots \\ 1 & x_{n1} & \dots & x_{np} \end{pmatrix}$ is the $n \times (p+1)$ \textbf{design matrix} (or model matrix), assumed to be known and constant.
+    \item $\vect{\beta} = \begin{pmatrix} \beta_0 \\ \beta_1 \\ \vdots \\ \beta_p \end{pmatrix}$ is the $(p+1) \times 1$ vector of unknown parameters.
+    \item $\vect{\epsilon} = \begin{pmatrix} \epsilon_1 \\ \epsilon_2 \\ \vdots \\ \epsilon_n \end{pmatrix}$ is the $n \times 1$ vector of random errors.
+\end{itemize}
+The assumptions on the error vector $\vect{\epsilon}$ translate to:
+\begin{enumerate}
+    \item $\E[\vect{\epsilon}] = \vect{0}$ (where $\vect{0}$ is the $n \times 1$ zero vector).
+    \item $\Var(\vect{\epsilon}) = \Cov(\vect{\epsilon}, \vect{\epsilon}) = \sigma^2 \mat{I}_n$ (where $\mat{I}_n$ is the $n \times n$ identity matrix). This matrix has $\sigma^2$ on the diagonal (capturing $\Var(\epsilon_i)=\sigma^2$) and 0s off-diagonal (capturing $\Cov(\epsilon_i, \epsilon_k)=0$ for $i \ne k$).
+\end{enumerate}
+The unknown parameters of the model are the vector $\vect{\beta}$ and the scalar variance $\sigma^2$.
+\end{definition}
+
+\begin{remark}[Model Scope]
+This model is quite general. We haven't specified the *distribution* of the errors (e.g., Normal distribution), only their first and second moments (mean and covariance). Many different error distributions could satisfy these conditions. Our goal is typically to perform statistical inference on the parameter vector $\vect{\beta}$, which describes the relationship between the predictors and the response. $\sigma^2$ is often considered a nuisance parameter, though estimating it is also important.
+\end{remark}
+
+%--------------------------------------------------------------------------
+\section{Least Squares Estimation Revisited}
+%--------------------------------------------------------------------------
+
+We previously defined the Least Squares Estimator (LSE) purely from an algebraic/geometric perspective: finding the coefficient vector $\hat{\vect{\beta}}$ that minimizes the sum of squared differences between observed $Y_i$ and fitted values $\hat{Y}_i$. Now, we interpret this within the context of the linear statistical model.
+
+\begin{definition}[LSE Components under the Model]
+\begin{itemize}
+    \item \textbf{LSE Estimator:} $\hat{\vect{\beta}} = (\mat{X}\T \mat{X})^{-1} \mat{X}\T \vect{Y}$.
+    This is now interpreted as an \textit{estimator} for the true, unknown parameter vector $\vect{\beta}$.
+    \item \textbf{Fitted Values:} $\hat{\vect{Y}} = \mat{X}\hat{\vect{\beta}} = \mat{X}(\mat{X}\T \mat{X})^{-1} \mat{X}\T \vect{Y}$.
+    Let $\mat{P}_M = \mat{X}(\mat{X}\T \mat{X})^{-1} \mat{X}\T$. This is the \textbf{projection matrix} onto the column space of $\mat{X}$ (denoted $M = \text{Im}(\mat{X})$). So, $\hat{\vect{Y}} = \mat{P}_M \vect{Y}$. The vector of fitted values is the orthogonal projection of the observed response vector $\vect{Y}$ onto the subspace spanned by the columns of the design matrix $\mat{X}$. $\hat{\vect{Y}}$ serves as an estimate for the systematic part $\mat{X}\vect{\beta}$.
+    \item \textbf{Residuals:} $\vect{e} = \vect{Y} - \hat{\vect{Y}} = \vect{Y} - \mat{P}_M \vect{Y} = (\mat{I} - \mat{P}_M)\vect{Y}$.
+    Let $\mat{Q} = \mat{I} - \mat{P}_M$. This is the projection matrix onto the orthogonal complement of the column space of $\mat{X}$, denoted $M^\perp$. Thus, $\vect{e} = \mat{Q}\vect{Y}$. The residual vector is the orthogonal projection of $\vect{Y}$ onto the space orthogonal to the column space of $\mat{X}$.
+\end{itemize}
+\end{definition}
+
+\begin{remark}[Residuals vs. Errors]
+It is crucial to distinguish between the \textbf{residuals} $\vect{e}$ and the true \textbf{errors} $\vect{\epsilon}$.
+\begin{itemize}
+    \item $\vect{\epsilon} = \vect{Y} - \mat{X}\vect{\beta}$ represents the deviation of the observations from the true underlying relationship. We typically do not observe $\vect{\epsilon}$ because $\vect{\beta}$ is unknown.
+    \item $\vect{e} = \vect{Y} - \mat{X}\hat{\vect{\beta}}$ represents the deviation of the observations from the fitted relationship. We *can* calculate $\vect{e}$ from the data.
+\end{itemize}
+Geometrically, $\vect{Y} = \mat{X}\vect{\beta} + \vect{\epsilon}$. The LSE process finds $\hat{\vect{Y}} = \mat{X}\hat{\vect{\beta}}$ as the projection of $\vect{Y}$ onto the column space $M$. The residual vector $\vect{e} = \vect{Y} - \hat{\vect{Y}}$ lies in the orthogonal space $M^\perp$. While $\vect{e}$ is not $\vect{\epsilon}$, it serves as our observable proxy or estimate for the unobservable noise. We will see that $\vect{e} = \mat{Q}\vect{Y} = \mat{Q}(\mat{X}\vect{\beta} + \vect{\epsilon}) = \mat{Q}\mat{X}\vect{\beta} + \mat{Q}\vect{\epsilon}$. Since the columns of $\mat{X}$ are in $M$, and $\mat{Q}$ projects onto $M^\perp$, $\mat{Q}\mat{X} = \mat{0}$. Therefore, $\vect{e} = \mat{Q}\vect{\epsilon}$. The residuals are the projection of the true errors onto the space orthogonal to the column space of $\mat{X}$.
+\end{remark}
+
+%--------------------------------------------------------------------------
+\section{Properties of LSE Estimators under the Linear Model}
+%--------------------------------------------------------------------------
+
+Now we use the assumptions of the linear model ($\E[\vect{\epsilon}] = \vect{0}$, $\Var(\vect{\epsilon}) = \sigma^2\mat{I}$) to derive statistical properties of our estimators $\hat{\vect{\beta}}$ and related quantities.
+
+\begin{proposition}[Expectation of Y]
+Under the linear model assumptions, the expected value of the response vector is:
+\[ \E[\vect{Y}] = \mat{X}\vect{\beta} \]
+\end{proposition}
+\begin{proof}
+\begin{align*}
+\E[\vect{Y}] &= \E[\mat{X}\vect{\beta} + \vect{\epsilon}] \\
+&= \E[\mat{X}\vect{\beta}] + \E[\vect{\epsilon}] \quad \text{(Linearity of Expectation)} \\
+&= \mat{X}\vect{\beta} + \vect{0} \quad \text{(Since } \mat{X}, \vect{\beta} \text{ are constant and } \E[\vect{\epsilon}] = \vect{0}) \\
+&= \mat{X}\vect{\beta}
+\end{align*}
+The expected value of the observations lies entirely in the systematic part of the model.
+\end{proof}
+
+\begin{theorem}[Unbiasedness of LSE]
+Under the linear model assumptions, the LSE $\hat{\vect{\beta}}$ is an unbiased estimator of $\vect{\beta}$. That is,
+\[ \E[\hat{\vect{\beta}}] = \vect{\beta} \]
+\end{theorem}
+\begin{proof}
+Let $\mat{A} = (\mat{X}\T \mat{X})^{-1} \mat{X}\T$. Since $\mat{X}$ is constant, $\mat{A}$ is also a constant matrix.
+\begin{align*}
+\E[\hat{\vect{\beta}}] &= \E[(\mat{X}\T \mat{X})^{-1} \mat{X}\T \vect{Y}] \\
+&= \E[\mat{A} \vect{Y}] \\
+&= \mat{A} \E[\vect{Y}] \quad \text{(Linearity of Expectation, } \mat{A} \text{ is constant)} \\
+&= (\mat{X}\T \mat{X})^{-1} \mat{X}\T (\mat{X}\vect{\beta}) \quad \text{(Since } \E[\vect{Y}] = \mat{X}\vect{\beta}) \\
+&= (\mat{X}\T \mat{X})^{-1} (\mat{X}\T \mat{X}) \vect{\beta} \\
+&= \mat{I} \vect{\beta} \\
+&= \vect{\beta}
+\end{align*}
+On average, the LSE procedure correctly identifies the true parameter vector.
+\end{proof}
+
+\begin{proposition}[Covariance Matrix of Y]
+Under the linear model assumptions, the covariance matrix of the response vector is:
+\[ \Var(\vect{Y}) = \sigma^2 \mat{I}_n \]
+\end{proposition}
+\begin{proof}
+\begin{align*}
+\Var(\vect{Y}) &= \Var(\mat{X}\vect{\beta} + \vect{\epsilon}) \\
+&= \Var(\vect{\epsilon}) \quad \text{(Since } \mat{X}\vect{\beta} \text{ is a constant vector)} \\
+&= \sigma^2 \mat{I}_n \quad \text{(Model assumption)}
+\end{align*}
+The variability and correlation structure of the observations are determined solely by the error term.
+\end{proof}
+
+\begin{theorem}[Covariance Matrix of LSE]
+Under the linear model assumptions, the covariance matrix of the LSE $\hat{\vect{\beta}}$ is:
+\[ \Var(\hat{\vect{\beta}}) = \sigma^2 (\mat{X}\T \mat{X})^{-1} \]
+\end{theorem}
+\begin{proof}
+Again, let $\mat{A} = (\mat{X}\T \mat{X})^{-1} \mat{X}\T$. We want to compute $\Var(\hat{\vect{\beta}}) = \Var(\mat{A}\vect{Y})$. We use the "butterfly formula" (Property 4): $\Var(\mat{A}\vect{Y}) = \mat{A} \Var(\vect{Y}) \mat{A}\T$.
+\begin{align*}
+\Var(\hat{\vect{\beta}}) &= \mat{A} \Var(\vect{Y}) \mat{A}\T \\
+&= [(\mat{X}\T \mat{X})^{-1} \mat{X}\T] (\sigma^2 \mat{I}_n) [(\mat{X}\T \mat{X})^{-1} \mat{X}\T]\T \\
+&= \sigma^2 [(\mat{X}\T \mat{X})^{-1} \mat{X}\T] \mat{I}_n [\mat{X} ((\mat{X}\T \mat{X})^{-1})\T] \\
+&= \sigma^2 (\mat{X}\T \mat{X})^{-1} \mat{X}\T \mat{X} (\mat{X}\T \mat{X})^{-1} \quad \text{(Since } (\mat{X}\T \mat{X})^{-1} \text{ is symmetric)} \\
+&= \sigma^2 (\mat{X}\T \mat{X})^{-1} (\mat{X}\T \mat{X}) (\mat{X}\T \mat{X})^{-1} \\
+&= \sigma^2 \mat{I} (\mat{X}\T \mat{X})^{-1} \\
+&= \sigma^2 (\mat{X}\T \mat{X})^{-1}
+\end{align*}
+This $(p+1) \times (p+1)$ matrix describes the variances of the individual coefficient estimators ($\hat{\beta}_j$) on its diagonal and the covariances between different pairs ($\hat{\beta}_j, \hat{\beta}_k$) off-diagonal. Its magnitude depends on the error variance $\sigma^2$ and the structure of the design matrix $\mat{X}$ through $(\mat{X}\T \mat{X})^{-1}$.
+\end{proof}
+
+%--------------------------------------------------------------------------
+\section{Estimating the Error Variance \texorpdfstring{$\sigma^2$}{sigma squared}}
+%--------------------------------------------------------------------------
+
+While our primary interest is often $\vect{\beta}$, the error variance $\sigma^2$ is also an important unknown parameter. It quantifies the residual variability not explained by the predictors. Furthermore, the precision of $\hat{\vect{\beta}}$ (as seen in its covariance matrix) depends on $\sigma^2$. Thus, we need an estimator for $\sigma^2$.
+
+\textbf{Intuition:} We don't observe the true errors $\epsilon_i$. However, we do observe the residuals $e_i = Y_i - \hat{Y}_i$. Since the residuals $e_i$ are our empirical stand-ins for the errors $\epsilon_i$, it seems reasonable to base an estimator for the variance of the $\epsilon_i$'s (which is $\sigma^2$) on the variability of the residuals $e_i$. A natural measure of the overall size of the residuals is the sum of squared residuals (SSR), $\|\vect{e}\|^2 = \sum_{i=1}^n e_i^2$.
+
+\begin{definition}[Estimator for $\sigma^2$]
+The commonly used unbiased estimator for the error variance $\sigma^2$ is:
+\[
+\hat{\sigma}^2 = S^2 = \frac{\|\vect{e}\|^2}{n - p - 1} = \frac{\sum_{i=1}^n e_i^2}{n - p - 1} = \frac{\text{SSR}}{n - p - 1}
+\]
+The quantity $n-p-1$ is known as the \textbf{degrees of freedom for error}.
+\end{definition}
+
+\begin{theorem}[Unbiasedness of $\hat{\sigma}^2$]
+Under the linear model assumptions, $\hat{\sigma}^2$ is an unbiased estimator of $\sigma^2$.
+\[
+\E[\hat{\sigma}^2] = \sigma^2
+\]
+\end{theorem}
+
+We will present two proofs for this important result.
+
+\begin{proof}[Proof 1: Direct Calculation using Trace]
+Our goal is to compute $\E[\hat{\sigma}^2]$. Since $\hat{\sigma}^2 = \frac{1}{n-p-1} \|\vect{e}\|^2$, and the denominator is constant, this is equivalent to showing $\E[\|\vect{e}\|^2] = \sigma^2(n-p-1)$.
+
+Recall $\vect{e} = \mat{Q}\vect{Y} = \mat{Q}\vect{\epsilon}$, where $\mat{Q} = \mat{I} - \mat{P}_M$. The squared norm is $\|\vect{e}\|^2 = \vect{e}\T\vect{e}$.
+\[
+\|\vect{e}\|^2 = (\mat{Q}\vect{\epsilon})\T (\mat{Q}\vect{\epsilon}) = \vect{\epsilon}\T \mat{Q}\T \mat{Q} \vect{\epsilon}
+\]
+Since $\mat{Q}$ is a projection matrix, it is symmetric ($\mat{Q}\T = \mat{Q}$) and idempotent ($\mat{Q}^2 = \mat{Q}$). Thus, $\mat{Q}\T\mat{Q} = \mat{Q}\mat{Q} = \mat{Q}$.
+\[
+\|\vect{e}\|^2 = \vect{\epsilon}\T \mat{Q} \vect{\epsilon}
+\]
+This is a quadratic form in the random vector $\vect{\epsilon}$. Expanding this:
+\[
+\|\vect{e}\|^2 = \sum_{i=1}^n \sum_{j=1}^n q_{ij} \epsilon_i \epsilon_j
+\]
+Now, let's take the expectation:
+\begin{align*}
+\E[\|\vect{e}\|^2] &= \E\left[\sum_{i=1}^n \sum_{j=1}^n q_{ij} \epsilon_i \epsilon_j\right] \\
+&= \sum_{i=1}^n \sum_{j=1}^n q_{ij} \E[\epsilon_i \epsilon_j] \quad \text{(Linearity of Expectation)}
+\end{align*}
+Recall that $\E[\epsilon_i \epsilon_j] = \Cov(\epsilon_i, \epsilon_j) + \E[\epsilon_i]\E[\epsilon_j]$. Since $\E[\epsilon_i] = 0$ for all $i$, we have $\E[\epsilon_i \epsilon_j] = \Cov(\epsilon_i, \epsilon_j)$.
+From the model assumptions, $\Cov(\epsilon_i, \epsilon_j) = \sigma^2$ if $i=j$, and $0$ if $i \neq j$.
+So, the only non-zero terms in the sum occur when $i=j$:
+\begin{align*}
+\E[\|\vect{e}\|^2] &= \sum_{i=1}^n q_{ii} \E[\epsilon_i^2] + \sum_{i \neq j} q_{ij} \E[\epsilon_i \epsilon_j] \\
+&= \sum_{i=1}^n q_{ii} \Var(\epsilon_i) + \sum_{i \neq j} q_{ij} \cdot 0 \\
+&= \sum_{i=1}^n q_{ii} \sigma^2 \\
+&= \sigma^2 \sum_{i=1}^n q_{ii}
+\end{align*}
+The sum $\sum_{i=1}^n q_{ii}$ is the trace of the matrix $\mat{Q}$, denoted $\Trace(\mat{Q})$. So,
+\[
+\E[\|\vect{e}\|^2] = \sigma^2 \Trace(\mat{Q})
+\]
+What is the trace of $\mat{Q} = \mat{I}_n - \mat{P}_M$? We know $\Trace(\mat{A} - \mat{B}) = \Trace(\mat{A}) - \Trace(\mat{B})$.
+$\Trace(\mat{I}_n) = n$.
+The trace of a projection matrix equals the dimension of the space it projects onto. $\mat{P}_M$ projects onto the column space of $\mat{X}$, which has dimension equal to the rank of $\mat{X}$. Assuming $\mat{X}$ has full column rank (which is required for $(\mat{X}\T\mat{X})^{-1}$ to exist), the rank is $p+1$. So, $\Trace(\mat{P}_M) = p+1$.
+Therefore, $\Trace(\mat{Q}) = \Trace(\mat{I}_n) - \Trace(\mat{P}_M) = n - (p+1) = n - p - 1$.
+Substituting this back:
+\[
+\E[\|\vect{e}\|^2] = \sigma^2 (n - p - 1)
+\]
+Finally,
+\[
+\E[\hat{\sigma}^2] = \E\left[\frac{\|\vect{e}\|^2}{n - p - 1}\right] = \frac{1}{n - p - 1} \E[\|\vect{e}\|^2] = \frac{1}{n - p - 1} \sigma^2 (n - p - 1) = \sigma^2
+\]
+This confirms that $\hat{\sigma}^2$ is an unbiased estimator for $\sigma^2$.
+\end{proof}
+
+Before the second proof, we establish a useful general lemma.
+
+\begin{lemma}[Expectation of Squared Norm and Trace]
+Let $\vect{Z}$ be a random vector with finite dimension, mean $\E[\vect{Z}] = \vect{\mu}_Z$, and covariance matrix $\Var(\vect{Z}) = \mat{\Sigma}_Z$. Then,
+\[
+\E[\|\vect{Z}\|^2] = \E[\vect{Z}\T\vect{Z}] = \Trace(\Var(\vect{Z})) + \|\E[\vect{Z}]\|^2 = \Trace(\mat{\Sigma}_Z) + \vect{\mu}_Z\T\vect{\mu}_Z
+\]
+Alternatively, using $\Var(\vect{Z}) = \E[\vect{Z}\vect{Z}\T] - \E[\vect{Z}]\E[\vect{Z}]\T$, we can write:
+\[
+\E[\|\vect{Z}\|^2] = \Trace(\E[\vect{Z}\vect{Z}\T])
+\]
+\end{lemma}
+
+\begin{proof}
+Let's prove $\E[\vect{Z}\T\vect{Z}] = \Trace(\E[\vect{Z}\vect{Z}\T])$.
+Note that $\vect{Z}\T\vect{Z}$ is a scalar ($1 \times 1$ matrix). For any scalar $s$, $s = \Trace(s)$.
+\[
+\E[\|\vect{Z}\|^2] = \E[\vect{Z}\T\vect{Z}] = \E[\Trace(\vect{Z}\T\vect{Z})]
+\]
+Using the cyclic property of the trace, $\Trace(AB) = \Trace(BA)$. Let $A = \vect{Z}\T$ and $B = \vect{Z}$.
+\[
+\E[\Trace(\vect{Z}\T\vect{Z})] = \E[\Trace(\vect{Z}\vect{Z}\T)]
+\]
+Since Trace is a linear operator (sum of diagonal elements), we can swap Trace and Expectation:
+\[
+\E[\Trace(\vect{Z}\vect{Z}\T)] = \Trace(\E[\vect{Z}\vect{Z}\T])
+\]
+This proves the second form. For the first form:
+\begin{align*}
+\Trace(\E[\vect{Z}\vect{Z}\T]) &= \Trace(\Var(\vect{Z}) + \E[\vect{Z}]\E[\vect{Z}]\T) \\
+&= \Trace(\Var(\vect{Z})) + \Trace(\vect{\mu}_Z\vect{\mu}_Z\T) \\
+&= \Trace(\Var(\vect{Z})) + \Trace(\vect{\mu}_Z\T\vect{\mu}_Z) \quad \text{(Cyclic property)} \\
+&= \Trace(\Var(\vect{Z})) + \vect{\mu}_Z\T\vect{\mu}_Z \quad \text{(Trace of a scalar is the scalar itself)} \\
+&= \Trace(\mat{\Sigma}_Z) + \|\vect{\mu}_Z\|^2
+\end{align*}
+Both forms are useful.
+\end{proof}
+
+\begin{proof}[Proof 2: Unbiasedness of $\hat{\sigma}^2$ using Lemma]
+We want to compute $\E[\|\vect{e}\|^2]$. We apply the lemma with $\vect{Z} = \vect{e}$.
+\[
+\E[\|\vect{e}\|^2] = \Trace(\Var(\vect{e})) + \|\E[\vect{e}]\|^2
+\]
+We need to find the mean and variance of the residual vector $\vect{e}$.
+
+\textit{Mean of $\vect{e}$:}
+\[
+\E[\vect{e}] = \E[\mat{Q}\vect{\epsilon}] = \mat{Q}\E[\vect{\epsilon}] = \mat{Q}\vect{0} = \vect{0}
+\]
+So, $\|\E[\vect{e}]\|^2 = 0$.
+
+\textit{Variance of $\vect{e}$:}
+\[
+\Var(\vect{e}) = \Var(\mat{Q}\vect{\epsilon}) = \mat{Q} \Var(\vect{\epsilon}) \mat{Q}\T \quad \text{(Butterfly formula)}
+\]
+Since $\Var(\vect{\epsilon}) = \sigma^2 \mat{I}_n$ and $\mat{Q}$ is symmetric ($\mat{Q}\T = \mat{Q}$):
+\[
+\Var(\vect{e}) = \mat{Q} (\sigma^2 \mat{I}_n) \mat{Q} = \sigma^2 \mat{Q} \mat{I}_n \mat{Q} = \sigma^2 \mat{Q}^2
+\]
+Since $\mat{Q}$ is idempotent ($\mat{Q}^2 = \mat{Q}$):
+\[
+\Var(\vect{e}) = \sigma^2 \mat{Q}
+\]
+
+\textit{Applying the Lemma:}
+\begin{align*}
+\E[\|\vect{e}\|^2] &= \Trace(\Var(\vect{e})) + \|\E[\vect{e}]\|^2 \\
+&= \Trace(\sigma^2 \mat{Q}) + 0 \\
+&= \sigma^2 \Trace(\mat{Q})
+\end{align*}
+As established in Proof 1, $\Trace(\mat{Q}) = n - p - 1$.
+\[
+\E[\|\vect{e}\|^2] = \sigma^2 (n - p - 1)
+\]
+Therefore,
+\[
+\E[\hat{\sigma}^2] = \frac{\E[\|\vect{e}\|^2]}{n - p - 1} = \frac{\sigma^2 (n - p - 1)}{n - p - 1} = \sigma^2
+\]
+This provides an alternative, perhaps slightly more abstract, route to the same result, leveraging the general lemma about the expected squared norm.
+\end{proof}
+
+%--------------------------------------------------------------------------
+\section{Summary and Next Steps}
+%--------------------------------------------------------------------------
+
+Let's briefly summarize where we stand:
+
+\begin{itemize}
+    \item We are working within the **Linear Model**: $\vect{Y} = \mat{X}\vect{\beta} + \vect{\epsilon}$, with $\E[\vect{\epsilon}] = \vect{0}$ and $\Var(\vect{\epsilon}) = \sigma^2 \mat{I}_n$. The parameters $\vect{\beta}$ and $\sigma^2$ are unknown, and $\mat{X}$ is considered fixed.
+    \item The **Least Squares Estimator** for $\vect{\beta}$ is $\hat{\vect{\beta}} = (\mat{X}\T \mat{X})^{-1} \mat{X}\T \vect{Y}$.
+    \item The **Residual Vector** is $\vect{e} = \vect{Y} - \mat{X}\hat{\vect{\beta}} = (\mat{I} - \mat{P}_M)\vect{Y} = \mat{Q}\vect{\epsilon}$.
+    \item The **Estimator for $\sigma^2$** is $\hat{\sigma}^2 = S^2 = \frac{\|\vect{e}\|^2}{n-p-1}$.
+    \item We have shown that both $\hat{\vect{\beta}}$ and $\hat{\sigma}^2$ are **unbiased estimators** for their respective parameters under the model assumptions:
+        \begin{itemize}
+            \item $\E[\hat{\vect{\beta}}] = \vect{\beta}$
+            \item $\E[\hat{\sigma}^2] = \sigma^2$
+        \end{itemize}
+    \item We also derived the **covariance matrix of the LSE**:
+        \[ \Var(\hat{\vect{\beta}}) = \sigma^2 (\mat{X}\T \mat{X})^{-1} \]
+\end{itemize}
+
+We have established the foundational properties of the standard estimators in the linear model framework. In the upcoming lectures, we will delve deeper into the properties of $\hat{\vect{\beta}}$, culminating in the famous **Gauss-Markov Theorem**. This theorem establishes that, in a specific sense, the LSE is the "best" linear unbiased estimator for $\vect{\beta}$. This provides a strong theoretical justification for using least squares under the assumptions we have made.
+
+\end{document}
