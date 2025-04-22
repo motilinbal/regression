@@ -1,0 +1,583 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, amsthm, amsfonts}
+\usepackage{geometry}
+\usepackage{bm} % For bold math symbols (\bm)
+\usepackage{framed} % For announcement boxes
+\usepackage[english]{babel} % Explicitly setting language
+
+\geometry{a4paper, margin=1in}
+
+% --- Theorem Environments ---
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% --- Custom Environment for Announcements ---
+\newenvironment{announcement}
+  {\begin{framed}\noindent\textbf{Administrative Note:}\quad}
+  {\end{framed}}
+
+% --- Math Operators ---
+\DeclareMathOperator{\E}{\mathbb{E}}
+\DeclareMathOperator{\Var}{\operatorname{Var}}
+\DeclareMathOperator{\Cov}{\operatorname{Cov}}
+\DeclareMathOperator{\tr}{\operatorname{tr}}
+\DeclareMathOperator{\argmin}{\operatorname{argmin}}
+\DeclareMathOperator{\rank}{\operatorname{rank}}
+\DeclareMathOperator{\im}{\operatorname{Im}} % For image/column space
+
+% --- Title Setup ---
+\title{Regression and Statistical Models \\ \large Tutorial 4: Multivariate Distributions and the Linear Model}
+\author{Undergraduate Mathematics Educator}
+\date{October 2023 (Based on Prior Lecture Notes)}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+    Welcome! These notes cover fundamental concepts related to multivariate random variables, focusing on expectations and covariance matrices. We will then transition to the cornerstone of this course: the linear model. We'll explore its matrix formulation, underlying assumptions, and key properties derived from those assumptions. We will work through several examples to solidify understanding, including some problems adapted from past exams. Pay close attention to the distinctions between assumptions and derived results, and how different modeling scenarios align with the standard linear model framework.
+\end{abstract}
+
+\section{Multivariate Random Variables: Expectations and Covariance}
+
+Often in statistics, we deal not just with single random variables, but with collections of them. Understanding their joint behavior is crucial. Let's start by defining some key concepts for random vectors.
+
+\begin{definition}[Random Vector]
+    A vector $\bm{Z} = (Z_1, Z_2, \ldots, Z_n)^T$ whose components $Z_i$ are random variables is called a \emph{random vector}.
+\end{definition}
+
+\begin{definition}[Expectation of a Random Vector/Matrix]
+    Let $\bm{Z} = (Z_1, \ldots, Z_n)^T$ be a random vector. Its \emph{expectation} is the vector of the expectations of its components:
+    \[
+    \E[\bm{Z}] = \begin{pmatrix} \E[Z_1] \\ \vdots \\ \E[Z_n] \end{pmatrix}
+    \]
+    Similarly, if $\bm{A}$ is a random matrix with entries $A_{ij}$, its expectation is the matrix of the expectations of its entries: $(\E[\bm{A}])_{ij} = \E[A_{ij}]$.
+\end{definition}
+
+Expectation behaves linearly, even with vectors and matrices. Let $\bm{Z}, \bm{W}$ be random vectors, $\bm{A}, \bm{B}$ be fixed (non-random) matrices of appropriate dimensions, and $\bm{C}$ be a fixed vector.
+\begin{proposition}[Properties of Expectation]
+    \begin{enumerate}
+        \item $\E[\bm{Z}+\boldsymbol{W}]=\E[\boldsymbol{Z}]+\E[\boldsymbol{W}]$
+        \item $\E[\boldsymbol{A} \boldsymbol{Z} \boldsymbol{B}]=\boldsymbol{A} \E[\boldsymbol{Z}] \boldsymbol{B}$ (Note: $\bm{B}$ must be $1 \times 1$ or $\bm{Z}$ must be a matrix for this to be generally applicable. If $\bm{Z}$ is a vector, often we see $\E[\bm{A}\bm{Z}] = \bm{A}\E[\bm{Z}]$ or $\E[\bm{Z}^T\bm{B}] = \E[\bm{Z}]^T\bm{B}$.)
+        \item $\E[\boldsymbol{A} \bm{Z}+\boldsymbol{C}]=\boldsymbol{A} \E[\bm{Z}]+\boldsymbol{C}$ (Follows from 1 and 2)
+    \end{enumerate}
+\end{proposition}
+
+While expectation describes the "center" of the distribution, the covariance matrix describes the spread and linear relationships between components.
+
+\begin{definition}[Covariance and Variance-Covariance Matrix]
+    Let $\bm{Z} \in \mathbb{R}^n$ and $\bm{W} \in \mathbb{R}^m$ be random vectors.
+    \begin{enumerate}
+        \item The \emph{covariance matrix} between $\bm{Z}$ and $\bm{W}$ is the $n \times m$ matrix:
+        \[
+        \Cov(\bm{Z}, \bm{W}) := \E\left[ (\bm{Z} - \E[\bm{Z}]) (\bm{W} - \E[\bm{W}])^T \right]
+        \]
+        The $(i, j)$-th entry is $\Cov(Z_i, W_j)$.
+        \item The \emph{variance-covariance matrix} (or simply variance matrix) of $\bm{Z}$ is the $n \times n$ matrix:
+        \[
+        \Var(\bm{Z}) := \Cov(\bm{Z}, \bm{Z}) = \E\left[ (\bm{Z} - \E[\bm{Z}]) (\bm{Z} - \E[\bm{Z}])^T \right]
+        \]
+    \end{enumerate}
+\end{definition}
+
+\begin{proposition}
+    The $(i, j)$-th entry of the variance-covariance matrix $\Var(\bm{Z})$ is the covariance between $Z_i$ and $Z_j$:
+    \[
+    (\Var(\bm{Z}))_{ij} = \Cov(Z_i, Z_j)
+    \]
+    Consequently, $\Var(\bm{Z})$ is a symmetric matrix, i.e., $(\Var(\bm{Z}))_{ij} = (\Var(\bm{Z}))_{ji}$.
+\end{proposition}
+
+\begin{proof}
+    Let $\bm{\mu} = \E[\bm{Z}]$. The $(i, j)$-th entry of $\Var(\bm{Z})$ is given by:
+    \begin{align*}
+    (\Var(\bm{Z}))_{ij} &= \left( \E\left[ (\bm{Z} - \bm{\mu}) (\bm{Z} - \bm{\mu})^T \right] \right)_{ij} \\
+    &= \E\left[ ((\bm{Z} - \bm{\mu}) (\bm{Z} - \bm{\mu})^T)_{ij} \right] \quad \text{(Expectation is element-wise)} \\
+    &= \E\left[ (\bm{Z} - \bm{\mu})_i (\bm{Z} - \bm{\mu})_j \right] \quad \text{(Definition of matrix multiplication)} \\
+    &= \E\left[ (Z_i - \E[Z_i]) (Z_j - \E[Z_j]) \right] \\
+    &= \Cov(Z_i, Z_j)
+    \end{align*}
+    Since $\Cov(Z_i, Z_j) = \Cov(Z_j, Z_i)$, we have $(\Var(\bm{Z}))_{ij} = (\Var(\bm{Z}))_{ji}$.
+\end{proof}
+
+\begin{proposition}[Properties of Covariance Matrices]
+    Let $\bm{Z}, \bm{W}, \bm{R}$ be random vectors, $\bm{A}, \bm{B}$ be fixed matrices of appropriate dimensions, and $\bm{a}$ be a fixed vector. The following properties hold:
+    \begin{enumerate}
+        \item $\Cov(\boldsymbol{Z}, \boldsymbol{W})=\Cov(\boldsymbol{W}, \boldsymbol{Z})^{\top}$
+        \item $\Cov(\boldsymbol{Z}+\boldsymbol{R}, \boldsymbol{W})=\Cov(\boldsymbol{Z}, \boldsymbol{W})+\Cov(\boldsymbol{R}, \boldsymbol{W})$
+        \item $\Cov(\boldsymbol{A} \boldsymbol{Z}, \boldsymbol{B} \boldsymbol{W})= \boldsymbol{A} \Cov(\boldsymbol{Z}, \boldsymbol{W}) \boldsymbol{B}^{\top}$
+        \item $\Var(\boldsymbol{A} \boldsymbol{Z})=\boldsymbol{A} \Var(\boldsymbol{Z}) \boldsymbol{A}^{\top}$ (From property 3 with $\bm{W}=\bm{Z}, \bm{B}=\bm{A}$)
+        \item $\Var(\boldsymbol{a}^{\top} \boldsymbol{Z})=\boldsymbol{a}^{\top} \Var(\boldsymbol{Z}) \boldsymbol{a}$ (From property 4, treating $\bm{a}^T$ as a $1 \times n$ matrix $A$)
+        \item $\Var(\boldsymbol{Z})$ is a symmetric and positive semidefinite matrix. (From property 5: $\Var(\boldsymbol{a}^{\top} \boldsymbol{Z}) \ge 0$ for any $\bm{a}$, which means $\boldsymbol{a}^{\top} \Var(\boldsymbol{Z}) \boldsymbol{a} \ge 0$.)
+    \end{enumerate}
+\end{proposition}
+
+\begin{remark}
+    You will be asked to prove these properties in the upcoming homework assignment. They are fundamental tools for manipulating variances and covariances of linear combinations of random variables.
+\end{remark}
+
+\begin{example}[Multivariate Normal Transformation] \label{ex:mvn_transform}
+    Let $Z_1, \ldots, Z_5$ be independent and identically distributed (iid) random variables following the standard normal distribution, $Z_i \sim \mathcal{N}(0, 1)$.
+    
+    (a) Find the expectation vector and variance-covariance matrix of the random vector $\bm{Z} = (Z_1, \ldots, Z_5)^T$.
+    
+    \emph{Solution:}
+    Since each $Z_i \sim \mathcal{N}(0, 1)$, we have $\E[Z_i] = 0$ and $\Var(Z_i) = 1$. Because the $Z_i$ are independent, $\Cov(Z_i, Z_j) = 0$ for $i \ne j$.
+    The expectation vector is:
+    \[ \E[\bm{Z}] = (\E[Z_1], \ldots, \E[Z_5])^T = (0, \ldots, 0)^T = \mathbf{0}_5 \]
+    The variance-covariance matrix is:
+    \[ \Var(\bm{Z})_{ij} = \Cov(Z_i, Z_j) = \begin{cases} \Var(Z_i) = 1 & \text{if } i=j \\ \Cov(Z_i, Z_j) = 0 & \text{if } i \ne j \end{cases} \]
+    So, $\Var(\bm{Z})$ is the $5 \times 5$ identity matrix:
+    \[ \Var(\bm{Z}) = \begin{pmatrix} 1 & 0 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 & 0 \\ 0 & 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 0 & 1 \end{pmatrix} = \bm{I}_5 \]
+    
+    (b) Define the transformation $A: \mathbb{R}^5 \to \mathbb{R}^3$ by the matrix:
+    \[ \bm{A} = \begin{pmatrix} 1 & 1 & 0 & 0 & 0 \\ 0 & 0 & 1 & 1 & 0 \\ 0 & 0 & 0 & 0 & 1 \end{pmatrix} \]
+    Is this transformation linear? Calculate the expectation vector and variance-covariance matrix of the transformed vector $\bm{W} = A\bm{Z}$.
+    
+    \emph{Solution:}
+    Yes, the transformation $\bm{Z} \mapsto \bm{A}\bm{Z}$ is a linear transformation because it is defined by matrix multiplication.
+    Using the properties of expectation and covariance:
+    \[ \E[\bm{W}] = \E[\bm{A}\bm{Z}] = \bm{A} \E[\bm{Z}] = \bm{A} \mathbf{0}_5 = \mathbf{0}_3 \]
+    The expectation of the transformed vector is the zero vector in $\mathbb{R}^3$.
+    \[ \Var(\bm{W}) = \Var(\bm{A}\bm{Z}) = \bm{A} \Var(\bm{Z}) \bm{A}^T = \bm{A} \bm{I}_5 \bm{A}^T = \bm{A}\bm{A}^T \]
+    Let's compute $\bm{A}\bm{A}^T$:
+    \begin{align*} \bm{A}\bm{A}^T &= \begin{pmatrix} 1 & 1 & 0 & 0 & 0 \\ 0 & 0 & 1 & 1 & 0 \\ 0 & 0 & 0 & 0 & 1 \end{pmatrix} \begin{pmatrix} 1 & 0 & 0 \\ 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{pmatrix} \\ &= \begin{pmatrix} (1)(1)+(1)(1)+0+0+0 & (1)(0)+(1)(0)+0+0+0 & (1)(0)+(1)(0)+0+0+0 \\ 0+0+(1)(0)+(1)(0)+0 & 0+0+(1)(1)+(1)(1)+0 & 0+0+(1)(0)+(1)(0)+0 \\ 0+0+0+0+(1)(0) & 0+0+0+0+(1)(0) & 0+0+0+0+(1)(1) \end{pmatrix} \\ &= \begin{pmatrix} 2 & 0 & 0 \\ 0 & 2 & 0 \\ 0 & 0 & 1 \end{pmatrix} \end{align*}
+    So, $\Var(\bm{W}) = \begin{pmatrix} 2 & 0 & 0 \\ 0 & 2 & 0 \\ 0 & 0 & 1 \end{pmatrix}$. Notice that the components of $\bm{W} = (Z_1+Z_2, Z_3+Z_4, Z_5)^T$ are uncorrelated, but $W_1$ and $W_2$ have variance 2, while $W_3$ has variance 1.
+    
+    (c) Would your answers to (a) and (b) change if it were only known that $Z_1, \ldots, Z_5$ were sampled such that $\E[Z_i] = 0$, $\Var(Z_i) = 1$ for all $i$, and $\Cov(Z_i, Z_j) = 0$ for $i \ne j$ (i.e., they are uncorrelated with mean 0 and variance 1, but not necessarily normally distributed or independent)?
+    
+    \emph{Solution:}
+    No, the answers for $\E[\bm{Z}]$, $\Var(\bm{Z})$, $\E[\bm{W}]$, and $\Var(\bm{W})$ would \emph{not} change. The calculations for the expectation vector and variance-covariance matrix only depend on the first moments ($\E[Z_i]$) and second moments ($\E[Z_i Z_j]$, which determine variances and covariances). They do not depend on the full distributional shape (like normality). The properties $\E[\bm{A}\bm{Z}] = \bm{A}\E[\bm{Z}]$ and $\Var(\bm{A}\bm{Z}) = \bm{A}\Var(\bm{Z})\bm{A}^T$ hold regardless of the underlying distribution, as long as the expectations and variances exist.
+\end{example}
+
+\begin{proposition}[Variance Ordering and Positive Semidefiniteness]
+Let $\bm{Z}, \bm{W}$ be random vectors in $\mathbb{R}^p$. The following are equivalent:
+\begin{enumerate}
+    \item For all constant vectors $\bm{v} \in \mathbb{R}^p$, $\Var(\bm{v}^T \bm{Z}) \ge \Var(\bm{v}^T \bm{W})$.
+    \item The matrix $\bm{B} := \Var(\bm{Z}) - \Var(\bm{W})$ is positive semidefinite.
+\end{enumerate}
+(Recall that a symmetric matrix $\bm{B}$ is positive semidefinite if $\bm{v}^T \bm{B} \bm{v} \ge 0$ for all vectors $\bm{v}$.)
+\end{proposition}
+\begin{proof}
+Using property 5 of covariance matrices:
+\[ \Var(\bm{v}^T \bm{Z}) = \bm{v}^T \Var(\bm{Z}) \bm{v} \]
+\[ \Var(\bm{v}^T \bm{W}) = \bm{v}^T \Var(\bm{W}) \bm{v} \]
+Therefore, statement (1) is equivalent to:
+\[ \bm{v}^T \Var(\bm{Z}) \bm{v} \ge \bm{v}^T \Var(\bm{W}) \bm{v} \quad \text{for all } \bm{v} \in \mathbb{R}^p \]
+Rearranging gives:
+\[ \bm{v}^T (\Var(\bm{Z}) - \Var(\bm{W})) \bm{v} \ge 0 \quad \text{for all } \bm{v} \in \mathbb{R}^p \]
+This is precisely the definition of the matrix $\bm{B} = \Var(\bm{Z}) - \Var(\bm{W})$ being positive semidefinite. Note that $\bm{B}$ is symmetric since $\Var(\bm{Z})$ and $\Var(\bm{W})$ are symmetric.
+\end{proof}
+\begin{remark}
+The condition that $\Var(\bm{Z}) - \Var(\bm{W})$ is positive semidefinite provides a way to compare the "overall dispersion" of two random vectors, often denoted as $\Var(\bm{Z}) \ge \Var(\bm{W})$ in the Loewner ordering of matrices. This concept is important in comparing the efficiency of estimators, for example. The source mentioned a condition involving $B=C^TC$ or $B=C^2$; this is related because a symmetric matrix is positive semidefinite if and only if it can be expressed as $C^TC$ for some matrix $C$ (e.g., via Cholesky decomposition or spectral decomposition).
+\end{remark}
+
+
+\section{The Linear Model}
+
+We now shift focus to the primary topic of the course: the linear model. This model forms the basis for regression analysis and many other statistical techniques.
+
+\subsection{Model Definition and Matrix Notation}
+
+Suppose we have $n$ observations. For each observation $i = 1, \ldots, n$, we have a response variable $Y_i$ and a set of $p$ predictor variables (or features) $X_{i1}, \ldots, X_{ip}$.
+
+The \emph{linear model} posits that the relationship between the response and the predictors is approximately linear, incorporating some random error:
+\[ Y_i = \beta_0 + \beta_1 X_{i1} + \beta_2 X_{i2} + \cdots + \beta_p X_{ip} + \epsilon_i \]
+Here:
+\begin{itemize}
+    \item $Y_i$ is the response variable for the $i$-th observation.
+    \item $X_{ij}$ is the value of the $j$-th predictor for the $i$-th observation.
+    \item $\beta_0$ is the intercept term (the expected value of $Y$ when all $X_j$ are zero).
+    \item $\beta_1, \ldots, \beta_p$ are the coefficients associated with each predictor, representing the change in $Y$ for a one-unit change in the corresponding $X_j$, holding other predictors constant. These are unknown parameters we typically want to estimate.
+    \item $\epsilon_i$ is the random error term for the $i$-th observation, representing variability in $Y_i$ not explained by the predictors.
+\end{itemize}
+
+It's incredibly convenient to express this model using matrix notation. Let's define:
+\begin{itemize}
+    \item The response vector $\bm{Y} \in \mathbb{R}^n$: $\bm{Y} = \begin{pmatrix} Y_1 \\ \vdots \\ Y_n \end{pmatrix}$
+    \item The design matrix $\bm{X} \in \mathbb{R}^{n \times (p+1)}$:
+    \[ \bm{X} = \begin{pmatrix}
+    1 & X_{11} & \cdots & X_{1p} \\
+    1 & X_{21} & \cdots & X_{2p} \\
+    \vdots & \vdots & \ddots & \vdots \\
+    1 & X_{n1} & \cdots & X_{np}
+    \end{pmatrix} \]
+    (Note the first column of ones, corresponding to the intercept $\beta_0$).
+    \item The parameter vector $\bm{\beta} \in \mathbb{R}^{p+1}$: $\bm{\beta} = \begin{pmatrix} \beta_0 \\ \beta_1 \\ \vdots \\ \beta_p \end{pmatrix}$
+    \item The error vector $\bm{\epsilon} \in \mathbb{R}^n$: $\bm{\epsilon} = \begin{pmatrix} \epsilon_1 \\ \vdots \\ \epsilon_n \end{pmatrix}$
+\end{itemize}
+
+With these definitions, the entire set of $n$ equations can be written compactly as:
+\[ \boxed{\bm{Y} = \bm{X}\bm{\beta} + \bm{\epsilon}} \]
+
+\subsection{Standard Assumptions}
+
+The utility of the linear model comes from making certain assumptions about the error terms $\epsilon_i$. The standard assumptions are:
+\begin{enumerate}
+    \item \textbf{Linearity:} The model $\bm{Y} = \bm{X}\bm{\beta} + \bm{\epsilon}$ correctly describes the relationship. This implies $\E[\bm{Y} | \bm{X}] = \bm{X}\bm{\beta}$.
+    \item \textbf{Zero Mean Error:} The expected value of the errors is zero: $\E[\epsilon_i] = 0$ for all $i$, or in matrix form, $\E[\bm{\epsilon}] = \mathbf{0}$.
+    \item \textbf{Homoscedasticity:} The variance of the errors is constant for all observations: $\Var(\epsilon_i) = \sigma^2$ for all $i$, where $\sigma^2$ is some positive constant.
+    \item \textbf{Uncorrelated Errors:} The errors for different observations are uncorrelated: $\Cov(\epsilon_i, \epsilon_j) = 0$ for all $i \ne j$.
+\end{enumerate}
+Assumptions 2, 3, and 4 can be concisely written using the variance-covariance matrix of the error vector:
+\[ \E[\bm{\epsilon}] = \mathbf{0} \quad \text{and} \quad \Cov(\bm{\epsilon}) = \Var(\bm{\epsilon}) = \sigma^2 \bm{I}_n \]
+where $\bm{I}_n$ is the $n \times n$ identity matrix.
+
+An additional assumption often made, particularly for inference (hypothesis testing, confidence intervals), is:
+\begin{enumerate}
+    \item[5.] \textbf{Normality:} The errors are normally distributed: $\epsilon_i \sim \mathcal{N}(0, \sigma^2)$. This implies $\bm{\epsilon} \sim \mathcal{N}(\mathbf{0}, \sigma^2 \bm{I}_n)$.
+\end{enumerate}
+This is referred to as the \emph{Normal Linear Model}.
+
+\subsection{Estimation and Key Quantities}
+
+Our goal is often to estimate the unknown parameter vector $\bm{\beta}$. The most common method is \emph{Ordinary Least Squares (OLS)}. The OLS estimator $\hat{\bm{\beta}}$ is the vector that minimizes the sum of squared differences between the observed responses $Y_i$ and the values predicted by the linear function of $X_i$.
+\[ \hat{\bm{\beta}} = \argmin_{\bm{b} \in \mathbb{R}^{p+1}} ||\bm{Y} - \bm{X}\bm{b}||^2 = \argmin_{\bm{b}} \sum_{i=1}^n (Y_i - (\bm{X}\bm{b})_i)^2 \]
+Under standard conditions (specifically, that $\bm{X}$ has full column rank, meaning its columns are linearly independent), the OLS estimator has a closed-form solution:
+\[ \boxed{\hat{\bm{\beta}} = (\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{Y}} \]
+
+Once we have $\hat{\bm{\beta}}$, we can define:
+\begin{itemize}
+    \item \textbf{Fitted values:} The predicted values on the regression line/plane:
+    \[ \hat{\bm{Y}} = \bm{X}\hat{\bm{\beta}} \]
+    \item \textbf{Residuals:} The differences between observed and fitted values:
+    \[ \bm{e} = \bm{Y} - \hat{\bm{Y}} \]
+    The residuals $\bm{e}$ are our empirical estimate of the unobservable errors $\bm{\epsilon}$.
+\end{itemize}
+\begin{remark}
+    Unless stated otherwise, $\hat{\bm{\beta}}$ will refer to the OLS estimator.
+\end{remark}
+
+\begin{example}[Assumptions vs. Results] \label{ex:assumptions_results}
+    Consider the following statements related to the linear model $\bm{Y} = \bm{X}\bm{\beta} + \bm{\epsilon}$. Classify each as either a fundamental assumption of the model (or OLS procedure) or a mathematical result derived from the assumptions/definitions. Assume $\bm{X}$ is fixed (non-random).
+
+    \begin{enumerate}
+        \item $\hat{\bm{\beta}} = \argmin_{\bm{b}} ||\bm{Y} - \bm{X}\bm{b}||^2$: **Definition/Result.** This is the definition of the OLS estimator $\hat{\bm{\beta}}$. It's the result of applying the least squares principle.
+        \item $\bm{X}\bm{\beta} = \E[\bm{Y} | \bm{X}]$ (or $\E[\bm{Y}]$ if $\bm{X}$ is fixed): **Assumption.** This is the core linearity assumption. It states that the conditional expectation of the response is a linear function of the predictors.
+        \item $\E[e_i] = 0$: **Result.** The OLS residuals have zero mean, $\E[\bm{e}] = \E[\bm{Y} - \hat{\bm{Y}}] = \E[\bm{Y}] - \E[\bm{X}\hat{\bm{\beta}}]$. Assuming $\E[\bm{Y}]=\bm{X}\bm{\beta}$ and that $\hat{\bm{\beta}}$ is unbiased (which we will show later), $\E[\bm{e}] = \bm{X}\bm{\beta} - \bm{X}\E[\hat{\bm{\beta}}] = \bm{X}\bm{\beta} - \bm{X}\bm{\beta} = \mathbf{0}$. More directly, $\bm{e} = (\bm{I}-\bm{P}_{\mathcal{C}})\bm{Y}$ where $\bm{P}_{\mathcal{C}}$ is the projection onto the column space of $\bm{X}$. $\E[\bm{e}] = (\bm{I}-\bm{P}_{\mathcal{C}})\E[\bm{Y}] = (\bm{I}-\bm{P}_{\mathcal{C}})\bm{X}\bm{\beta} = \bm{X}\bm{\beta} - \bm{P}_{\mathcal{C}}\bm{X}\bm{\beta} = \bm{X}\bm{\beta} - \bm{X}\bm{\beta} = \mathbf{0}$ (since $\bm{X}\bm{\beta}$ is in the column space of $\bm{X}$, $P_{\mathcal{C}}$ leaves it unchanged).
+        \item $\E[\epsilon_i] = 0$: **Assumption.** This is the standard assumption of zero mean errors.
+        \item $\bm{X}^T \bm{e} = \mathbf{0}$: **Result.** This is a direct consequence of the OLS normal equations. $\bm{e} = \bm{Y} - \bm{X}\hat{\bm{\beta}} = \bm{Y} - \bm{X}(\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{Y}$. Then $\bm{X}^T\bm{e} = \bm{X}^T\bm{Y} - \bm{X}^T\bm{X}(\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{Y} = \bm{X}^T\bm{Y} - \bm{X}^T\bm{Y} = \mathbf{0}$. Geometrically, it means the residual vector is orthogonal to the column space of $\bm{X}$.
+        \item $\Var(\bm{Y}) = \sigma^2 \bm{I}_n$: **Result (under fixed X).** If we treat $\bm{X}$ as fixed (non-random), then $\Var(\bm{Y}) = \Var(\bm{X}\bm{\beta} + \bm{\epsilon}) = \Var(\bm{\epsilon})$. If we assume $\Var(\bm{\epsilon}) = \sigma^2\bm{I}_n$, then $\Var(\bm{Y}) = \sigma^2\bm{I}_n$. If $\bm{X}$ is random, this is generally not true.
+    \end{enumerate}
+\end{example}
+
+\begin{example}[Scenarios and Model Assumptions] \label{ex:scenarios}
+    Consider the following scenarios describing how data $(X_i, Y_i)$ might arise. For each, specify the distributions (or nature) of $X_i, Y_i, \epsilon_i$ and $Y_i | X_i$. Identify which assumptions of the standard linear model ($\E[\epsilon_i|X_i]=0$, $\Var(\epsilon_i|X_i)=\sigma^2$, errors uncorrelated, linearity) hold. Let $\epsilon_i$ generally be iid $\mathcal{N}(0, \sigma^2)$ and independent of $X_i$ unless stated otherwise.
+    
+    \begin{enumerate}
+        \item \textbf{Fixed Design:} $X_i \in \mathbb{R}^p$ are predetermined, fixed constants. $Y_i = X_i^T \bm{\beta} + \epsilon_i$, where $\epsilon_i \sim \mathcal{N}(0, \sigma^2)$ iid.
+            \begin{itemize}
+                \item $X_i$: Fixed vectors.
+                \item $\epsilon_i$: iid $\mathcal{N}(0, \sigma^2)$.
+                \item $Y_i | X_i$: Since $X_i$ is fixed, this is just the distribution of $Y_i$. $Y_i \sim \mathcal{N}(X_i^T \bm{\beta}, \sigma^2)$. $Y_i$ are independent.
+                \item Assumptions: Linearity holds ($\E[Y_i|X_i] = X_i^T\bm{\beta}$), $\E[\epsilon_i|X_i] = \E[\epsilon_i] = 0$. $\Var(\epsilon_i|X_i) = \Var(\epsilon_i) = \sigma^2$ (Homoscedasticity). Errors are uncorrelated (actually independent). Normality holds. All standard assumptions are met.
+            \end{itemize}
+            
+        \item \textbf{Random Design (Normal):} $X_i \in \mathbb{R}^p$ are iid random vectors, e.g., $X_i \sim \mathcal{N}(\bm{\mu}_X, \bm{\Sigma}_X)$. $Y_i = X_i^T \bm{\beta} + \epsilon_i$, where $\epsilon_i \sim \mathcal{N}(0, \sigma^2)$ iid, and $\epsilon_i$ are independent of $X_i$.
+            \begin{itemize}
+                \item $X_i$: iid random vectors (Normal).
+                \item $\epsilon_i$: iid $\mathcal{N}(0, \sigma^2)$, independent of $X_i$.
+                \item $Y_i | X_i$: Conditional on $X_i$, $Y_i \sim \mathcal{N}(X_i^T \bm{\beta}, \sigma^2)$.
+                \item $Y_i$: Random variable (its distribution is a mixture, often normal if $X_i$ is normal). $Y_i$ are generally dependent unless $\bm{\beta}=0$.
+                \item Assumptions: Conditional linearity $\E[Y_i|X_i] = X_i^T\bm{\beta}$ holds. $\E[\epsilon_i|X_i] = \E[\epsilon_i] = 0$ (due to independence). $\Var(\epsilon_i|X_i) = \Var(\epsilon_i) = \sigma^2$ (Homoscedasticity, due to independence). Errors $\epsilon_i$ are uncorrelated/independent. Normality of errors holds. All standard *conditional* assumptions hold. The properties of OLS estimators often rely on these conditional assumptions.
+            \end{itemize}
+            
+        \item \textbf{Random Design (Uniform):} $X_i \in \mathbb{R}^1$ are iid $U(-1, 1)$. $Y_i = X_i \beta + \epsilon_i$, where $\epsilon_i \sim \mathcal{N}(0, \sigma^2)$ iid, independent of $X_i$.
+            \begin{itemize}
+                \item $X_i$: iid $U(-1, 1)$.
+                \item $\epsilon_i$: iid $\mathcal{N}(0, \sigma^2)$, independent of $X_i$.
+                \item $Y_i | X_i$: Conditional on $X_i$, $Y_i \sim \mathcal{N}(X_i \beta, \sigma^2)$.
+                \item $Y_i$: Random variable (non-normal distribution).
+                \item Assumptions: Conditional linearity $\E[Y_i|X_i] = X_i \beta$ holds. $\E[\epsilon_i|X_i] = 0$. $\Var(\epsilon_i|X_i) = \sigma^2$ (Homoscedasticity). Errors are uncorrelated/independent. Normality of errors holds. Standard conditional assumptions are met, but $Y_i$ itself is not normal.
+            \end{itemize}
+            
+        \item \textbf{Non-linear Relationship:} $X_i \in \mathbb{R}^1$ are iid $\mathcal{N}(0, 1)$. $Y_i = X_i^2 \beta + \epsilon_i$, where $\epsilon_i \sim \mathcal{N}(0, \sigma^2)$ iid, independent of $X_i$.
+            \begin{itemize}
+                \item $X_i$: iid $\mathcal{N}(0, 1)$.
+                \item $\epsilon_i$: iid $\mathcal{N}(0, \sigma^2)$, independent of $X_i$.
+                \item $Y_i | X_i$: Conditional on $X_i$, $Y_i \sim \mathcal{N}(X_i^2 \beta, \sigma^2)$.
+                \item $Y_i$: Random variable.
+                \item Assumptions: The relationship $\E[Y_i|X_i] = X_i^2 \beta$ is *not* linear in $X_i$. The linearity assumption fails if we model $Y_i$ vs $X_i$. However, if we define a new predictor $Z_i = X_i^2$, then $Y_i = Z_i \beta + \epsilon_i$, and the model *is* linear in $Z_i$. $\E[\epsilon_i|X_i] = 0$ holds. $\Var(\epsilon_i|X_i) = \sigma^2$ holds. Errors are uncorrelated/independent. Normality of errors holds. The standard assumptions hold for the model $Y_i$ vs $Z_i=X_i^2$, but not for $Y_i$ vs $X_i$.
+            \end{itemize}
+            
+        \item \textbf{Panel Data Structure:} $X_{it} \in \mathbb{R}^p$ are fixed design variables for individual $i$ at time $t$. $Y_{it} = X_{it}^T \bm{\beta} + \epsilon_{it}$, where $\epsilon_{it} \sim \mathcal{N}(0, \sigma^2)$ iid across both $i$ and $t$.
+            \begin{itemize}
+                \item $X_{it}$: Fixed vectors.
+                \item $\epsilon_{it}$: iid $\mathcal{N}(0, \sigma^2)$.
+                \item $Y_{it} | X_{it}$: $Y_{it} \sim \mathcal{N}(X_{it}^T \bm{\beta}, \sigma^2)$.
+                \item Assumptions: If we stack all $Y_{it}$ into a single vector $\bm{Y}$ and all $X_{it}^T$ into a large design matrix $\bm{X}$, the model $\bm{Y} = \bm{X}\bm{\beta} + \bm{\epsilon}$ holds. Linearity holds. $\E[\epsilon_{it}]=0$. $\Var(\epsilon_{it})=\sigma^2$ (Homoscedasticity). Errors are uncorrelated (by assumption). Normality holds. All standard assumptions are met. (Note: In practice, panel data often has correlated errors within individuals, requiring more advanced models).
+            \end{itemize}
+    \end{enumerate}
+\end{example}
+
+\section{Properties of Estimators and Related Quantities}
+
+Let's delve into some properties related to common statistics used in linear models and basic inference.
+
+\begin{example}[Orthogonal Projection Matrix] \label{ex:projection}
+    Let $\bm{v} \in \mathbb{R}^n$ be a non-zero vector, $\bm{v} \ne \mathbf{0}$. Show that the matrix $\bm{P} = \frac{\bm{v}\bm{v}^T}{||\bm{v}||^2}$ is an orthogonal projection matrix. What is the rank of this matrix?
+
+    \emph{Solution:}
+    An orthogonal projection matrix must be symmetric ($\bm{P} = \bm{P}^T$) and idempotent ($\bm{P}^2 = \bm{P}$).
+    
+    1.  \textbf{Symmetry:} We need to show $\bm{P}^T = \bm{P}$.
+        \[ \bm{P}^T = \left( \frac{\bm{v}\bm{v}^T}{||\bm{v}||^2} \right)^T = \frac{(\bm{v}\bm{v}^T)^T}{||\bm{v}||^2} = \frac{(\bm{v}^T)^T \bm{v}^T}{||\bm{v}||^2} = \frac{\bm{v}\bm{v}^T}{||\bm{v}||^2} = \bm{P} \]
+        So, $\bm{P}$ is symmetric.
+        
+    2.  \textbf{Idempotence:} We need to show $\bm{P}^2 = \bm{P}$.
+        \begin{align*} \bm{P}^2 &= \left( \frac{\bm{v}\bm{v}^T}{||\bm{v}||^2} \right) \left( \frac{\bm{v}\bm{v}^T}{||\bm{v}||^2} \right) \\ &= \frac{1}{(||\bm{v}||^2)^2} (\bm{v}\bm{v}^T)(\bm{v}\bm{v}^T) \\ &= \frac{1}{||\bm{v}||^4} \bm{v}(\bm{v}^T\bm{v})\bm{v}^T \quad \text{(associativity of matrix multiplication)} \end{align*}
+        Recognize that $\bm{v}^T\bm{v} = \sum_{i=1}^n v_i^2 = ||\bm{v}||^2$, which is a scalar.
+        \[ \bm{P}^2 = \frac{1}{||\bm{v}||^4} \bm{v}(||\bm{v}||^2)\bm{v}^T = \frac{||\bm{v}||^2}{||\bm{v}||^4} \bm{v}\bm{v}^T = \frac{1}{||\bm{v}||^2} \bm{v}\bm{v}^T = \bm{P} \]
+        So, $\bm{P}$ is idempotent.
+        
+    Since $\bm{P}$ is symmetric and idempotent, it is an orthogonal projection matrix. It projects vectors onto the subspace spanned by $\bm{v}$.
+
+    \textbf{Rank:} The matrix $\bm{v}\bm{v}^T$ is an outer product of a non-zero vector with itself. Every column of $\bm{v}\bm{v}^T$ is a multiple of $\bm{v}$. Specifically, column $j$ is $v_j \bm{v}$. Since $\bm{v} \ne \mathbf{0}$, the column space is spanned by the single vector $\bm{v}$. Therefore, the rank of $\bm{v}\bm{v}^T$ is 1. Since $\bm{P}$ is just a scalar multiple of $\bm{v}\bm{v}^T$, its rank is also 1.
+    \[ \rank(\bm{P}) = 1 \]
+\end{example}
+
+\begin{example}[Unbiasedness of Sample Variance] \label{ex:unbiased_S2}
+    Let $Y_1, \ldots, Y_n$ be iid random variables with mean $\mu$ and variance $\sigma^2$. Show that the sample variance $S_n^2 = \frac{1}{n-1} \sum_{i=1}^n (Y_i - \bar{Y})^2$, where $\bar{Y} = \frac{1}{n}\sum Y_i$, is an unbiased estimator for $\sigma^2$, i.e., $\E[S_n^2] = \sigma^2$.
+
+    \emph{Solution:}
+    We start by expanding the sum of squares term:
+    \begin{align*} \sum_{i=1}^n (Y_i - \bar{Y})^2 &= \sum_{i=1}^n (Y_i - \mu + \mu - \bar{Y})^2 \\ &= \sum_{i=1}^n [(Y_i - \mu) - (\bar{Y} - \mu)]^2 \\ &= \sum_{i=1}^n [(Y_i - \mu)^2 - 2(Y_i - \mu)(\bar{Y} - \mu) + (\bar{Y} - \mu)^2] \\ &= \sum_{i=1}^n (Y_i - \mu)^2 - 2(\bar{Y} - \mu) \sum_{i=1}^n (Y_i - \mu) + \sum_{i=1}^n (\bar{Y} - \mu)^2 \\ &= \sum_{i=1}^n (Y_i - \mu)^2 - 2(\bar{Y} - \mu) (n\bar{Y} - n\mu) + n(\bar{Y} - \mu)^2 \\ &= \sum_{i=1}^n (Y_i - \mu)^2 - 2n(\bar{Y} - \mu)^2 + n(\bar{Y} - \mu)^2 \\ &= \sum_{i=1}^n (Y_i - \mu)^2 - n(\bar{Y} - \mu)^2 \end{align*}
+    Now, we take the expectation:
+    \[ \E\left[ \sum_{i=1}^n (Y_i - \bar{Y})^2 \right] = \E\left[ \sum_{i=1}^n (Y_i - \mu)^2 \right] - n \E\left[ (\bar{Y} - \mu)^2 \right] \]
+    We know that $\E[(Y_i - \mu)^2] = \Var(Y_i) = \sigma^2$. So,
+    \[ \E\left[ \sum_{i=1}^n (Y_i - \mu)^2 \right] = \sum_{i=1}^n \E[(Y_i - \mu)^2] = \sum_{i=1}^n \sigma^2 = n\sigma^2 \]
+    Also, $\E[(\bar{Y} - \mu)^2] = \Var(\bar{Y})$. Since $Y_i$ are iid:
+    \[ \Var(\bar{Y}) = \Var\left(\frac{1}{n}\sum_{i=1}^n Y_i\right) = \frac{1}{n^2} \sum_{i=1}^n \Var(Y_i) = \frac{1}{n^2} (n\sigma^2) = \frac{\sigma^2}{n} \]
+    Substituting these back:
+    \[ \E\left[ \sum_{i=1}^n (Y_i - \bar{Y})^2 \right] = n\sigma^2 - n\left(\frac{\sigma^2}{n}\right) = n\sigma^2 - \sigma^2 = (n-1)\sigma^2 \]
+    Finally, we find the expectation of $S_n^2$:
+    \[ \E[S_n^2] = \E\left[ \frac{1}{n-1} \sum_{i=1}^n (Y_i - \bar{Y})^2 \right] = \frac{1}{n-1} \E\left[ \sum_{i=1}^n (Y_i - \bar{Y})^2 \right] = \frac{1}{n-1} (n-1)\sigma^2 = \sigma^2 \]
+    Thus, $S_n^2$ is an unbiased estimator for $\sigma^2$. The division by $(n-1)$ instead of $n$ is precisely what corrects for the bias introduced by using $\bar{Y}$ (an estimate of $\mu$) instead of $\mu$ itself.
+\end{example}
+
+\begin{example}[Distribution of Sample Variance under Normality] \label{ex:dist_S2}
+    Assume now that $Y_1, \ldots, Y_n$ are iid $\mathcal{N}(\mu, \sigma^2)$. Prove the result, previously seen, that
+    \[ \frac{(n-1)S_n^2}{\sigma^2} = \frac{1}{\sigma^2} \sum_{i=1}^n (Y_i - \bar{Y})^2 \sim \chi_{n-1}^2 \]
+    where $\chi_{n-1}^2$ denotes the chi-squared distribution with $n-1$ degrees of freedom.
+
+    \emph{Solution Sketch:}
+    This is a standard result often proved using Cochran's Theorem or properties of quadratic forms of normal variables. Here's a conceptual outline:
+    
+    1.  \textbf{Standardize:} Let $Z_i = (Y_i - \mu)/\sigma$. Then $Z_1, \ldots, Z_n$ are iid $\mathcal{N}(0, 1)$. The vector $\bm{Z} = (Z_1, \ldots, Z_n)^T \sim \mathcal{N}(\mathbf{0}, \bm{I}_n)$.
+    2.  \textbf{Quadratic Form:} We are interested in the sum of squares $\sum (Y_i - \bar{Y})^2$. Let's express this in terms of $\bm{Z}$. Note $\bar{Y} = \mu + \sigma \bar{Z}$.
+        \[ \sum_{i=1}^n (Y_i - \bar{Y})^2 = \sum_{i=1}^n (\sigma Z_i - \sigma \bar{Z})^2 = \sigma^2 \sum_{i=1}^n (Z_i - \bar{Z})^2 \]
+        So, $\frac{1}{\sigma^2} \sum (Y_i - \bar{Y})^2 = \sum (Z_i - \bar{Z})^2$.
+    3.  \textbf{Projection Matrix:} Recall the identity $\sum (Z_i - \bar{Z})^2 = \sum Z_i^2 - n\bar{Z}^2$. This can be written as a quadratic form in $\bm{Z}$:
+        \[ \sum (Z_i - \bar{Z})^2 = \bm{Z}^T \bm{Z} - n (\frac{1}{n} \bm{1}^T \bm{Z})^2 = \bm{Z}^T \bm{Z} - \frac{1}{n} \bm{Z}^T \bm{1} \bm{1}^T \bm{Z} = \bm{Z}^T (\bm{I}_n - \frac{1}{n}\bm{1}\bm{1}^T) \bm{Z} \]
+        where $\bm{1}$ is the $n \times 1$ vector of ones.
+    4.  \textbf{Idempotent Matrix:} Let $\bm{M} = \bm{I}_n - \frac{1}{n}\bm{1}\bm{1}^T$. The term $\frac{1}{n}\bm{1}\bm{1}^T = \frac{\bm{1}\bm{1}^T}{||\bm{1}||^2}$ is the projection matrix onto the subspace spanned by $\bm{1}$ (as seen in Example \ref{ex:projection}, since $||\bm{1}||^2 = n$). Thus, $\bm{M}$ is the projection matrix onto the subspace orthogonal to $\bm{1}$. As a projection matrix, $\bm{M}$ is symmetric and idempotent ($\bm{M}^2 = \bm{M}$).
+    5.  \textbf{Rank:} The rank of a projection matrix is the dimension of the subspace it projects onto. The space $\mathbb{R}^n$ can be decomposed into the span of $\bm{1}$ (dimension 1) and its orthogonal complement (dimension $n-1$). $\bm{M}$ projects onto this orthogonal complement, so $\rank(\bm{M}) = n-1$.
+    6.  \textbf{Distribution of Quadratic Form:} A key theorem states that if $\bm{Z} \sim \mathcal{N}(\mathbf{0}, \bm{I}_k)$ and $\bm{A}$ is a $k \times k$ symmetric, idempotent matrix with rank $r$, then the quadratic form $\bm{Z}^T \bm{A} \bm{Z} \sim \chi_r^2$.
+    7.  \textbf{Conclusion:} Applying this theorem with $\bm{Z} \sim \mathcal{N}(\mathbf{0}, \bm{I}_n)$ and $\bm{A} = \bm{M} = \bm{I}_n - \frac{1}{n}\bm{1}\bm{1}^T$, which is symmetric, idempotent, and has rank $n-1$, we conclude that:
+        \[ \frac{(n-1)S_n^2}{\sigma^2} = \sum (Z_i - \bar{Z})^2 = \bm{Z}^T \bm{M} \bm{Z} \sim \chi_{n-1}^2 \]
+    This result is fundamental for constructing confidence intervals and hypothesis tests for $\sigma^2$ in the normal setting.
+\end{example}
+
+\section{Further Properties and Exam Problems}
+
+Let's explore a few more useful properties and tackle some problems adapted from previous exams.
+
+\begin{example}[Expected Squared Norm and Trace] \label{ex:trace_norm}
+    Let $\bm{Z} \in \mathbb{R}^n$ be a random vector.
+    \begin{enumerate}
+        \item Show that $\E[||\bm{Z}||^2] = \tr(\E[\bm{Z}\bm{Z}^T])$.
+        \item Deduce that if $\E[\bm{Z}] = \mathbf{0}$, then $\E[||\bm{Z}||^2] = \tr(\Var(\bm{Z}))$.
+    \end{enumerate}
+    Justify each step.
+
+    \emph{Solution:}
+    (1) We start with the definition of the squared Euclidean norm:
+    \[ ||\bm{Z}||^2 = \sum_{i=1}^n Z_i^2 \]
+    Taking the expectation:
+    \[ \E[||\bm{Z}||^2] = \E\left[ \sum_{i=1}^n Z_i^2 \right] = \sum_{i=1}^n \E[Z_i^2] \quad \text{(Linearity of Expectation)} \]
+    Now consider the trace of the matrix $\E[\bm{Z}\bm{Z}^T]$. The expectation can be moved inside the trace (as trace is a linear operator and expectation is element-wise):
+    \[ \tr(\E[\bm{Z}\bm{Z}^T]) = \E[\tr(\bm{Z}\bm{Z}^T)] \]
+    The trace of the outer product matrix $\bm{Z}\bm{Z}^T$ is the sum of its diagonal elements:
+    \[ \tr(\bm{Z}\bm{Z}^T) = \sum_{i=1}^n (\bm{Z}\bm{Z}^T)_{ii} \]
+    The $(i, i)$-th element of $\bm{Z}\bm{Z}^T$ is simply $Z_i Z_i = Z_i^2$. So,
+    \[ \tr(\bm{Z}\bm{Z}^T) = \sum_{i=1}^n Z_i^2 \]
+    Taking the expectation:
+    \[ \E[\tr(\bm{Z}\bm{Z}^T)] = \E\left[ \sum_{i=1}^n Z_i^2 \right] = \sum_{i=1}^n \E[Z_i^2] \]
+    Comparing the results, we see that $\E[||\bm{Z}||^2] = \tr(\E[\bm{Z}\bm{Z}^T])$.
+
+    (2) If $\E[\bm{Z}] = \mathbf{0}$, the variance-covariance matrix is defined as:
+    \[ \Var(\bm{Z}) = \E[(\bm{Z} - \E[\bm{Z}])(\bm{Z} - \E[\bm{Z}])^T] = \E[(\bm{Z} - \mathbf{0})(\bm{Z} - \mathbf{0})^T] = \E[\bm{Z}\bm{Z}^T] \]
+    Substituting this into the result from part (1):
+    \[ \E[||\bm{Z}||^2] = \tr(\E[\bm{Z}\bm{Z}^T]) = \tr(\Var(\bm{Z})) \]
+    This useful identity connects the expected squared length of a mean-zero random vector to the sum of its variances and covariances (specifically, the sum of variances, which are the diagonal elements of the trace).
+\end{example}
+
+\begin{example}[Expected Inner Product and Trace of Covariance] \label{ex:trace_innerprod}
+    Let $\bm{U}, \bm{V}$ be random vectors in $\mathbb{R}^n$. Assume that the expectation of at least one of them is the zero vector (e.g., $\E[\bm{U}] = \mathbf{0}$). Show that:
+    \[ \E[\bm{U}^T\bm{V}] = \tr(\Cov(\bm{V}, \bm{U})) \]
+    (Note: The source had $\operatorname{tr}(\operatorname{cov}(VU^T))$, which might be a typo. We use the standard definition $\Cov(\bm{V}, \bm{U}) = \E[(\bm{V}-\E\bm{V})(\bm{U}-\E\bm{U})^T]$).
+
+    \emph{Solution:}
+    Assume, without loss of generality, that $\E[\bm{U}] = \mathbf{0}$.
+    The inner product $\bm{U}^T\bm{V}$ is a scalar ($1 \times 1$ matrix). A scalar is equal to its trace.
+    \[ \bm{U}^T\bm{V} = \tr(\bm{U}^T\bm{V}) \]
+    However, the trace is usually applied to square matrices. We can use the property $\tr(AB) = \tr(BA)$ for compatible matrices. Let's rewrite the inner product using a trace:
+    \[ \bm{U}^T\bm{V} = \sum_{i=1}^n U_i V_i \]
+    Consider the trace of $\bm{V}\bm{U}^T$ (which is $n \times n$):
+    \[ \tr(\bm{V}\bm{U}^T) = \sum_{i=1}^n (\bm{V}\bm{U}^T)_{ii} = \sum_{i=1}^n V_i U_i = \bm{U}^T\bm{V} \]
+    So, $\bm{U}^T\bm{V} = \tr(\bm{V}\bm{U}^T)$. Now take the expectation:
+    \[ \E[\bm{U}^T\bm{V}] = \E[\tr(\bm{V}\bm{U}^T)] = \tr(\E[\bm{V}\bm{U}^T]) \quad \text{(Linearity of Trace and Expectation)} \]
+    Now let's look at the definition of $\Cov(\bm{V}, \bm{U})$:
+    \[ \Cov(\bm{V}, \bm{U}) = \E[(\bm{V} - \E[\bm{V}])(\bm{U} - \E[\bm{U}])^T] \]
+    Since we assumed $\E[\bm{U}] = \mathbf{0}$:
+    \[ \Cov(\bm{V}, \bm{U}) = \E[(\bm{V} - \E[\bm{V}])(\bm{U} - \mathbf{0})^T] = \E[(\bm{V} - \E[\bm{V}])\bm{U}^T] \]
+    \[ = \E[\bm{V}\bm{U}^T - \E[\bm{V}]\bm{U}^T] = \E[\bm{V}\bm{U}^T] - \E[\E[\bm{V}]\bm{U}^T] \]
+    \[ = \E[\bm{V}\bm{U}^T] - \E[\bm{V}]\E[\bm{U}^T] \quad \text{(Since } \E[\bm{V}] \text{ is constant)} \]
+    Since $\E[\bm{U}] = \mathbf{0}$, its transpose $\E[\bm{U}^T] = (\E[\bm{U}])^T = \mathbf{0}^T$.
+    \[ \Cov(\bm{V}, \bm{U}) = \E[\bm{V}\bm{U}^T] - \E[\bm{V}]\mathbf{0}^T = \E[\bm{V}\bm{U}^T] \]
+    Therefore,
+    \[ \tr(\Cov(\bm{V}, \bm{U})) = \tr(\E[\bm{V}\bm{U}^T]) \]
+    Comparing this with our expression for $\E[\bm{U}^T\bm{V}]$, we conclude:
+    \[ \E[\bm{U}^T\bm{V}] = \tr(\Cov(\bm{V}, \bm{U})) \]
+\end{example}
+
+\subsection{Problems from Past Exams}
+
+The following problems are adapted from previous exams and test understanding of the linear model's properties, particularly relating to projections, residuals, and covariances.
+
+\begin{example}[Exam Problem 1 - Moed Aleph 5784 / 2023-24] \label{ex:exam1}
+Assume the standard linear model assumptions hold: $\bm{Y} = \bm{X}\bm{\beta} + \bm{\epsilon}$, with $\E[\bm{\epsilon}] = \mathbf{0}$ and $\Cov(\bm{\epsilon}) = \sigma^2 \bm{I}_n$. Let $\hat{\bm{Y}} = \bm{X}\hat{\bm{\beta}}$ be the vector of fitted values (where $\hat{\bm{\beta}}$ is the OLS estimator) and $\bm{e} = \bm{Y} - \hat{\bm{Y}}$ be the vector of residuals. Let $\mathcal{C} = \im(\bm{X})$ be the column space of $\bm{X}$. Recall $\hat{\bm{Y}} = P_{\mathcal{C}}\bm{Y}$ where $P_{\mathcal{C}} = \bm{X}(\bm{X}^T\bm{X})^{-1}\bm{X}^T$ is the orthogonal projection matrix onto $\mathcal{C}$. Assume $\bm{X}$ has full column rank $k = p+1$.
+
+(a) Let $\bm{X}'$ be the matrix obtained by deleting some columns from $\bm{X}$, and let $L = \im(\bm{X}')$ be its column space. Note that $L \subseteq \mathcal{C}$. Let $P_L$ be the orthogonal projection matrix onto $L$. Show that $P_L \hat{\bm{Y}} = P_L \bm{Y}$. Does this result require the linear model assumptions or the normal linear model assumptions?
+
+(b) Find $\E[||\bm{e}||^2]$.
+
+(c) Calculate the following quantities and state their dimensions: $\Cov(\hat{\bm{\beta}}, \bm{e})$, $\Cov(\bm{\epsilon}, \bm{e})$, $\Cov(\bm{e})$.
+
+(d) Find $\Var(e_i)$, the variance of the $i$-th residual.
+
+\emph{Solution:}
+
+(a) We are given $\hat{\bm{Y}} = P_{\mathcal{C}}\bm{Y}$ and $L \subseteq \mathcal{C}$. We want to show $P_L \hat{\bm{Y}} = P_L \bm{Y}$.
+Substitute the expression for $\hat{\bm{Y}}$:
+\[ P_L \hat{\bm{Y}} = P_L (P_{\mathcal{C}} \bm{Y}) = (P_L P_{\mathcal{C}}) \bm{Y} \]
+A fundamental property of orthogonal projections is that if $L \subseteq \mathcal{C}$, then projecting onto the larger space $\mathcal{C}$ first and then onto the smaller space $L$ is equivalent to just projecting onto $L$. That is, $P_L P_{\mathcal{C}} = P_L$.
+Therefore,
+\[ P_L \hat{\bm{Y}} = P_L \bm{Y} \]
+This result is purely a property of geometry and linear algebra concerning orthogonal projections onto nested subspaces. It does \emph{not} depend on any statistical assumptions of the linear model (linearity, error distribution, etc.).
+
+(b) We need $\E[||\bm{e}||^2]$. First, express $\bm{e}$ in terms of $\bm{\epsilon}$:
+\[ \bm{e} = \bm{Y} - \hat{\bm{Y}} = \bm{Y} - P_{\mathcal{C}}\bm{Y} = (\bm{I} - P_{\mathcal{C}})\bm{Y} \]
+Substitute $\bm{Y} = \bm{X}\bm{\beta} + \bm{\epsilon}$:
+\[ \bm{e} = (\bm{I} - P_{\mathcal{C}})(\bm{X}\bm{\beta} + \bm{\epsilon}) = (\bm{I} - P_{\mathcal{C}})\bm{X}\bm{\beta} + (\bm{I} - P_{\mathcal{C}})\bm{\epsilon} \]
+Since the columns of $\bm{X}$ are in $\mathcal{C}$, $P_{\mathcal{C}}\bm{X} = \bm{X}$. Thus, $(\bm{I} - P_{\mathcal{C}})\bm{X} = \bm{X} - P_{\mathcal{C}}\bm{X} = \bm{X} - \bm{X} = \mathbf{0}$.
+So, $\bm{e} = (\bm{I} - P_{\mathcal{C}})\bm{\epsilon}$.
+Now consider $||\bm{e}||^2 = \bm{e}^T\bm{e}$:
+\[ ||\bm{e}||^2 = ((\bm{I} - P_{\mathcal{C}})\bm{\epsilon})^T ((\bm{I} - P_{\mathcal{C}})\bm{\epsilon}) = \bm{\epsilon}^T (\bm{I} - P_{\mathcal{C}})^T (\bm{I} - P_{\mathcal{C}}) \bm{\epsilon} \]
+Since $(\bm{I} - P_{\mathcal{C}})$ is a projection matrix, it is symmetric and idempotent: $(\bm{I} - P_{\mathcal{C}})^T = (\bm{I} - P_{\mathcal{C}})$ and $(\bm{I} - P_{\mathcal{C}})^2 = (\bm{I} - P_{\mathcal{C}})$.
+\[ ||\bm{e}||^2 = \bm{\epsilon}^T (\bm{I} - P_{\mathcal{C}}) \bm{\epsilon} \]
+This is a quadratic form in $\bm{\epsilon}$. We use the formula $\E[\bm{z}^T \bm{A} \bm{z}] = \tr(\bm{A} \Var(\bm{z})) + (\E[\bm{z}])^T \bm{A} (\E[\bm{z}])$.
+Here, $\bm{z} = \bm{\epsilon}$, $\bm{A} = \bm{I} - P_{\mathcal{C}}$, $\E[\bm{\epsilon}] = \mathbf{0}$, and $\Var(\bm{\epsilon}) = \sigma^2 \bm{I}_n$.
+\[ \E[||\bm{e}||^2] = \tr((\bm{I} - P_{\mathcal{C}}) (\sigma^2 \bm{I}_n)) + \mathbf{0}^T (\bm{I} - P_{\mathcal{C}}) \mathbf{0} \]
+\[ = \sigma^2 \tr(\bm{I} - P_{\mathcal{C}}) + 0 \]
+The trace of a projection matrix is its rank. $\rank(\bm{I}) = n$. $\rank(P_{\mathcal{C}}) = \rank(\bm{X}) = k$ (since $\bm{X}$ has full column rank $k=p+1$).
+\[ \tr(\bm{I} - P_{\mathcal{C}}) = \tr(\bm{I}) - \tr(P_{\mathcal{C}}) = n - \rank(P_{\mathcal{C}}) = n - k \]
+Therefore,
+\[ \E[||\bm{e}||^2] = \sigma^2 (n - k) \]
+This justifies why $s^2 = ||\bm{e}||^2 / (n-k)$ is an unbiased estimator for $\sigma^2$.
+
+(c) We calculate the covariances.
+\begin{itemize}
+    \item $\Cov(\hat{\bm{\beta}}, \bm{e})$:
+    We have $\hat{\bm{\beta}} = (\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{Y} = (\bm{X}^T\bm{X})^{-1}\bm{X}^T(\bm{X}\bm{\beta} + \bm{\epsilon}) = \bm{\beta} + (\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{\epsilon}$.
+    So $\hat{\bm{\beta}} - \E[\hat{\bm{\beta}}] = (\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{\epsilon}$ (since $\E[\hat{\bm{\beta}}]=\bm{\beta}$).
+    And $\bm{e} - \E[\bm{e}] = \bm{e} = (\bm{I}-P_{\mathcal{C}})\bm{\epsilon}$ (since $\E[\bm{e}] = \mathbf{0}$).
+    \begin{align*} \Cov(\hat{\bm{\beta}}, \bm{e}) &= \E[(\hat{\bm{\beta}} - \E[\hat{\bm{\beta}}]) (\bm{e} - \E[\bm{e}])^T] \\ &= \E[ ((\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{\epsilon}) ((\bm{I}-P_{\mathcal{C}})\bm{\epsilon})^T ] \\ &= \E[ (\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{\epsilon} \bm{\epsilon}^T (\bm{I}-P_{\mathcal{C}})^T ] \\ &= (\bm{X}^T\bm{X})^{-1}\bm{X}^T \E[\bm{\epsilon}\bm{\epsilon}^T] (\bm{I}-P_{\mathcal{C}}) \quad \text{(constants out, } \bm{I}-P_{\mathcal{C}} \text{ symmetric)} \\ &= (\bm{X}^T\bm{X})^{-1}\bm{X}^T (\sigma^2 \bm{I}_n) (\bm{I}-P_{\mathcal{C}}) \quad \text{(since } \E[\bm{\epsilon}]=\mathbf{0}, \E[\bm{\epsilon}\bm{\epsilon}^T]=\Var(\bm{\epsilon})) \\ &= \sigma^2 (\bm{X}^T\bm{X})^{-1}\bm{X}^T (\bm{I}-P_{\mathcal{C}}) \end{align*}
+    We know $(\bm{I}-P_{\mathcal{C}})$ projects onto the space orthogonal to $\mathcal{C} = \im(\bm{X})$. The rows of $\bm{X}^T$ are in the orthogonal complement of this space. Alternatively, recall $(\bm{I}-P_{\mathcal{C}})\bm{X} = \mathbf{0}$, so $\bm{X}^T(\bm{I}-P_{\mathcal{C}}) = (\bm{X}^T(\bm{I}-P_{\mathcal{C}})^T)^T = ( ((\bm{I}-P_{\mathcal{C}})\bm{X})^T )^T = (\mathbf{0}^T)^T = \mathbf{0}$.
+    Thus, $\Cov(\hat{\bm{\beta}}, \bm{e}) = \sigma^2 (\bm{X}^T\bm{X})^{-1} \mathbf{0} = \mathbf{0}$.
+    The dimension is $(k \times n)$. The OLS estimator and the residual vector are uncorrelated.
+
+    \item $\Cov(\bm{\epsilon}, \bm{e})$:
+    $\E[\bm{\epsilon}]=\mathbf{0}$ and $\E[\bm{e}]=\mathbf{0}$.
+    \begin{align*} \Cov(\bm{\epsilon}, \bm{e}) &= \E[\bm{\epsilon}\bm{e}^T] = \E[\bm{\epsilon} ((\bm{I}-P_{\mathcal{C}})\bm{\epsilon})^T] \\ &= \E[\bm{\epsilon}\bm{\epsilon}^T(\bm{I}-P_{\mathcal{C}})^T] = \E[\bm{\epsilon}\bm{\epsilon}^T](\bm{I}-P_{\mathcal{C}}) \\ &= (\sigma^2 \bm{I}_n)(\bm{I}-P_{\mathcal{C}}) = \sigma^2 (\bm{I}-P_{\mathcal{C}}) \end{align*}
+    The dimension is $(n \times n)$.
+
+    \item $\Cov(\bm{e})$: This is just $\Var(\bm{e})$.
+    \begin{align*} \Var(\bm{e}) &= \Var((\bm{I}-P_{\mathcal{C}})\bm{\epsilon}) \\ &= (\bm{I}-P_{\mathcal{C}}) \Var(\bm{\epsilon}) (\bm{I}-P_{\mathcal{C}})^T \\ &= (\bm{I}-P_{\mathcal{C}}) (\sigma^2 \bm{I}_n) (\bm{I}-P_{\mathcal{C}}) \\ &= \sigma^2 (\bm{I}-P_{\mathcal{C}})(\bm{I}-P_{\mathcal{C}}) \\ &= \sigma^2 (\bm{I}-P_{\mathcal{C}}) \quad \text{(Idempotence)} \end{align*}
+    The dimension is $(n \times n)$. Notice $\Var(\bm{e}) = \Cov(\bm{\epsilon}, \bm{e})$.
+\end{itemize}
+
+(d) $\Var(e_i)$ is the $i$-th diagonal element of the matrix $\Var(\bm{e})$.
+\[ \Var(e_i) = (\Var(\bm{e}))_{ii} = (\sigma^2 (\bm{I}-P_{\mathcal{C}}))_{ii} = \sigma^2 (\bm{I}_{ii} - (P_{\mathcal{C}})_{ii}) \]
+\[ = \sigma^2 (1 - (P_{\mathcal{C}})_{ii}) \]
+The diagonal elements of the projection matrix $P_{\mathcal{C}} = \bm{X}(\bm{X}^T\bm{X})^{-1}\bm{X}^T$ are often called the \emph{leverage values}, denoted $h_{ii}$. So,
+\[ \Var(e_i) = \sigma^2 (1 - h_{ii}) \]
+The variance of a residual depends on the corresponding leverage value $h_{ii}$, which measures how influential the $i$-th observation is in determining the fit.
+\end{example}
+
+
+\begin{example}[Exam Problem 2 - Midterm Exam 5762 / 2001-02, Generalized Least Squares] \label{ex:exam2_gls}
+Consider a linear model $\bm{Y} = \bm{X}\bm{\beta} + \bm{\epsilon}$, where the errors satisfy the standard assumptions $\E[\bm{\epsilon}] = \mathbf{0}$ and $\Cov(\bm{\epsilon}) = \sigma^2 \bm{I}_n$. Let $\bm{\Sigma}$ be a known $n \times n$ symmetric positive definite matrix.
+
+For any vectors $\bm{u}, \bm{v} \in \mathbb{R}^n$, define the \emph{Mahalanobis norm} induced by $\bm{\Sigma}^{-1}$ as:
+\[ ||\bm{u} - \bm{v}||_{\Sigma^{-1}}^2 = (\bm{u} - \bm{v})^T \bm{\Sigma}^{-1} (\bm{u} - \bm{v}) \]
+Define the \emph{Generalized Least Squares (GLS)} estimator $\hat{\bm{\beta}}_{\Sigma}$ as the vector minimizing this norm between $\bm{Y}$ and $\bm{X}\bm{b}$:
+\[ \hat{\bm{\beta}}_{\Sigma} = \argmin_{\bm{b} \in \mathbb{R}^k} ||\bm{Y} - \bm{X}\bm{b}||_{\Sigma^{-1}}^2 \]
+
+(a) Show that
+\[ \hat{\bm{\beta}}_{\Sigma} = (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \bm{X}^T \bm{\Sigma}^{-1} \bm{Y} \]
+Explain what estimator is obtained in the special case where $\bm{\Sigma} = \sigma^2 \bm{I}_n$.
+(Hint: Since $\bm{\Sigma}$ is symmetric positive definite, so is $\bm{\Sigma}^{-1}$. Thus, there exists a matrix $\bm{C}$ such that $\bm{C}^T \bm{C} = \bm{\Sigma}^{-1}$. Consider transforming the variables using $\bm{C}$.)
+
+(b) Assume now that the true model is $\bm{Y} = \bm{X}\bm{\beta} + \bm{\epsilon}$ with $\E[\bm{\epsilon}] = \mathbf{0}$ but $\Cov(\bm{\epsilon}) = \bm{\Sigma}$ (where $\bm{\Sigma}$ is known and positive definite, possibly different from $\sigma^2\bm{I}$). Show that the GLS estimator $\hat{\bm{\beta}}_{\Sigma}$ found in part (a) is unbiased for $\bm{\beta}$, and find its variance-covariance matrix, $\Var(\hat{\bm{\beta}}_{\Sigma})$.
+
+\emph{Solution:}
+
+(a) We want to minimize $S(\bm{b}) = (\bm{Y} - \bm{X}\bm{b})^T \bm{\Sigma}^{-1} (\bm{Y} - \bm{X}\bm{b})$.
+Following the hint, since $\bm{\Sigma}^{-1}$ is symmetric positive definite, we can perform a Cholesky decomposition $\bm{\Sigma}^{-1} = \bm{L}\bm{L}^T$ where $\bm{L}$ is lower triangular and invertible, or more generally find a matrix $\bm{C}$ (e.g., the symmetric positive definite square root $\bm{\Sigma}^{-1/2}$) such that $\bm{C}^T \bm{C} = \bm{\Sigma}^{-1}$. Let's use such a $\bm{C}$.
+We can rewrite the objective function:
+\begin{align*} S(\bm{b}) &= (\bm{Y} - \bm{X}\bm{b})^T \bm{C}^T \bm{C} (\bm{Y} - \bm{X}\bm{b}) \\ &= (\bm{C}(\bm{Y} - \bm{X}\bm{b}))^T (\bm{C}(\bm{Y} - \bm{X}\bm{b})) \\ &= (\bm{C}\bm{Y} - \bm{C}\bm{X}\bm{b})^T (\bm{C}\bm{Y} - \bm{C}\bm{X}\bm{b}) \end{align*}
+Let's define transformed variables: $\tilde{\bm{Y}} = \bm{C}\bm{Y}$ and $\tilde{\bm{X}} = \bm{C}\bm{X}$. Then the objective function becomes:
+\[ S(\bm{b}) = (\tilde{\bm{Y}} - \tilde{\bm{X}}\bm{b})^T (\tilde{\bm{Y}} - \tilde{\bm{X}}\bm{b}) = ||\tilde{\bm{Y}} - \tilde{\bm{X}}\bm{b}||^2 \]
+This is now a standard OLS problem for the transformed model $\tilde{\bm{Y}} = \tilde{\bm{X}}\bm{b} + \tilde{\bm{\epsilon}}$ (where $\tilde{\bm{\epsilon}} = \bm{C}\bm{\epsilon}$). The value of $\bm{b}$ that minimizes this sum of squares is the OLS solution for the transformed system:
+\[ \hat{\bm{b}} = (\tilde{\bm{X}}^T\tilde{\bm{X}})^{-1}\tilde{\bm{X}}^T \tilde{\bm{Y}} \]
+Now substitute back the original variables:
+\begin{itemize}
+    \item $\tilde{\bm{X}}^T\tilde{\bm{X}} = (\bm{C}\bm{X})^T (\bm{C}\bm{X}) = \bm{X}^T \bm{C}^T \bm{C} \bm{X} = \bm{X}^T \bm{\Sigma}^{-1} \bm{X}$
+    \item $\tilde{\bm{X}}^T\tilde{\bm{Y}} = (\bm{C}\bm{X})^T (\bm{C}\bm{Y}) = \bm{X}^T \bm{C}^T \bm{C} \bm{Y} = \bm{X}^T \bm{\Sigma}^{-1} \bm{Y}$
+\end{itemize}
+So, the minimizing vector $\hat{\bm{\beta}}_{\Sigma}$ is:
+\[ \hat{\bm{\beta}}_{\Sigma} = (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \bm{X}^T \bm{\Sigma}^{-1} \bm{Y} \]
+
+Special Case: If $\bm{\Sigma} = \sigma^2 \bm{I}_n$, then $\bm{\Sigma}^{-1} = (\sigma^2 \bm{I}_n)^{-1} = \frac{1}{\sigma^2} \bm{I}_n$.
+\begin{align*} \hat{\bm{\beta}}_{\sigma^2\bm{I}} &= (\bm{X}^T (\frac{1}{\sigma^2}\bm{I}) \bm{X})^{-1} \bm{X}^T (\frac{1}{\sigma^2}\bm{I}) \bm{Y} \\ &= (\frac{1}{\sigma^2} \bm{X}^T \bm{X})^{-1} (\frac{1}{\sigma^2} \bm{X}^T \bm{Y}) \\ &= (\sigma^2 (\bm{X}^T \bm{X})^{-1}) (\frac{1}{\sigma^2} \bm{X}^T \bm{Y}) \quad \text{(using } (cA)^{-1} = c^{-1}A^{-1} \text{ for scalar } c) \\ &= (\bm{X}^T \bm{X})^{-1} \bm{X}^T \bm{Y} \end{align*}
+This is exactly the formula for the Ordinary Least Squares (OLS) estimator $\hat{\bm{\beta}}_{OLS}$. Minimizing the Mahalanobis norm with $\bm{\Sigma}^{-1}$ proportional to the identity matrix is equivalent to OLS.
+
+(b) Now we assume the true model has $\E[\bm{Y}] = \bm{X}\bm{\beta}$ and $\Var(\bm{Y}) = \Var(\bm{\epsilon}) = \bm{\Sigma}$. We want to find the expectation and variance of $\hat{\bm{\beta}}_{\Sigma} = (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \bm{X}^T \bm{\Sigma}^{-1} \bm{Y}$.
+Let $\bm{A} = (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \bm{X}^T \bm{\Sigma}^{-1}$. This is a constant matrix (treating $\bm{X}$ and $\bm{\Sigma}$ as fixed). Then $\hat{\bm{\beta}}_{\Sigma} = \bm{A}\bm{Y}$.
+
+Unbiasedness:
+\begin{align*} \E[\hat{\bm{\beta}}_{\Sigma}] &= \E[\bm{A}\bm{Y}] = \bm{A} \E[\bm{Y}] \\ &= (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \bm{X}^T \bm{\Sigma}^{-1} (\bm{X}\bm{\beta}) \\ &= (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} (\bm{X}^T \bm{\Sigma}^{-1} \bm{X}) \bm{\beta} \\ &= \bm{I} \bm{\beta} = \bm{\beta} \end{align*}
+So, $\hat{\bm{\beta}}_{\Sigma}$ is an unbiased estimator for $\bm{\beta}$ under the assumption that $\Var(\bm{Y}) = \bm{\Sigma}$.
+
+Variance-Covariance Matrix:
+\begin{align*} \Var(\hat{\bm{\beta}}_{\Sigma}) &= \Var(\bm{A}\bm{Y}) = \bm{A} \Var(\bm{Y}) \bm{A}^T \\ &= \bm{A} \bm{\Sigma} \bm{A}^T \\ &= [(\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \bm{X}^T \bm{\Sigma}^{-1}] \bm{\Sigma} [(\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \bm{X}^T \bm{\Sigma}^{-1}]^T \end{align*}
+Let's find $\bm{A}^T$:
+\begin{align*} \bm{A}^T &= ((\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \bm{X}^T \bm{\Sigma}^{-1})^T \\ &= (\bm{\Sigma}^{-1})^T (\bm{X}^T)^T ((\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1})^T \\ &= \bm{\Sigma}^{-1} \bm{X} ((\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{T})^{-1} \quad (\text{since } \bm{\Sigma}^{-1} \text{ is symmetric}) \\ &= \bm{\Sigma}^{-1} \bm{X} (\bm{X}^T (\bm{\Sigma}^{-1})^T (\bm{X}^T)^T)^{-1} \\ &= \bm{\Sigma}^{-1} \bm{X} (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \quad (\text{since } \bm{X}^T \bm{\Sigma}^{-1} \bm{X} \text{ is symmetric}) \end{align*}
+Now substitute $\bm{A}$ and $\bm{A}^T$ into the variance formula:
+\begin{align*} \Var(\hat{\bm{\beta}}_{\Sigma}) &= [(\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \bm{X}^T \bm{\Sigma}^{-1}] \bm{\Sigma} [\bm{\Sigma}^{-1} \bm{X} (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1}] \\ &= (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \bm{X}^T (\bm{\Sigma}^{-1} \bm{\Sigma} \bm{\Sigma}^{-1}) \bm{X} (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \\ &= (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \bm{X}^T (\bm{I} \bm{\Sigma}^{-1}) \bm{X} (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \\ &= (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} (\bm{X}^T \bm{\Sigma}^{-1} \bm{X}) (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \\ &= \bm{I} (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \\ &= (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1} \end{align*}
+Thus, the variance-covariance matrix of the GLS estimator is $\Var(\hat{\bm{\beta}}_{\Sigma}) = (\bm{X}^T \bm{\Sigma}^{-1} \bm{X})^{-1}$. This famous result shows that using the inverse of the true covariance matrix as the weight matrix in the least squares criterion leads to a simple expression for the variance of the resulting estimator. The Gauss-Markov theorem further states that this GLS estimator is the Best Linear Unbiased Estimator (BLUE) when $\Var(\bm{\epsilon})=\bm{\Sigma}$.
+\end{example}
+
+\begin{announcement}
+    Please remember to review the properties of covariance matrices (listed in Section 1) as they will be part of your upcoming homework assignment. Ensure you understand the derivations from the examples, particularly those involving projections and the properties of OLS/GLS estimators. The distinction between model assumptions and derived results (Example \ref{ex:assumptions_results}) is crucial.
+\end{announcement}
+
+\end{document}
