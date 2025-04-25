@@ -1,0 +1,380 @@
+\documentclass[11pt, letterpaper]{article}
+
+% --- Standard Packages ---
+\usepackage{amsmath}         % AMS mathematical facilities
+\usepackage{amssymb}         % AMS symbols
+\usepackage{amsthm}          % AMS theorem environments
+\usepackage{bm}              % Better bold math symbols (\bm command)
+\usepackage{geometry}        % For adjusting margins
+\usepackage[utf8]{inputenc}  % Specify input encoding
+\usepackage[T1]{fontenc}     % Specify font encoding
+\usepackage{hyperref}        % For hyperlinks (optional, but good practice)
+
+% --- Page Layout ---
+\geometry{margin=1in} % Standard 1-inch margins
+\linespread{1.1}      % Slightly larger line spacing for readability
+
+% --- Custom Theorem Environments ---
+% We define theorem styles for definitions, theorems/propositions, and remarks/examples.
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section] % Number definitions within sections
+
+\theoremstyle{plain} % Default style for theorems, lemmas, propositions
+\newtheorem{proposition}[definition]{Proposition} % Share numbering with definitions
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\newtheorem{theorem}[definition]{Theorem}
+
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}     % Share numbering
+\newtheorem{example}[definition]{Example}   % Share numbering
+
+% --- Custom Math Commands ---
+% Using \bm for bold math symbols as it's generally preferred over \boldsymbol or \mathbf
+\newcommand{\E}{\mathbb{E}}            % Expectation symbol
+\newcommand{\Cov}{\operatorname{Cov}}  % Covariance operator
+\newcommand{\Var}{\operatorname{Var}}  % Variance operator
+\newcommand{\tr}{\operatorname{tr}}    % Trace operator
+\newcommand{\ImSpace}{\operatorname{Im}}% Image space of a matrix
+
+% Commands for vectors and matrices to ensure consistency
+\newcommand{\vb}[1]{\bm{#1}}          % Generic vector/bold symbol
+\newcommand{\mb}[1]{\bm{#1}}          % Generic matrix/bold symbol (often same as vector)
+
+\newcommand{\Yvec}{\vb{Y}}            % Response vector
+\newcommand{\Xmat}{\mb{X}}            % Design matrix
+\newcommand{\Amat}{\mb{A}}            % Hat matrix helper A = (X^T X)^-1 X^T
+\newcommand{\Qmat}{\mb{Q}}            % Projection matrix onto M-perp
+\newcommand{\Pmat}{\mb{P}}            % Projection matrix onto M
+\newcommand{\Imat}{\mb{I}}            % Identity matrix
+\newcommand{\betavec}{\vb{\beta}}     % Beta coefficient vector
+\newcommand{\epsilonvec}{\vb{\epsilon}}% Error vector
+\newcommand{\evec}{\vb{e}}            % Residual vector
+\newcommand{\Yhatvec}{\vb{\hat{Y}}}    % Fitted values vector
+\newcommand{\betahatvec}{\vb{\hat{\beta}}}% Estimated beta vector
+\newcommand{\muvec}{\vb{\mu}}        % Mean vector
+\newcommand{\zerovec}{\vb{0}}        % Zero vector
+\newcommand{\Zvec}{\vb{Z}}            % Generic random vector
+
+% Configure hyperref (optional)
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+    pdftitle={Lecture Notes: Inference Under the Linear Model},
+    pdfauthor={Undergraduate Mathematics Educator} % Placeholder
+}
+
+% --- Document Start ---
+\begin{document}
+
+\title{Lecture Notes: Inference Under the Linear Model}
+\author{Your Name/Course Name Here} % Instructors/students should replace this
+\date{\today} % Or specify a lecture date
+
+\maketitle
+
+% Note: Administrative details were not present in the provided source material.
+% If there were announcements (homework deadlines, office hours, etc.),
+% they would be included here in a distinct section, e.g.:
+% \section*{Course Announcements}
+% \begin{itemize}
+%   \item Homework 3 is due next Friday at 5:00 PM via Gradescope.
+%   \item My office hours this week are moved to Wednesday, 2-3 PM.
+% \end{itemize}
+% \hrule % Separator line
+% \bigskip
+
+\section{From Least Squares Fitting to Statistical Inference}
+
+In our exploration of linear models so far, we've focused on the method of \textbf{Least Squares (LS)}. Given a design matrix $\Xmat$ (size $n \times (p+1)$, where $n$ is the number of observations and $p$ is the number of predictor variables, plus one for an intercept) and a vector of observed responses $\Yvec$ (size $n \times 1$), we found the coefficient vector $\betahatvec$ that minimizes the sum of squared differences between the observed responses and the values predicted by the linear model. This LS estimator is given by:
+\[
+\betahatvec = \Amat \Yvec, \quad \text{where} \quad \Amat := (\Xmat^\top \Xmat)^{-1} \Xmat^\top
+\]
+Assuming, of course, that $\Xmat^\top \Xmat$ is invertible, which typically holds if $n \ge p+1$ and the columns of $\Xmat$ are linearly independent.
+
+From this estimate, we defined two important vectors:
+\begin{itemize}
+    \item The vector of \textbf{fitted values}: $\Yhatvec = \Xmat \betahatvec$. This represents the projection of the observed data $\Yvec$ onto the column space of $\Xmat$.
+    \item The vector of \textbf{residuals}: $\evec = \Yvec - \Yhatvec$. This captures the part of the data \emph{not} explained by the linear fit.
+\end{itemize}
+A fundamental geometric property we discovered is that the residual vector is orthogonal to the fitted values vector, $\evec \perp \Yhatvec$, and indeed, orthogonal to any vector in the column space of $\Xmat$.
+
+\begin{remark}[Algebra, Not Statistics (Yet)]
+It's essential to remember that everything described above is derived from the algebraic goal of minimizing $\|\Yvec - \Xmat\betavec\|^2$. We haven't needed to make any assumptions about probability distributions or random errors. These results hold for any given dataset $(\Xmat, \Yvec)$.
+\end{remark}
+
+Our goal now is to move beyond simply finding the "best fit" line or hyperplane. We want to perform \textbf{statistical inference}. This involves asking questions like:
+\begin{itemize}
+    \item How uncertain is our estimate $\betahatvec$? Can we construct confidence intervals for the true coefficients $\betavec$?
+    \item Is a particular predictor variable significantly associated with the response? (i.e., can we test hypotheses like $H_0: \beta_j = 0$?)
+    \item How much variability in the response is inherent noise versus explained by the model?
+\end{itemize}
+To answer these questions, we need to introduce a probabilistic framework – the \textbf{linear model assumptions} – which describes how the data $\Yvec$ are generated.
+
+\section{The Linear Model: Assumptions and Basic Properties}
+
+We now formally adopt the standard (or Gaussian) linear model.
+
+\begin{definition}[The Linear Model] \label{def:linear_model}
+The linear model assumes that the response vector $\Yvec$ is generated according to:
+\begin{equation} \label{eq:linear_model_main}
+\Yvec = \Xmat \betavec + \epsilonvec
+\end{equation}
+where:
+\begin{itemize}
+    \item $\Xmat$ is the $n \times (p+1)$ design matrix, treated as fixed and known.
+    \item $\betavec$ is the $(p+1) \times 1$ vector of \emph{true, unknown} population coefficients.
+    \item $\epsilonvec$ is the $n \times 1$ vector of \emph{unobserved random errors}, satisfying:
+        \begin{enumerate}
+            \item[(LM1)] \textbf{Zero Mean}: $\E[\epsilonvec] = \zerovec$. (Equivalently, $\E[\epsilon_i] = 0$ for each $i=1, \dots, n$).
+            \item[(LM2)] \textbf{Constant Variance (Homoscedasticity)}: $\Var(\epsilon_i) = \sigma^2$ for all $i$, where $\sigma^2 > 0$ is an unknown parameter.
+            \item[(LM3)] \textbf{Uncorrelated Errors}: $\Cov(\epsilon_i, \epsilon_j) = 0$ for all $i \neq j$.
+        \end{enumerate}
+\end{itemize}
+Assumptions (LM2) and (LM3) can be compactly written using the covariance matrix of the error vector: $\Cov(\epsilonvec) = \E[\epsilonvec \epsilonvec^\top] - (\E[\epsilonvec])(\E[\epsilonvec])^\top = \E[\epsilonvec \epsilonvec^\top] = \sigma^2 \Imat_n$, where $\Imat_n$ is the $n \times n$ identity matrix.
+
+Often, an additional assumption is made for exact inference:
+\begin{itemize}
+    \item[(LM4)] \textbf{Normality}: The errors $\epsilon_i$ are normally distributed. Combined with (LM1)-(LM3), this means $\epsilonvec \sim \mathcal{N}(\zerovec, \sigma^2 \Imat_n)$.
+\end{itemize}
+For the results in this section (calculating means and covariances), we only need assumptions (LM1)-(LM3). The normality assumption (LM4) will become crucial later when we discuss distributions of test statistics (like t-tests and F-tests).
+\end{definition}
+
+Under these assumptions, $\Yvec$ becomes a random vector. Let's find its mean and covariance matrix.
+
+\paragraph{Mean of $\Yvec$:}
+Using the linearity of expectation and (LM1):
+\[
+\E[\Yvec] = \E[\Xmat \betavec + \epsilonvec] = \E[\Xmat \betavec] + \E[\epsilonvec] = \Xmat \betavec + \zerovec = \Xmat \betavec
+\]
+(Note: $\Xmat\betavec$ is considered a constant vector in this expectation, as $\Xmat$ is fixed and $\betavec$ is a fixed, albeit unknown, parameter vector).
+
+\paragraph{Covariance of $\Yvec$:}
+Using properties of covariance (adding a constant vector doesn't change covariance) and the definition $\Cov(\epsilonvec) = \sigma^2 \Imat_n$:
+\[
+\Cov(\Yvec) = \Cov(\Xmat \betavec + \epsilonvec) = \Cov(\epsilonvec) = \sigma^2 \Imat_n
+\]
+
+\section{Statistical Properties of the LS Estimator \texorpdfstring{$\betahatvec$}{beta-hat}}
+
+Now that $\Yvec$ is a random vector, our LS estimator $\betahatvec = \Amat \Yvec = (\Xmat^\top \Xmat)^{-1} \Xmat^\top \Yvec$ also becomes a random vector. We can investigate its statistical properties, specifically its mean and covariance matrix.
+
+\subsection{Mean of \texorpdfstring{$\betahatvec$}{beta-hat} (Unbiasedness)}
+
+Let's calculate the expected value of our estimator.
+\begin{align*}
+\E[\betahatvec] &= \E[\Amat \Yvec] \\
+&= \Amat \E[\Yvec] \quad \text{(since } \Amat \text{ is a constant matrix)} \\
+&= (\Xmat^\top \Xmat)^{-1} \Xmat^\top (\Xmat \betavec) \quad \text{(substituting } \E[\Yvec] = \Xmat\betavec \text{)} \\
+&= (\Xmat^\top \Xmat)^{-1} (\Xmat^\top \Xmat) \betavec \\
+&= \Imat_{p+1} \betavec \\
+&= \betavec
+\end{align*}
+This proves a fundamental result:
+\begin{proposition}
+Under the linear model assumptions (LM1)-(LM3), the Least Squares estimator $\betahatvec$ is an \textbf{unbiased estimator} of the true coefficient vector $\betavec$. That is, $\E[\betahatvec] = \betavec$.
+\end{proposition}
+This means that if we were to repeat our experiment many times and calculate $\betahatvec$ each time, the average of these estimates would converge to the true value $\betavec$. This is a very desirable property for an estimator.
+
+\subsection{Covariance Matrix of \texorpdfstring{$\betahatvec$}{beta-hat}}
+
+Next, let's find the covariance matrix of $\betahatvec$. Recall the property for a constant matrix $\mb{B}$ and a random vector $\Zvec$: $\Cov(\mb{B} \Zvec) = \mb{B} \Cov(\Zvec) \mb{B}^\top$. We apply this with $\Zvec = \Yvec$ and $\mb{B} = \Amat = (\Xmat^\top \Xmat)^{-1} \Xmat^\top$.
+
+\begin{align*}
+\Cov(\betahatvec) &= \Cov(\Amat \Yvec) \\
+&= \Amat \Cov(\Yvec) \Amat^\top \\
+&= \Amat (\sigma^2 \Imat_n) \Amat^\top \quad \text{(substituting } \Cov(\Yvec) = \sigma^2 \Imat_n \text{)} \\
+&= \sigma^2 \Amat \Amat^\top \\
+&= \sigma^2 \left[ (\Xmat^\top \Xmat)^{-1} \Xmat^\top \right] \left[ (\Xmat^\top \Xmat)^{-1} \Xmat^\top \right]^\top \\
+&= \sigma^2 (\Xmat^\top \Xmat)^{-1} \Xmat^\top \left( (\Xmat^\top)^\top ((\Xmat^\top \Xmat)^{-1})^\top \right) \\
+&= \sigma^2 (\Xmat^\top \Xmat)^{-1} \Xmat^\top \Xmat ((\Xmat^\top \Xmat)^{-1}) \quad \text{(since } (\Xmat^\top \Xmat)^{-1} \text{ is symmetric)} \\
+&= \sigma^2 (\Xmat^\top \Xmat)^{-1} (\Xmat^\top \Xmat) (\Xmat^\top \Xmat)^{-1} \\
+&= \sigma^2 \Imat_{p+1} (\Xmat^\top \Xmat)^{-1} \\
+&= \sigma^2 (\Xmat^\top \Xmat)^{-1}
+\end{align*}
+We have derived the covariance matrix of the LS estimator:
+\begin{proposition}
+Under the linear model assumptions (LM1)-(LM3), the covariance matrix of the LS estimator $\betahatvec$ is given by:
+\[
+\boxed{\Cov(\betahatvec) = \sigma^2 (\Xmat^\top \Xmat)^{-1}}
+\]
+\end{proposition}
+
+\begin{remark}[Interpreting $\Cov(\betahatvec)$]
+This $(p+1) \times (p+1)$ matrix is crucial for inference.
+\begin{itemize}
+    \item The diagonal entries give the variances of the individual coefficient estimators: $\Var(\hat{\beta}_j) = \sigma^2 [(\Xmat^\top \Xmat)^{-1}]_{jj}$. This measures the precision of each estimate.
+    \item The off-diagonal entries give the covariances between different coefficient estimators: $\Cov(\hat{\beta}_j, \hat{\beta}_k) = \sigma^2 [(\Xmat^\top \Xmat)^{-1}]_{jk}$. This tells us how the estimates tend to vary together.
+    \item Notice the dependence on $\sigma^2$: higher underlying noise variance leads to higher variance (less precision) in our estimates.
+    \item The term $(\Xmat^\top \Xmat)^{-1}$ reflects the influence of the experimental design or data structure. For example, multicollinearity (near linear dependence among columns of $\Xmat$) tends to inflate the diagonal elements of $(\Xmat^\top \Xmat)^{-1}$, increasing the variance of the corresponding coefficient estimates.
+\end{itemize}
+To use this covariance matrix for practical inference (like constructing confidence intervals or hypothesis tests), we need the value of $\sigma^2$. Since $\sigma^2$ is typically unknown, we must estimate it from the data.
+\end{remark}
+
+\section{Estimating the Error Variance \texorpdfstring{$\sigma^2$}{sigma\textasciicircum 2}}
+
+\subsection{Motivation and Definition}
+
+How can we estimate the underlying noise level $\sigma^2$? Intuitively, the residuals $\evec = \Yvec - \Yhatvec$ represent the discrepancy between our observations and the model's fit. The magnitude of these residuals should reflect the magnitude of the true errors $\epsilonvec$.
+
+A natural quantity to consider is the \textbf{Sum of Squared Residuals (SSR)}:
+\[
+\text{SSR} = \|\evec\|^2 = \sum_{i=1}^n e_i^2
+\]
+Since $\sigma^2 = \Var(\epsilon_i) = \E[\epsilon_i^2]$ (because $\E[\epsilon_i]=0$), we might think SSR is related to $n\sigma^2$. However, the residuals $e_i$ are not the same as the true errors $\epsilon_i$. The residuals are calculated using the \emph{estimated} coefficients $\betahatvec$, which depend on the data $\Yvec$. This process of estimating $\betavec$ "uses up" some information from the data.
+
+Specifically, we estimated $p+1$ parameters (the components of $\betavec$). It turns out that the appropriate divisor for SSR to get an unbiased estimate of $\sigma^2$ is not $n$, but $n - (p+1)$, the \textbf{residual degrees of freedom}.
+
+\begin{definition}[Unbiased Estimator of $\sigma^2$]
+The unbiased estimator of the error variance $\sigma^2$, often denoted by $\hat{\sigma}^2$ or $s^2$, is defined as:
+\[
+\hat{\sigma}^2 := \frac{1}{n-p-1} \|\evec\|^2 = \frac{1}{n-p-1} \sum_{i=1}^n e_i^2 = \frac{\text{SSR}}{n-p-1}
+\]
+This quantity is also known as the \textbf{Residual Mean Square} (RMS or MSE).
+\end{definition}
+
+We will now rigorously prove that this definition indeed yields an unbiased estimator.
+
+\begin{proposition} \label{prop:sigmahat_unbiased}
+Under the linear model assumptions (LM1)-(LM3), the estimator $\hat{\sigma}^2$ defined above is an unbiased estimator of $\sigma^2$. That is, $\E[\hat{\sigma}^2] = \sigma^2$.
+\end{proposition}
+
+We offer two distinct proofs of this important result. They provide different perspectives and utilize different mathematical tools.
+
+\subsection{Proof 1: Using Projection Matrices}
+
+This proof relies heavily on the geometric interpretation of least squares in terms of projections.
+
+\begin{proof}[First Proof of Proposition \ref{prop:sigmahat_unbiased}]
+Let $M = \ImSpace(\Xmat)$ be the column space of the design matrix $\Xmat$. This is the subspace of $\mathbb{R}^n$ spanned by the columns of $\Xmat$. Assuming $\Xmat$ has full column rank, the dimension of $M$ is $p+1$.
+
+Recall that $\Yhatvec = \Xmat\betahatvec$ is the orthogonal projection of $\Yvec$ onto $M$. Let $\Pmat = \Xmat(\Xmat^\top \Xmat)^{-1}\Xmat^\top$ be the $n \times n$ projection matrix onto $M$. So, $\Yhatvec = \Pmat\Yvec$.
+
+The residual vector is $\evec = \Yvec - \Yhatvec = \Yvec - \Pmat\Yvec = (\Imat_n - \Pmat)\Yvec$.
+Let $\Qmat := \Imat_n - \Pmat$. $\Qmat$ is the projection matrix onto the orthogonal complement of $M$, denoted $M^\perp$. We know the following properties of $\Qmat$:
+\begin{itemize}
+    \item It is symmetric: $\Qmat^\top = \Qmat$.
+    \item It is idempotent: $\Qmat^2 = \Qmat\Qmat = \Qmat$.
+    \item It annihilates vectors in $M$: $\Qmat\Xmat = (\Imat_n - \Pmat)\Xmat = \Xmat - \Pmat\Xmat = \Xmat - \Xmat = \mb{0}$. (Since $\Pmat\Xmat = \Xmat$ because columns of $\Xmat$ are in $M$).
+\end{itemize}
+Now, let's express the residual vector in terms of the true errors $\epsilonvec$. Using the linear model $\Yvec = \Xmat\betavec + \epsilonvec$:
+\[
+\evec = \Qmat\Yvec = \Qmat(\Xmat\betavec + \epsilonvec) = \Qmat\Xmat\betavec + \Qmat\epsilonvec = \zerovec \cdot \betavec + \Qmat\epsilonvec = \Qmat\epsilonvec
+\]
+This crucial step shows that the residual vector $\evec$ is simply the projection of the true (unobserved) error vector $\epsilonvec$ onto the subspace $M^\perp$, which is orthogonal to the space spanned by our predictors.
+
+Now we compute the expected value of the Sum of Squared Residuals, $\E[\|\evec\|^2]$.
+\begin{align*}
+\E[\|\evec\|^2] &= \E[\|\Qmat\epsilonvec\|^2] \\
+&= \E[(\Qmat\epsilonvec)^\top (\Qmat\epsilonvec)] \\
+&= \E[\epsilonvec^\top \Qmat^\top \Qmat \epsilonvec] \\
+&= \E[\epsilonvec^\top \Qmat \epsilonvec] \quad \text{(using } \Qmat^\top = \Qmat \text{ and } \Qmat^2 = \Qmat \text{)}
+\end{align*}
+The term $\epsilonvec^\top \Qmat \epsilonvec$ is a quadratic form in the random vector $\epsilonvec$. We can write it explicitly as $\sum_{i=1}^n \sum_{j=1}^n Q_{ij} \epsilon_i \epsilon_j$. By linearity of expectation:
+\[
+\E[\epsilonvec^\top \Qmat \epsilonvec] = \E\left[\sum_{i=1}^n \sum_{j=1}^n Q_{ij} \epsilon_i \epsilon_j\right] = \sum_{i=1}^n \sum_{j=1}^n Q_{ij} \E[\epsilon_i \epsilon_j]
+\]
+From the linear model assumptions (LM1)-(LM3), we know $\E[\epsilon_i] = 0$ and $\Cov(\epsilon_i, \epsilon_j) = \E[\epsilon_i \epsilon_j]$. Thus:
+\[
+\E[\epsilon_i \epsilon_j] = \begin{cases} \Var(\epsilon_i) = \sigma^2, & \text{if } i = j \\ \Cov(\epsilon_i, \epsilon_j) = 0, & \text{if } i \neq j \end{cases}
+\]
+Substituting this into our sum:
+\begin{align*}
+\E[\|\evec\|^2] &= \sum_{i=1}^n \sum_{j=1}^n Q_{ij} \E[\epsilon_i \epsilon_j] \\
+&= \sum_{i=1}^n Q_{ii} \E[\epsilon_i^2] + \sum_{i \neq j} Q_{ij} \E[\epsilon_i \epsilon_j] \\
+&= \sum_{i=1}^n Q_{ii} (\sigma^2) + \sum_{i \neq j} Q_{ij} (0) \\
+&= \sigma^2 \sum_{i=1}^n Q_{ii}
+\end{align*}
+The sum $\sum_{i=1}^n Q_{ii}$ is precisely the trace of the matrix $\Qmat$, denoted $\tr(\Qmat)$.
+So, we have $\E[\|\evec\|^2] = \sigma^2 \tr(\Qmat)$.
+
+What is the trace of the projection matrix $\Qmat$? The trace of any projection matrix is equal to the dimension of the subspace it projects onto. $\Qmat$ projects onto $M^\perp$. We know $\dim(\mathbb{R}^n) = n$ and $\dim(M) = p+1$ (assuming $\Xmat$ has full rank). By the rank-nullity theorem or properties of orthogonal complements, $\dim(M^\perp) = \dim(\mathbb{R}^n) - \dim(M) = n - (p+1)$.
+Therefore, $\operatorname{rank}(\Qmat) = \dim(M^\perp) = n - p - 1$.
+Since the trace of a projection matrix equals its rank, we have $\tr(\Qmat) = n - p - 1$.
+
+Substituting this back into our expectation calculation:
+\[
+\E[\|\evec\|^2] = \sigma^2 (n - p - 1)
+\]
+Finally, we can find the expectation of our proposed estimator $\hat{\sigma}^2$:
+\[
+\E[\hat{\sigma}^2] = \E\left[\frac{1}{n-p-1} \|\evec\|^2\right] = \frac{1}{n-p-1} \E[\|\evec\|^2] = \frac{1}{n-p-1} \sigma^2 (n - p - 1) = \sigma^2
+\]
+This completes the proof that $\hat{\sigma}^2$ is an unbiased estimator of $\sigma^2$.
+\end{proof}
+
+\begin{remark}[Degrees of Freedom]
+The quantity $n - p - 1$ is often called the \textbf{degrees of freedom for error} (or residual degrees of freedom). It represents the number of independent pieces of information in the data that are available for estimating the variance $\sigma^2$, after having already used $p+1$ degrees of freedom to estimate the coefficients in $\betavec$.
+\end{remark}
+
+\subsection{Proof 2: Using a General Lemma about Expected Norms}
+
+An alternative, perhaps more abstract, proof uses a general result about the expected squared norm of a random vector.
+
+\begin{lemma} \label{lemma:expected_norm}
+Let $\Zvec$ be a random vector in $\mathbb{R}^k$ with mean $\muvec_{\Zvec} = \E[\Zvec]$ and covariance matrix $\Cov(\Zvec)$. Then,
+\[
+\E[\|\Zvec\|^2] = \tr(\E[\Zvec \Zvec^\top]) = \tr(\Cov(\Zvec) + \muvec_{\Zvec} \muvec_{\Zvec}^\top)
+\]
+As a special case, if the mean is zero ($\muvec_{\Zvec} = \zerovec$), then $\E[\|\Zvec\|^2] = \tr(\Cov(\Zvec))$.
+\end{lemma}
+
+\begin{proof}[Proof of Lemma \ref{lemma:expected_norm}]
+We start with the definition of the squared Euclidean norm $\|\Zvec\|^2 = \Zvec^\top \Zvec$.
+\begin{align*}
+\E[\|\Zvec\|^2] &= \E[\Zvec^\top \Zvec] \\
+&\overset{(a)}{=} \E[\tr(\Zvec^\top \Zvec)] \quad \text{(Since } \Zvec^\top \Zvec \text{ is a } 1 \times 1 \text{ matrix, its trace is itself)} \\
+&\overset{(b)}{=} \E[\tr(\Zvec \Zvec^\top)] \quad \text{(Using the cyclic property of trace: } \tr(AB) = \tr(BA)\text{)} \\
+&\overset{(c)}{=} \tr(\E[\Zvec \Zvec^\top]) \quad \text{(Linearity of trace and expectation allows swapping them)} \\
+&\overset{(d)}{=} \tr(\Cov(\Zvec) + \muvec_{\Zvec} \muvec_{\Zvec}^\top) \quad \text{(Using the definition } \Cov(\Zvec) = \E[\Zvec \Zvec^\top] - \muvec_{\Zvec} \muvec_{\Zvec}^\top\text{)}
+\end{align*}
+This establishes the lemma. The special case follows immediately by setting $\muvec_{\Zvec} = \zerovec$.
+\end{proof}
+
+Now we apply this lemma to prove Proposition \ref{prop:sigmahat_unbiased}.
+
+\begin{proof}[Alternative Proof of Proposition \ref{prop:sigmahat_unbiased}]
+We want to compute $\E[\|\evec\|^2]$. We apply Lemma \ref{lemma:expected_norm} with the random vector $\Zvec = \evec$. To do this, we first need the mean and covariance matrix of $\evec$.
+
+Recall from the first proof that $\evec = \Qmat\Yvec$, where $\Qmat = \Imat_n - \Pmat$.
+The mean of $\evec$ is:
+\[
+\E[\evec] = \E[\Qmat\Yvec] = \Qmat \E[\Yvec] = \Qmat (\Xmat\betavec) = (\Qmat\Xmat)\betavec = \mb{0} \cdot \betavec = \zerovec
+\]
+So, the mean vector $\muvec_{\evec}$ is the zero vector.
+
+The covariance matrix of $\evec$ is:
+\begin{align*}
+\Cov(\evec) &= \Cov(\Qmat\Yvec) \\
+&= \Qmat \Cov(\Yvec) \Qmat^\top \\
+&= \Qmat (\sigma^2 \Imat_n) \Qmat^\top \quad (\text{using } \Cov(\Yvec) = \sigma^2 \Imat_n) \\
+&= \sigma^2 \Qmat \Imat_n \Qmat^\top \\
+&= \sigma^2 \Qmat \Qmat^\top \\
+&= \sigma^2 \Qmat \Qmat \quad (\text{since } \Qmat \text{ is symmetric}) \\
+&= \sigma^2 \Qmat \quad (\text{since } \Qmat \text{ is idempotent})
+\end{align*}
+So, $\Cov(\evec) = \sigma^2 \Qmat$.
+
+Now we apply the special case of Lemma \ref{lemma:expected_norm} (since $\muvec_{\evec} = \zerovec$):
+\begin{align*}
+\E[\|\evec\|^2] &= \tr(\Cov(\evec)) \\
+&= \tr(\sigma^2 \Qmat) \\
+&= \sigma^2 \tr(\Qmat) \quad \text{(Linearity of trace)}
+\end{align*}
+As established in the first proof using properties of projection matrices, $\tr(\Qmat) = n - p - 1$.
+Therefore,
+\[
+\E[\|\evec\|^2] = \sigma^2 (n - p - 1)
+\]
+Finally, the expectation of our estimator $\hat{\sigma}^2$ is:
+\[
+\E[\hat{\sigma}^2] = \E\left[\frac{1}{n-p-1} \|\evec\|^2\right] = \frac{1}{n-p-1} \E[\|\evec\|^2] = \frac{1}{n-p-1} \sigma^2 (n - p - 1) = \sigma^2
+\]
+This provides a second confirmation that $\hat{\sigma}^2$ is an unbiased estimator for $\sigma^2$.
+\end{proof}
+
+With these results – the unbiasedness of $\betahatvec$ and $\hat{\sigma}^2$, and the covariance matrix of $\betahatvec$ – we have laid the groundwork for constructing confidence intervals and hypothesis tests concerning the regression coefficients $\betavec$, which are central tasks in statistical inference for linear models.
+
+\end{document}

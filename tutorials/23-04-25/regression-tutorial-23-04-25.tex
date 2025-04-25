@@ -1,0 +1,518 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{amsfonts} % Added for \mathbb
+\usepackage{bm} % Added for bold math symbols like beta and epsilon
+\usepackage[margin=1in]{geometry}
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref} % Added colorlinks for better navigation
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+
+% Definition-like environments
+\theoremstyle{definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+% Math macros
+\newcommand{\R}{\mathbb{R}} % Real numbers
+\newcommand{\E}{\mathbb{E}} % Expectation
+\newcommand{\Var}{\mathrm{Var}} % Variance
+\newcommand{\Cov}{\mathrm{Cov}} % Covariance
+\newcommand{\T}{^T} % Transpose shortcut
+\newcommand{\bbeta}{\bm{\beta}} % Bold beta
+\newcommand{\bepsilon}{\bm{\epsilon}} % Bold epsilon
+\newcommand{\bZero}{\mathbf{0}} % Bold zero vector/matrix
+\newcommand{\bhat}[1]{\hat{\bm{#1}}} % Bold hat estimator
+
+\begin{document}
+
+\title{Lecture Notes: Multidimensional Random Vectors and Introduction to the Linear Model}
+\author{Undergraduate Math Educator} % Placeholder - can be adapted
+\date{Based on lecture given post-break, covering weeks prior}
+\maketitle
+
+\section*{Administrative Announcements}
+\label{sec:admin}
+
+A few key dates and details to keep in mind:
+
+\begin{itemize}
+    \item \textbf{Midterm Quiz:} Please note that we have a midterm quiz scheduled for \textbf{May 12th}. That's coming up in about three weeks.
+    \item \textbf{Quiz Material:} The material covered will likely be up to the topics discussed one week prior, meaning content covered up to \textbf{May 5th}.
+    \item \textbf{Review Session:} I will try my best, though I can't promise, to hold a dedicated review session during the tutorial the week before the quiz. This would be separate from the regular tutorial content.
+    \item \textbf{Moed Bet (Second Chance):} There will be a second chance date (\textit{Moed Bet}) for the quiz, but please be aware this is \textbf{only for students who are eligible} according to the rules (typically for excused absences, etc.). Do not plan on this being a general retake opportunity. If you are unable to attend the main quiz for a valid reason, you may be eligible for a special subsequent date.
+    \item \textbf{Office Hours:} Please make use of office hours if you have questions about the material or the upcoming quiz. Statistics can be tricky, but we're here to help!
+    \item \textbf{New Homework Assignment:} Have you started the new homework assignment (the "additional exercise sheet")? How did you find it, especially question 4 onwards? It's good practice for the concepts we're discussing.
+\end{itemize}
+
+Let's make sure we're all on track. Okay, let's begin with the mathematics.
+
+\section{Recap and Deep Dive: Multidimensional Random Vectors}
+\label{sec:random_vectors}
+
+Over the last week before the break, and continuing now, we've been exploring the fascinating world of \textbf{multidimensional random variables}, often represented as random vectors. This is a crucial extension of the single-variable probability concepts you're familiar with. We also started touching upon the assumptions underpinning the \textbf{linear model}, which will be a central theme in this course.
+
+Today, we'll solidify our understanding of random vectors and their properties in the first part, and then delve deeper into the assumptions of the linear model in the second part.
+
+\subsection{Random Vectors and Expectation}
+\label{subsec:vec_expectation}
+
+Let's start with the basics. Imagine we have $n$ random variables, $Z_1, Z_2, \ldots, Z_n$. We can group these together into a column vector:
+\[
+Z = \begin{pmatrix} Z_1 \\ Z_2 \\ \vdots \\ Z_n \end{pmatrix} \in \R^n
+\]
+This $Z$ is what we call a \textbf{random vector}. Each component $Z_i$ is itself a random variable.
+
+\begin{definition}[Expectation of a Random Vector]
+\label{def:vec_expectation}
+The \textbf{expectation} (or expected value) of a random vector $Z \in \R^n$ is defined as the vector of the expectations of its individual components:
+\[
+\E[Z] = \begin{pmatrix} \E[Z_1] \\ \E[Z_2] \\ \vdots \\ \E[Z_n] \end{pmatrix} \in \R^n
+\]
+Each $\E[Z_i]$ here is the standard, or \textit{marginal}, expectation of the random variable $Z_i$, considered on its own (not conditional on the other components).
+\end{definition}
+
+\begin{remark}
+Just like with scalar random variables, the expectation represents the "center of mass" or the long-run average of the random vector.
+\end{remark}
+
+Many properties of expectation carry over naturally from the scalar case.
+
+\begin{proposition}[Linearity of Expectation for Vectors/Matrices]
+\label{prop:linearity_expectation}
+Let $Z$ and $W$ be random vectors of the same dimension, and let $A$, $B$, and $C$ be constant (non-random) matrices or vectors of compatible dimensions. Then:
+\begin{enumerate}
+    \item $\E[Z + W] = \E[Z] + \E[W]$
+    \item $\E[AZ] = A\E[Z]$
+    \item $\E[AZ + C] = A\E[Z] + C$
+    \item $\E[AZB] = A\E[Z]B$ (if dimensions allow multiplication)
+\end{enumerate}
+We need to be careful with matrix multiplication order, but the linearity principle holds. Proving these relies on applying the definition component-wise.
+\end{proposition}
+
+\subsection{The Variance-Covariance Matrix}
+\label{subsec:covariance_matrix}
+
+While expectation tells us about the center, the \textbf{variance-covariance matrix} (often just called the covariance matrix) tells us about the spread and the linear relationships between the components of a random vector.
+
+\begin{definition}[Covariance Matrix of Two Random Vectors]
+\label{def:cov_two_vectors}
+Let $Z \in \R^n$ and $W \in \R^p$ be random vectors. Their \textbf{covariance matrix} is defined as:
+\[
+\Cov(Z, W) = \E\left[ (Z - \E[Z]) (W - \E[W])\T \right]
+\]
+This results in an $n \times p$ matrix. The $(i, j)$-th entry of this matrix is $\Cov(Z_i, W_j) = \E[(Z_i - \E[Z_i])(W_j - \E[W_j])]$.
+\end{definition}
+
+\begin{remark}
+Think about the dimensions: $(Z - \E[Z])$ is $n \times 1$, and $(W - \E[W])\T$ is $1 \times p$. Their outer product gives an $n \times p$ matrix. The expectation is taken element-wise.
+\end{remark}
+
+\begin{definition}[Variance-Covariance Matrix of a Single Random Vector]
+\label{def:varcov_one_vector}
+A particularly important case is the covariance of a random vector $Z \in \R^n$ with itself. This is called the \textbf{variance-covariance matrix} of $Z$, often denoted $\Var(Z)$:
+\[
+\Var(Z) = \Cov(Z, Z) = \E\left[ (Z - \E[Z]) (Z - \E[Z])\T \right]
+\]
+This is always an $n \times n$ square matrix.
+\end{definition}
+
+What does this matrix look like?
+\[
+\Var(Z) = \begin{pmatrix}
+\Cov(Z_1, Z_1) & \Cov(Z_1, Z_2) & \cdots & \Cov(Z_1, Z_n) \\
+\Cov(Z_2, Z_1) & \Cov(Z_2, Z_2) & \cdots & \Cov(Z_2, Z_n) \\
+\vdots & \vdots & \ddots & \vdots \\
+\Cov(Z_n, Z_1) & \Cov(Z_n, Z_2) & \cdots & \Cov(Z_n, Z_n)
+\end{pmatrix}
+\]
+Notice that the diagonal entries are $\Cov(Z_i, Z_i) = \Var(Z_i)$, the variances of the individual components. The off-diagonal entries $\Cov(Z_i, Z_j)$ (for $i \neq j$) are the covariances between pairs of components, measuring their linear association.
+
+\subsection{Properties of Covariance Matrices}
+\label{subsec:cov_properties}
+
+Covariance matrices have several crucial properties, extending familiar scalar properties:
+
+\begin{proposition}[Properties of Covariance]
+\label{prop:cov_properties}
+Let $Z \in \R^n$, $W \in \R^p$, $R \in \R^n$ be random vectors, and let $A$, $B$, $C$ be constant matrices/vectors of compatible dimensions.
+\begin{enumerate}
+    \item \textbf{Symmetry of Variance:} $\Var(Z)$ is a symmetric matrix. ($\Var(Z) = \Var(Z)\T$)
+    \item \textbf{Relationship between Cov(Z, W) and Cov(W, Z):} $\Cov(Z, W) = \Cov(W, Z)\T$. (This relates the $n \times p$ matrix to the $p \times n$ matrix).
+    \item \textbf{Bilinearity:}
+        \begin{itemize}
+            \item $\Cov(Z + R, W) = \Cov(Z, W) + \Cov(R, W)$
+            \item $\Cov(Z, W + S) = \Cov(Z, W) + \Cov(Z, S)$ (where $S \in \R^p$)
+        \end{itemize}
+    \item \textbf{Effect of Linear Transformations:}
+        \begin{itemize}
+            \item $\Cov(AZ, BW) = A \Cov(Z, W) B\T$
+            \item $\Var(AZ) = \Cov(AZ, AZ) = A \Cov(Z, Z) A\T = A \Var(Z) A\T$
+            \item $\Var(Z + C) = \Var(Z)$ (Adding a constant doesn't change variance/covariance)
+        \end{itemize}
+    \item \textbf{Positive Semi-Definiteness:} For any random vector $Z$, its variance-covariance matrix $\Var(Z)$ is positive semi-definite (PSD). This means that for any constant vector $v \in \R^n$, the scalar quantity $v\T \Var(Z) v \ge 0$.
+\end{enumerate}
+\end{proposition}
+
+\begin{remark}[Intuition for PSD]
+\label{rem:psd_intuition}
+Why must $\Var(Z)$ be PSD? Consider the scalar random variable $Y = v\T Z = \sum v_i Z_i$, which is a linear combination of the components of $Z$. Its variance is $\Var(Y)$. Using the transformation property (4b from Prop \ref{prop:cov_properties}) with $A = v\T$ (a $1 \times n$ matrix), we get $\Var(v\T Z) = v\T \Var(Z) (v\T)\T = v\T \Var(Z) v$. Since the variance of any scalar random variable must be non-negative, it follows that $v\T \Var(Z) v \ge 0$ for all $v$. This property is fundamental!
+\end{remark}
+
+\begin{remark}[Independence and Covariance]
+\label{rem:indep_cov}
+If components $Z_i$ and $Z_j$ are independent, then $\Cov(Z_i, Z_j) = 0$. If all components of $Z$ are mutually independent, then $\Var(Z)$ will be a diagonal matrix. However, the converse is not generally true: $\Cov(Z_i, Z_j) = 0$ (uncorrelated) does not imply independence, *except* in the special case of normally distributed random variables.
+\end{remark}
+
+Let's work through an example to make this concrete.
+
+\begin{example}[Standard Normal Vector]
+\label{ex:std_normal_vector}
+Let $Z_1, Z_2, \ldots, Z_5$ be independent random variables, each following a standard normal distribution, $Z_i \sim N(0, 1)$. Let $Z = (Z_1, \ldots, Z_5)\T$. Find $\E[Z]$ and $\Var(Z)$.
+
+\textbf{Solution:}
+\begin{itemize}
+    \item \textbf{Expectation:} Since $Z_i \sim N(0, 1)$, we know $\E[Z_i] = 0$ for all $i=1, \ldots, 5$. Therefore,
+    \[
+    \E[Z] = \begin{pmatrix} \E[Z_1] \\ \vdots \\ \E[Z_5] \end{pmatrix} = \begin{pmatrix} 0 \\ \vdots \\ 0 \end{pmatrix} = \bZero_5 \in \R^5
+    \]
+    The expectation is the zero vector in $\R^5$.
+
+    \item \textbf{Variance-Covariance Matrix:} We need to find the $5 \times 5$ matrix $\Var(Z)$. The entry $(i, j)$ is $\Cov(Z_i, Z_j)$.
+        \begin{itemize}
+            \item For the diagonal entries ($i = j$): $\Cov(Z_i, Z_i) = \Var(Z_i)$. Since $Z_i \sim N(0, 1)$, we have $\Var(Z_i) = 1$.
+            \item For the off-diagonal entries ($i \neq j$): $\Cov(Z_i, Z_j)$. Since $Z_i$ and $Z_j$ are independent for $i \neq j$, their covariance is 0. $\Cov(Z_i, Z_j) = 0$.
+        \end{itemize}
+    Putting this together, the matrix has 1s on the diagonal and 0s everywhere else. This is the identity matrix of size 5.
+    \[
+    \Var(Z) = \begin{pmatrix}
+    1 & 0 & 0 & 0 & 0 \\
+    0 & 1 & 0 & 0 & 0 \\
+    0 & 0 & 1 & 0 & 0 \\
+    0 & 0 & 0 & 1 & 0 \\
+    0 & 0 & 0 & 0 & 1
+    \end{pmatrix} = I_5
+    \]
+\end{itemize}
+So, for a vector of independent standard normal variables, the expectation is the zero vector and the covariance matrix is the identity matrix. This is a foundational result.
+\end{example}
+
+\begin{example}[Affine Transformation of a Random Vector]
+\label{ex:affine_transformation}
+Continuing with $Z \in \R^5$ from Example \ref{ex:std_normal_vector}, where $\E[Z]=\bZero_5$ and $\Var(Z)=I_5$.
+Define a transformation $H: \R^5 \to \R^3$ by $Y = H(Z) = BZ + c$, where
+\[
+B = \begin{pmatrix} 2 & -3 & 4 & 0 & 0 \\ 0 & 8 & 0 & -4 & -6 \\ 0 & 0 & 0 & 6 & 1 \end{pmatrix} \quad \text{and} \quad c = \begin{pmatrix} 7 \\ 3 \\ -1 \end{pmatrix}
+\]
+\begin{enumerate}
+    \item Is the transformation $H$ linear?
+    \item Calculate the expectation vector $\E[Y]$ and the covariance matrix $\Var(Y)$.
+\end{enumerate}
+
+\textbf{Solution:}
+\begin{enumerate}
+    \item \textbf{Linearity of H:} A transformation $H$ is linear if $H(\bZero) = \bZero$ and $H(\alpha v_1 + \beta v_2) = \alpha H(v_1) + \beta H(v_2)$. Let's check the first condition:
+    \[ H(\bZero_5) = B \cdot \bZero_5 + c = \bZero_3 + c = c = \begin{pmatrix} 7 \\ 3 \\ -1 \end{pmatrix} \]
+    Since $H(\bZero) \neq \bZero_3$, the transformation $H$ is \textbf{not linear}. It is an \textit{affine} transformation, which is a linear transformation ($Z \mapsto BZ$) followed by a translation (adding $c$).
+
+    \item \textbf{Expectation and Variance of Y:} We use the properties of expectation and variance under linear transformations (Prop \ref{prop:linearity_expectation} and \ref{prop:cov_properties}).
+    \begin{itemize}
+        \item \textbf{Expectation:}
+        \[ \E[Y] = \E[BZ + c] = \E[BZ] + \E[c] \]
+        Using linearity and the fact that $c$ is constant:
+        \[ \E[Y] = B\E[Z] + c \]
+        We know $\E[Z] = \bZero_5$, so:
+        \[ \E[Y] = B \cdot \bZero_5 + c = \bZero_3 + c = c = \begin{pmatrix} 7 \\ 3 \\ -1 \end{pmatrix} \]
+        The expected value of $Y$ is simply the translation vector $c$.
+
+        \item \textbf{Variance-Covariance Matrix:}
+        \[ \Var(Y) = \Var(BZ + c) \]
+        Adding a constant vector does not affect the variance:
+        \[ \Var(Y) = \Var(BZ) \]
+        Using the property $\Var(AZ) = A \Var(Z) A\T$:
+        \[ \Var(Y) = B \Var(Z) B\T \]
+        We know $\Var(Z) = I_5$, so:
+        \[ \Var(Y) = B I_5 B\T = B B\T \]
+        Now we need to compute the matrix product $B B\T$:
+        \[ B\T = \begin{pmatrix} 2 & 0 & 0 \\ -3 & 8 & 0 \\ 4 & 0 & 0 \\ 0 & -4 & 6 \\ 0 & -6 & 1 \end{pmatrix} \]
+        \[
+        B B\T = \begin{pmatrix} 2 & -3 & 4 & 0 & 0 \\ 0 & 8 & 0 & -4 & -6 \\ 0 & 0 & 0 & 6 & 1 \end{pmatrix}
+        \begin{pmatrix} 2 & 0 & 0 \\ -3 & 8 & 0 \\ 4 & 0 & 0 \\ 0 & -4 & 6 \\ 0 & -6 & 1 \end{pmatrix}
+        \]
+        Performing the multiplication (row by column):
+        \begin{align*} (1,1): & (2)(2) + (-3)(-3) + (4)(4) + 0 + 0 = 4 + 9 + 16 = 29 \\ (1,2): & (2)(0) + (-3)(8) + (4)(0) + 0 + 0 = -24 \\ (1,3): & (2)(0) + (-3)(0) + (4)(0) + (0)(6) + (0)(1) = 0 \\ (2,1): & (0)(2) + (8)(-3) + (0)(4) + (-4)(0) + (-6)(0) = -24 \\ (2,2): & (0)(0) + (8)(8) + (0)(0) + (-4)(-4) + (-6)(-6) = 64 + 16 + 36 = 116 \\ (2,3): & (0)(0) + (8)(0) + (0)(0) + (-4)(6) + (-6)(1) = -24 - 6 = -30 \\ (3,1): & 0 + 0 + 0 + 0 + 0 = 0 \\ (3,2): & 0 + 0 + 0 + (6)(-4) + (1)(-6) = -24 - 6 = -30 \\ (3,3): & 0 + 0 + 0 + (6)(6) + (1)(1) = 36 + 1 = 37 \end{align*}
+        So, the covariance matrix is:
+        \[
+        \Var(Y) = B B\T = \begin{pmatrix} 29 & -24 & 0 \\ -24 & 116 & -30 \\ 0 & -30 & 37 \end{pmatrix}
+        \]
+        Note: As expected, $\Var(Y)$ is a $3 \times 3$ symmetric matrix.
+    \end{itemize}
+\end{enumerate}
+This example illustrates how to handle affine transformations and highlights that the non-linear shift $c$ only affects the mean, not the covariance structure.
+\end{example}
+
+\begin{remark}[Independence from Distribution Type for Mean/Variance]
+\label{rem:dist_independence_revisited}
+Would the results for $\E[Y]$ and $\Var(Y)$ in Example \ref{ex:affine_transformation} change if the $Z_i$ were independent $U(-\sqrt{3}, \sqrt{3})$ variables instead of $N(0,1)$?
+Let's check the properties of $Z_i \sim U(-\sqrt{3}, \sqrt{3})$:
+\begin{itemize}
+    \item $\E[Z_i] = \frac{-\sqrt{3} + \sqrt{3}}{2} = 0$.
+    \item $\Var(Z_i) = \frac{(\sqrt{3} - (-\sqrt{3}))^2}{12} = \frac{(2\sqrt{3})^2}{12} = \frac{12}{12} = 1$.
+\end{itemize}
+Since the $Z_i$ are still independent, $\E[Z_i]=0$, and $\Var(Z_i)=1$, the input vector $Z$ still has $\E[Z] = \bZero_5$ and $\Var(Z) = I_5$.
+The calculations for $\E[Y]$ and $\Var(Y)$ relied *only* on the mean vector and covariance matrix of $Z$, not on the specific type of distribution (Normal vs. Uniform). Therefore, the results would be exactly the same. This is an important point: many properties and calculations in linear models depend only on first and second moments (mean, variance, covariance), not the full distribution. We often denote this assumption generically as $Z \sim (\bZero, I)$, meaning a random vector with mean $\bZero$ and covariance $I$.
+\end{remark}
+
+\section{Comparing Covariance Matrices}
+\label{sec:compare_cov}
+
+Sometimes we want to compare the "spread" or "variability" represented by two different covariance matrices. This leads to the concept of ordering matrices in terms of positive semi-definiteness.
+
+\begin{theorem}[Equivalence Conditions for Covariance Dominance]
+\label{thm:cov_equivalence_revisited}
+Let $Z, W \in \R^p$ be random vectors. The following statements are equivalent:
+\begin{enumerate}
+    \item For every constant (non-random) vector $v \in \R^p$, $\Var(v\T Z) \ge \Var(v\T W)$.
+    \item The matrix $B = \Var(Z) - \Var(W)$ is positive semi-definite ($B \succeq 0$).
+    \item There exists a matrix $C$ such that $B = \Var(Z) - \Var(W) = CC\T$. (This relates to the existence of a "matrix square root" or Cholesky factor for PSD matrices).
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}[Sketch of Equivalence $1 \iff 2$]
+We established the core relationship in Remark \ref{rem:psd_intuition}: $\Var(v\T Z) = v\T \Var(Z) v$ and $\Var(v\T W) = v\T \Var(W) v$.
+Let $B = \Var(Z) - \Var(W)$.
+Then, $v\T B v = v\T (\Var(Z) - \Var(W)) v = v\T \Var(Z) v - v\T \Var(W) v = \Var(v\T Z) - \Var(v\T W)$.
+
+Now the equivalence is clear:
+\begin{itemize}
+    \item Assume (1) holds: $\Var(v\T Z) \ge \Var(v\T W)$ for all $v$. This implies $\Var(v\T Z) - \Var(v\T W) \ge 0$ for all $v$. Therefore, $v\T B v \ge 0$ for all $v$, which means $B$ is PSD by definition. So, (1) $\implies$ (2).
+    \item Assume (2) holds: $B$ is PSD, meaning $v\T B v \ge 0$ for all $v$. This implies $Var(v\T Z) - \Var(v\T W) \ge 0$ for all $v$. Therefore, $\Var(v\T Z) \ge \Var(v\T W)$ for all $v$. So, (2) $\implies$ (1).
+\end{itemize}
+The equivalence between (2) and (3) relates to properties of positive semi-definite matrices. Since $B = \Var(Z) - \Var(W)$ must be symmetric (as $\Var(Z)$ and $\Var(W)$ are symmetric), if $B$ is PSD, such a $C$ exists (e.g., from Cholesky decomposition or eigenvalue decomposition). Conversely, if $B=CC\T$, then $v\T B v = v\T C C\T v = (C\T v)\T (C\T v) = \| C\T v \|^2 \ge 0$, so $B$ is PSD.
+\end{proof}
+
+\begin{remark}[Motivation for Theorem \ref{thm:cov_equivalence_revisited}]
+\label{rem:motivation_cov_compare}
+Why is this theorem important? In statistics, we often compare estimators. Suppose $\bhat{\beta}_1$ and $\bhat{\beta}_2$ are two different vector estimators for some true parameter vector $\bbeta$. Statement (1) says that for any linear combination of the parameters $v\T \bbeta$, the variance of the estimate using $\bhat{\beta}_1$ ($v\T \bhat{\beta}_1$) is no smaller than the variance using $\bhat{\beta}_2$ ($v\T \bhat{\beta}_2$). Statement (2) provides a potentially easier way to check this condition by just examining the difference of the covariance matrices. If $\Var(\bhat{\beta}_1) - \Var(\bhat{\beta}_2)$ is PSD, we say that $\bhat{\beta}_2$ is "more efficient" than $\bhat{\beta}_1$ in this matrix sense. We will see later that the OLS estimator $\bhat{\beta}_{OLS}$ is the "Best Linear Unbiased Estimator" (BLUE), meaning it has the smallest variance (in this matrix sense) among all linear unbiased estimators. This theorem provides the mathematical language for such comparisons.
+\end{remark}
+
+
+\section{Introduction to the Linear Model}
+\label{sec:linear_model}
+
+Now we transition to the core topic of this course: the linear model.
+
+\subsection{What is a Statistical Model?}
+\label{subsec:stat_model}
+
+Remember from your introductory courses, a statistical model is a set of assumptions about how data are generated. Often, we assume the data $Y_1, \ldots, Y_n$ come from a specific family of distributions characterized by some unknown parameter $\theta$ (e.g., $Y_i \sim \text{Exponential}(\lambda)$, where $\theta=\lambda$). The goal of statistical inference is typically to estimate $\theta$ from the observed data.
+
+The linear model provides a framework for modeling the relationship between an outcome variable $Y$ and one or more predictor variables (or covariates) $X_1, \ldots, X_p$. It assumes a specific, linear, structure for this relationship, plus some assumptions about the randomness involved.
+
+\subsection{The Linear Model Formulation}
+\label{subsec:lm_formulation}
+
+Let $Y_i$ be the outcome variable for the $i$-th observation ($i=1, \ldots, n$).
+Let $x_{i1}, \ldots, x_{ip}$ be the values of $p$ predictor variables for the $i$-th observation. We often include an intercept term by setting $x_{i0}=1$ for all $i$.
+
+We can organize this data:
+\begin{itemize}
+    \item Outcome vector: $Y = (Y_1, \ldots, Y_n)\T \in \R^n$
+    \item Design Matrix: $X$ is an $n \times (p+1)$ matrix where the $i$-th row is $(x_{i0}, x_{i1}, \ldots, x_{ip})$.
+    \[
+    X = \begin{pmatrix}
+    x_{10} & x_{11} & \cdots & x_{1p} \\
+    x_{20} & x_{21} & \cdots & x_{2p} \\
+    \vdots & \vdots & \ddots & \vdots \\
+    x_{n0} & x_{n1} & \cdots & x_{np}
+    \end{pmatrix} = \begin{pmatrix}
+    1 & x_{11} & \cdots & x_{1p} \\
+    1 & x_{21} & \cdots & x_{2p} \\
+    \vdots & \vdots & \ddots & \vdots \\
+    1 & x_{n1} & \cdots & x_{np}
+    \end{pmatrix}
+    \]
+    (Assuming an intercept is included).
+\end{itemize}
+The \textbf{linear model} postulates that the relationship between $Y$ and $X$ can be described as:
+\[
+Y = X\bbeta + \bepsilon
+\]
+where:
+\begin{itemize}
+    \item $Y \in \R^n$ is the random vector of outcomes.
+    \item $X \in \R^{n \times (p+1)}$ is the \textbf{design matrix}, usually treated as \textbf{fixed and known}. (Or conditions are conditional on $X$).
+    \item $\bbeta \in \R^{p+1}$ is the vector of unknown \textbf{regression coefficients} (parameters). $\bbeta = (\beta_0, \beta_1, \ldots, \beta_p)\T$. These are fixed, unknown constants we want to estimate.
+    \item $\bepsilon \in \R^n$ is the vector of random \textbf{errors} or disturbances. $\bepsilon = (\epsilon_1, \ldots, \epsilon_n)\T$.
+\end{itemize}
+The randomness in $Y$ comes entirely from the error term $\bepsilon$. The term $X\bbeta$ represents the systematic part of the relationship. The error term $\epsilon_i$ captures all other factors influencing $Y_i$ that are not included in the predictors $X$, including inherent randomness. If $\bepsilon$ were zero, $Y$ would be perfectly determined by $X$.
+
+\subsection{Assumptions of the Classical Linear Model}
+\label{subsec:lm_assumptions}
+
+For the standard theory (especially Ordinary Least Squares - OLS) to work nicely, we typically make the following assumptions about the error term $\bepsilon$, often called the \textbf{Gauss-Markov assumptions}:
+
+\begin{enumerate}
+    \item \textbf{Linearity:} The relationship $Y = X\bbeta + \bepsilon$ holds. (This is the model definition itself).
+    \item \textbf{Zero Conditional Mean (Strict Exogeneity):} $\E[\bepsilon | X] = \bZero_n$.
+       This implies $\E[\epsilon_i | X] = 0$ for all $i$. It also implies the unconditional mean is zero: $\E[\bepsilon] = \E[\E[\bepsilon|X]] = \E[\bZero] = \bZero$.
+       \textit{Intuition:} The errors average out to zero regardless of the values of the predictors. There's no systematic tendency for the error to be positive or negative for particular $X$ values. A violation might occur if the true relationship is non-linear but we fit a linear model. For example, if the true relationship is $Y = \beta_0 + \beta_1 X + \beta_2 X^2 + \epsilon$, but we fit $Y = \gamma_0 + \gamma_1 X + \delta$, the new error term $\delta$ might have a mean that depends on $X$.
+
+    \item \textbf{Homoscedasticity and No Correlation:} The conditional covariance matrix of the errors, given $X$, is constant and diagonal:
+       \[ \Var(\bepsilon | X) = \E[\bepsilon \bepsilon\T | X] = \sigma^2 I_n \]
+       where $\sigma^2$ is a positive, unknown constant scalar (the error variance).
+       This single matrix assumption combines two ideas:
+       \begin{itemize}
+           \item \textbf{Homoscedasticity (Constant Variance):} $\Var(\epsilon_i | X) = \sigma^2$ for all $i$. The spread of the errors is the same for all observations, regardless of their $X$ values.
+           \item \textbf{No Correlation:} $\Cov(\epsilon_i, \epsilon_j | X) = 0$ for all $i \neq j$. The errors for different observations are uncorrelated.
+       \end{itemize}
+       \textit{Intuition:} Homoscedasticity means the variability of the outcome around the regression line is constant. Imagine plotting residuals against fitted values: homoscedasticity looks like a random horizontal band. Heteroscedasticity (non-constant variance) might appear as a funnel shape (variance increasing with fitted value) or other systematic patterns. No correlation means knowing the error for one observation gives no information about the error for another. This might be violated with time series data (errors today correlated with errors yesterday) or clustered data (e.g., student scores within the same school might be correlated).
+
+    \item \textbf{(Often Implicit) Fixed Design or Full Rank:} The design matrix $X$ is treated as fixed (non-random) or conditions are conditional on $X$. We also usually assume $X$ has full column rank ($p+1$), meaning no perfect multicollinearity and $n \ge p+1$. This ensures $(X\T X)$ is invertible.
+    \item \textbf{(For Inference) Normality:} Sometimes, for hypothesis testing and confidence intervals, we add the assumption that the errors are normally distributed: $\bepsilon | X \sim N(\bZero_n, \sigma^2 I_n)$. This assumption is \textit{not} needed for OLS to be unbiased or for the variance formula to hold, but it simplifies distributional results for tests and intervals.
+\end{enumerate}
+
+We can summarize assumptions (2) and (3) concisely using the notation we developed earlier:
+\[ \bepsilon | X \sim (\bZero_n, \sigma^2 I_n) \]
+This notation implies the mean vector is $\bZero_n$ and the covariance matrix is $\sigma^2 I_n$, without necessarily assuming normality unless stated.
+
+\subsection{Consequences of Assumptions for Y}
+\label{subsec:consequences_for_y}
+
+Under these assumptions, what can we say about the outcome vector $Y$?
+\begin{itemize}
+    \item \textbf{Conditional Mean of Y:}
+      \[ \E[Y | X] = \E[X\bbeta + \bepsilon | X] = \E[X\bbeta | X] + \E[\bepsilon | X] \]
+      Since $X$ and $\bbeta$ are fixed (or conditioned upon), $\E[X\bbeta | X] = X\bbeta$. Using Assumption 2, $\E[\bepsilon | X] = \bZero$.
+      \[ \E[Y | X] = X\bbeta + \bZero = X\bbeta \]
+      The conditional expectation of the outcome lies exactly on the regression line/plane defined by $X\bbeta$.
+
+    \item \textbf{Conditional Variance of Y:}
+      \[ \Var(Y | X) = \Var(X\bbeta + \bepsilon | X) \]
+      Adding a constant ($X\bbeta$ is constant given $X$) doesn't change variance:
+      \[ \Var(Y | X) = \Var(\bepsilon | X) \]
+      Using Assumption 3:
+      \[ \Var(Y | X) = \sigma^2 I_n \]
+      The variability of $Y$ around its conditional mean is determined solely by the error variance $\sigma^2$, and the outcomes $Y_i$ are conditionally uncorrelated with the same conditional variance.
+\end{itemize}
+
+\section{The Ordinary Least Squares (OLS) Estimator}
+\label{sec:ols}
+
+Our goal is to estimate the unknown parameter vector $\bbeta$. The most common method is Ordinary Least Squares (OLS).
+
+\begin{definition}[OLS Estimator]
+\label{def:ols}
+The OLS estimator $\bhat{\beta}_{OLS}$ (often denoted simply $\bhat{\beta}$) is the vector that minimizes the sum of squared residuals (SSR):
+\[ SSR(\bbeta) = \sum_{i=1}^n (Y_i - x_i\T \bbeta)^2 = \| Y - X\bbeta \|^2 \]
+where $x_i\T$ is the $i$-th row of $X$.
+The vector $\bhat{\beta}$ that minimizes this is given by the solution to the \textbf{normal equations} $X\T (Y - X\bhat{\beta}) = \bZero$, which yields:
+\[ \bhat{\beta} = (X\T X)^{-1} X\T Y \]
+(Assuming $X\T X$ is invertible, which requires $X$ to have full column rank, meaning no perfect multicollinearity among predictors and $n \ge p+1$).
+\end{definition}
+
+\begin{remark}
+Finding the OLS estimator is a mathematical optimization problem that does *not* require any of the statistical assumptions (Assumptions 1-3) about the error term. It's simply finding the vector $\bhat{\beta}$ such that the fitted values $X\bhat{\beta}$ are the orthogonal projection of $Y$ onto the column space of $X$. However, the *properties* of this estimator (like unbiasedness and its variance) rely heavily on those assumptions.
+\end{remark}
+
+\subsection{Properties of the OLS Estimator}
+\label{subsec:ols_properties}
+
+Let's investigate the properties of $\bhat{\beta}$ under the Gauss-Markov assumptions (1, 2, 3).
+
+\begin{proposition}[Unbiasedness of OLS]
+\label{prop:ols_unbiased}
+Under assumptions 1 (linearity: $Y=X\bbeta+\bepsilon$) and 2 (zero conditional mean: $\E[\bepsilon | X] = \bZero$), the OLS estimator $\bhat{\beta}$ is conditionally unbiased for $\bbeta$, given $X$.
+\[ \E[\bhat{\beta} | X] = \bbeta \]
+\end{proposition}
+
+\begin{proof}
+Substitute $Y = X\bbeta + \bepsilon$ into the formula for $\bhat{\beta}$:
+\begin{align*} \bhat{\beta} &= (X\T X)^{-1} X\T Y \\ &= (X\T X)^{-1} X\T (X\bbeta + \bepsilon) \\ &= (X\T X)^{-1} X\T X \bbeta + (X\T X)^{-1} X\T \bepsilon \quad \text{(Distributing)} \\ &= I_{p+1} \bbeta + (X\T X)^{-1} X\T \bepsilon \quad \text{(Since } (X\T X)^{-1} X\T X = I) \\ &= \bbeta + (X\T X)^{-1} X\T \bepsilon \end{align*}
+This shows that the OLS estimator is the true value plus a linear combination of the errors. Now, take the conditional expectation given $X$. Let $A = (X\T X)^{-1} X\T$. Note that $A$ is constant given $X$.
+\begin{align*} \E[\bhat{\beta} | X] &= \E[\bbeta + A \bepsilon | X] \\ &= \E[\bbeta | X] + \E[A \bepsilon | X] \quad \text{(Linearity of E)} \\ &= \bbeta + A \E[\bepsilon | X] \quad \text{(Since } \bbeta \text{ and } A \text{ are constant given } X) \\ &= \bbeta + A \cdot \bZero \quad \text{(Using Assumption 2: } \E[\bepsilon|X]=\bZero) \\ &= \bbeta \end{align*}
+Thus, $\bhat{\beta}$ is conditionally unbiased for $\bbeta$. This relies crucially on the model being linear and the errors having zero mean conditional on $X$.
+\end{proof}
+
+\begin{proposition}[Variance-Covariance Matrix of OLS]
+\label{prop:ols_variance}
+Under assumptions 1, 2, and 3 (linearity, zero conditional mean, homoscedasticity and no correlation: $\Var(\bepsilon|X)=\sigma^2 I_n$), the conditional variance-covariance matrix of $\bhat{\beta}$, given $X$, is:
+\[ \Var(\bhat{\beta} | X) = \sigma^2 (X\T X)^{-1} \]
+\end{proposition}
+
+\begin{proof}
+From the unbiasedness proof, we have $\bhat{\beta} = \bbeta + A \bepsilon$, where $A = (X\T X)^{-1} X\T$.
+Since $\bbeta$ is a constant vector, $\Var(\bhat{\beta} | X) = \Var(\bbeta + A \bepsilon | X) = \Var(A \bepsilon | X)$.
+Using the property $\Var(MZ) = M \Var(Z) M\T$ for a constant matrix $M$ (from Prop \ref{prop:cov_properties}), with $M=A$:
+\[ \Var(\bhat{\beta} | X) = A \Var(\bepsilon | X) A\T \]
+Now, use Assumption 3: $\Var(\bepsilon | X) = \sigma^2 I_n$.
+\begin{align*} \Var(\bhat{\beta} | X) &= A (\sigma^2 I_n) A\T \\ &= \sigma^2 A I_n A\T \\ &= \sigma^2 A A\T \\ &= \sigma^2 \left[ (X\T X)^{-1} X\T \right] \left[ (X\T X)^{-1} X\T \right]\T \quad \text{(Substituting A)} \\ &= \sigma^2 (X\T X)^{-1} X\T (X\T)\T ((X\T X)^{-1})\T \quad \text{(Using } (CD)\T = D\T C\T) \\ &= \sigma^2 (X\T X)^{-1} X\T X (X\T X)^{-1} \quad \text{(Since } (A\T)\T=A \text{ and } (X\T X)^{-1} \text{ is symmetric)} \\ &= \sigma^2 (X\T X)^{-1} (X\T X) (X\T X)^{-1} \\ &= \sigma^2 (X\T X)^{-1} I_{p+1} \\ &= \sigma^2 (X\T X)^{-1} \end{align*}
+This derivation relies on all three assumptions: linearity (to write $\bhat{\beta} = \bbeta + A\bepsilon$), zero conditional mean (implicitly used in the variance definition relative to the mean $\bbeta$), and crucially, homoscedasticity and no correlation (to substitute $\Var(\bepsilon|X) = \sigma^2 I$). If errors were heteroscedastic or correlated, $\Var(\bepsilon|X)$ would be a different matrix $\Omega$, and the result would be $\Var(\bhat{\beta}|X) = A \Omega A\T$, which is more complex (leading to Generalized Least Squares).
+\end{proof}
+
+\subsection{Residuals and Projection Matrices}
+\label{subsec:residuals_projections}
+
+Let's revisit residuals and their connection to projection matrices.
+\begin{itemize}
+    \item Fitted values: $\hat{Y} = X\bhat{\beta} = X(X\T X)^{-1} X\T Y = P_X Y$. Recall $P_X = X(X\T X)^{-1} X\T$ is the projection matrix onto the column space of $X$, $Col(X)$. It's symmetric ($P_X\T = P_X$) and idempotent ($P_X P_X = P_X$).
+    \item Residual vector: $e = Y - \hat{Y} = Y - P_X Y = (I - P_X)Y = M_X Y$. Recall $M_X = I - P_X$ is the projection matrix onto the space orthogonal to $Col(X)$. It's also symmetric and idempotent, and $M_X P_X = P_X M_X = \mathbf{0}$ (the zero matrix).
+\end{itemize}
+
+\begin{proposition}[Properties of Residuals]
+\label{prop:residual_properties}
+\begin{enumerate}
+    \item \textbf{Mean of Residuals (Mathematical Property):} If the model includes an intercept (i.e., the first column of $X$ is $\mathbf{1}$, the vector of ones), then the sum of the OLS residuals is always exactly zero: $\sum_{i=1}^n e_i = \mathbf{1}\T e = 0$.
+    \item \textbf{Expectation of Residuals (Statistical Property):} Under assumptions 1 and 2 ($\E[Y|X]=X\bbeta$), $\E[e | X] = \bZero$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+\begin{enumerate}
+    \item $\mathbf{1}\T e = \mathbf{1}\T M_X Y$. Since $M_X$ is symmetric ($M_X\T = M_X$), this is $(M_X \mathbf{1})\T Y$. If $\mathbf{1}$ is a column in $X$, then $\mathbf{1} \in Col(X)$. The projection $M_X \mathbf{1}$ projects $\mathbf{1}$ onto the space orthogonal to $Col(X)$. Since $\mathbf{1}$ is already *in* $Col(X)$, this projection must be zero. So $M_X \mathbf{1} = \bZero$. Thus $\mathbf{1}\T e = \bZero\T Y = 0$. This is purely algebraic, relying only on the presence of an intercept (which puts $\mathbf{1}$ in $Col(X)$).
+    \item $\E[e | X] = \E[M_X Y | X]$. Since $M_X$ is constant given $X$, $\E[e | X] = M_X \E[Y | X]$. Using assumptions 1 and 2, we know $\E[Y|X]=X\bbeta$. So, $\E[e | X] = M_X (X\bbeta)$. Since the columns of $X\bbeta$ are linear combinations of columns of $X$, $X\bbeta \in Col(X)$. Therefore, the projection onto the orthogonal complement is zero: $M_X (X\bbeta) = \bZero$. This relies on the model assumptions yielding $\E[Y|X]=X\bbeta$.
+\end{enumerate}
+So, the fact that $\sum e_i = 0$ (when there's an intercept) is always true by construction of OLS. The fact that $\E[e | X] = \bZero$ (meaning the errors average to zero in expectation, even conditional on X) requires the model assumptions to hold.
+\end{proof}
+
+\begin{lemma}[Projection Property for Nested Models]
+\label{lem:nested_projection}
+Let $L \subset M$ be two vector subspaces of $\R^n$ (e.g., $L = Col(X_L)$ and $M = Col(X_M)$ where $X_L$ is a subset of the columns of $X_M$). Let $P_L$ and $P_M$ be the orthogonal projection matrices onto $L$ and $M$ respectively. Then $P_L P_M = P_M P_L = P_L$.
+\end{lemma}
+
+\begin{proof}
+\textit{Proof that $P_M P_L = P_L$:}
+Take any vector $v \in \R^n$. $P_L v$ is the projection of $v$ onto $L$. By definition, $P_L v \in L$. Since $L \subset M$, it follows that $P_L v$ is also in $M$. Projecting a vector that is already in $M$ onto $M$ leaves it unchanged. Therefore, $P_M (P_L v) = P_L v$. Since this holds for all $v$, we have $P_M P_L = P_L$.
+
+\textit{Proof that $P_L P_M = P_L$:}
+Since $P_L$ and $P_M$ are projection matrices, they are symmetric ($P_L\T = P_L$, $P_M\T = P_M$).
+Using the result we just proved ($P_M P_L = P_L$) and taking the transpose:
+$(P_M P_L)\T = P_L\T$
+$P_L\T P_M\T = P_L\T$
+$P_L P_M = P_L$.
+Thus, both products equal $P_L$.
+\end{proof}
+
+\begin{example}[Fitted Values in Nested Models]
+\label{ex:nested_fitted}
+Suppose we have a "full" model estimated by OLS: $Y = X\bbeta + \bepsilon$, with fitted values $\hat{Y} = P_X Y$.
+Now consider a "reduced" model using only a subset of the columns of $X$, say $X_L$, where $Col(X_L) \subset Col(X)$. The OLS fit for this reduced model is $Y = X_L \bhat{\gamma} + e_L$, with fitted values $\hat{Y}_L = P_L Y$, where $P_L$ projects onto $Col(X_L)$.
+
+Consider applying the projection $P_L$ to the fitted values from the full model, $\hat{Y}$:
+\[ P_L \hat{Y} = P_L (P_X Y) \]
+Since $Col(X_L) \subset Col(X)$, we can apply Lemma \ref{lem:nested_projection} with $L = Col(X_L)$ and $M = Col(X)$. The lemma states $P_L P_X = P_L$.
+Substituting this into the equation:
+\[ P_L \hat{Y} = (P_L P_X) Y = P_L Y \]
+But we know that $P_L Y$ are the fitted values from the reduced model, $\hat{Y}_L$.
+Therefore,
+\[ P_L \hat{Y} = \hat{Y}_L \]
+This means if you take the predictions from a larger model and orthogonally project them onto the subspace defined by a smaller (nested) model, you obtain exactly the predictions from fitting the smaller model directly. This geometric insight is fundamental to understanding analysis of variance (ANOVA) tables and tests for comparing nested linear models.
+\end{example}
+
+This concludes our review and extension of random vectors and our introduction to the linear model framework and the OLS estimator. Next time, we will build upon this foundation, exploring inference and diagnostics.
+
+\end{document}
