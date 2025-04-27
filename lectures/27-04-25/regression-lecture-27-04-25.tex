@@ -1,0 +1,497 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{geometry}
+\usepackage[T1]{fontenc} % Helps with rendering accents in some PDF viewers
+\usepackage{lmodern} % Use a modern font
+\usepackage{hyperref} % For clickable links, if needed
+\usepackage{tcolorbox} % For visually separating announcements
+
+% Page Geometry
+\geometry{a4paper, margin=1in}
+
+% Theorem Styles
+\newtheoremstyle{mytheoremstyle}
+  {\topsep} % Space above
+  {\topsep} % Space below
+  {\itshape} % Body font
+  {} % Indent amount
+  {\bfseries} % Theorem head font
+  {.} % Punctuation after theorem head
+  {.5em} % Space after theorem head
+  {} % Theorem head spec (can be left empty, meaning `normal')
+
+\newtheoremstyle{mydefinitionstyle}
+  {\topsep} % Space above
+  {\topsep} % Space below
+  {\normalfont} % Body font
+  {} % Indent amount
+  {\bfseries} % Theorem head font
+  {.} % Punctuation after theorem head
+  {.5em} % Space after theorem head
+  {} % Theorem head spec
+
+\theoremstyle{mytheoremstyle}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{mydefinitionstyle}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{question}[theorem]{Question}
+
+\renewcommand{\qedsymbol}{$\blacksquare$} % Nicer QED symbol
+
+% Custom command for vectors (bold)
+\newcommand{\vect}[1]{\mathbf{#1}}
+% Custom operators
+\DeclareMathOperator{\E}{E}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\Bias}{Bias}
+\DeclareMathOperator{\MSE}{MSE}
+\DeclareMathOperator{\Tr}{Tr} % Trace
+
+% Environment for announcements
+\newtcolorbox{announcementbox}[1][]{
+  colback=blue!5!white,
+  colframe=blue!75!black,
+  title=#1,
+  fonttitle=\bfseries
+}
+
+\title{Lecture Notes: Linear Combinations and Optimality in Linear Models}
+\author{Undergraduate Mathematics Educator}
+\date{Based on Lecture Transcript} % Or specific date
+
+\begin{document}
+
+\maketitle
+
+%---------------------------------------------------------------------
+% Administrative Announcements Section
+%---------------------------------------------------------------------
+% Corrected the title here - removed the '&'
+\begin{announcementbox}[Important Announcements and Quiz Information]
+\begin{itemize}
+    \item \textbf{Upcoming Quiz:}
+        \begin{itemize}
+            \item \textbf{Date:} Monday, May 12th (Week 7).
+            \item \textbf{Time:} During the regular 2-hour lecture slot.
+            \item \textbf{Allowed Materials:} You may bring 4 pages of notes. This can be either 4 single-sided sheets OR 2 double-sided sheets.
+            \item \textbf{Format:} The notes MUST be printed on physical paper. Electronic devices (iPads, laptops, etc.) are \textbf{not permitted} for accessing notes during the quiz.
+            \item Further details will be posted in an official course announcement.
+        \end{itemize}
+    \item Please ensure you review the material covered up to the end of Week 6 in preparation for the quiz.
+\end{itemize}
+\end{announcementbox}
+
+%---------------------------------------------------------------------
+% Mathematical Content Begins
+%---------------------------------------------------------------------
+
+\section{Recap: The Linear Model and Least Squares Estimation}
+
+Let's begin by recalling the framework we've been working with: the linear model. We express the relationship between a response vector $\vect{Y}$ (of length $n$) and a set of predictor variables encoded in the design matrix $\vect{X}$ (size $n \times (p+1)$) via a parameter vector $\vect{\beta}$ (of length $p+1$) and an error term $\vect{\epsilon}$ (of length $n$).
+
+\begin{definition}[Linear Model]
+The linear model is given by:
+\begin{equation*}
+\vect{Y} = \vect{X}\vect{\beta} + \vect{\epsilon}
+\end{equation*}
+We make the following standard assumptions about the error term $\vect{\epsilon}$:
+\begin{enumerate}
+    \item \textbf{Zero Mean:} $\E[\vect{\epsilon}] = \vect{0}$ (a vector of zeros). This implies $\E[Y_i] = (\vect{X}\vect{\beta})_i$.
+    \item \textbf{Constant Variance and Uncorrelated Errors:} $\Cov(\vect{\epsilon}) = \E[\vect{\epsilon}\vect{\epsilon}^T] = \sigma^2 \vect{I}_n$, where $\sigma^2 > 0$ is the error variance and $\vect{I}_n$ is the $n \times n$ identity matrix. This means $\Var(\epsilon_i) = \sigma^2$ for all $i$, and $\Cov(\epsilon_i, \epsilon_j) = 0$ for $i \neq j$.
+\end{enumerate}
+The design matrix $\vect{X}$ is considered fixed and known. The parameters $\vect{\beta}$ and $\sigma^2$ are considered fixed but unknown constants that we wish to estimate or make inferences about.
+\end{definition}
+
+\begin{remark}[Alternative Notation]
+Sometimes, we compactly write the assumptions on $\epsilon$ as $\vect{\epsilon} \sim (0, \sigma^2 \vect{I}_n)$. At this stage, this notation *only* refers to the mean and covariance structure (the first two moments). We have not yet assumed a specific distribution (like normality) for the errors.
+\end{remark}
+
+Our primary tool for estimating $\vect{\beta}$ has been the method of least squares, which minimizes the sum of squared residuals $SSE = ||\vect{Y} - \vect{X}\vect{\beta}||^2$.
+
+\begin{proposition}[Least Squares Estimators]
+\hfill
+\begin{itemize}
+    \item The least squares estimator (LSE) for $\vect{\beta}$ is:
+        \begin{equation*}
+        \hat{\vect{\beta}} = (\vect{X}^T \vect{X})^{-1} \vect{X}^T \vect{Y}
+        \end{equation*}
+        (assuming $\vect{X}^T \vect{X}$ is invertible, which usually holds if $\vect{X}$ has full column rank).
+    \item An unbiased estimator for the error variance $\sigma^2$ is:
+        \begin{equation*}
+        \hat{\sigma}^2 = s^2 = \frac{SSE}{n-(p+1)} = \frac{||\vect{Y} - \vect{X}\hat{\vect{\beta}}||^2}{n-p-1}
+        \end{equation*}
+        The denominator $n-p-1$ represents the degrees of freedom for error.
+\end{itemize}
+\end{proposition}
+
+We established some fundamental properties of the LSE $\hat{\vect{\beta}}$ last time:
+
+\begin{proposition}[Properties of $\hat{\vect{\beta}}$]
+Under the linear model assumptions:
+\begin{itemize}
+    \item \textbf{Unbiasedness:} $\hat{\vect{\beta}}$ is an unbiased estimator of $\vect{\beta}$, meaning $\E[\hat{\vect{\beta}}] = \vect{\beta}$.
+    \item \textbf{Covariance Matrix:} The covariance matrix of the random vector $\hat{\vect{\beta}}$ is
+        \begin{equation*}
+        \Cov(\hat{\vect{\beta}}) = \sigma^2 (\vect{X}^T \vect{X})^{-1}
+        \end{equation*}
+\end{itemize}
+\end{proposition}
+
+\begin{proof}[Proof Sketch Reminder]
+\begin{itemize}
+    \item Unbiasedness: $\E[\hat{\vect{\beta}}] = \E[(\vect{X}^T \vect{X})^{-1} \vect{X}^T \vect{Y}] = (\vect{X}^T \vect{X})^{-1} \vect{X}^T \E[\vect{Y}]$. Since $\E[\vect{Y}] = \E[\vect{X}\vect{\beta} + \vect{\epsilon}] = \vect{X}\vect{\beta} + \E[\vect{\epsilon}] = \vect{X}\vect{\beta}$, we get $\E[\hat{\vect{\beta}}] = (\vect{X}^T \vect{X})^{-1} (\vect{X}^T \vect{X}) \vect{\beta} = \vect{\beta}$.
+    % Slightly adjusted phrasing around the overfull box issue
+    \item Covariance: We compute $\Cov(\hat{\vect{\beta}}) = \Cov((\vect{X}^T \vect{X})^{-1} \vect{X}^T \vect{Y})$. Apply the property $\Cov(\vect{A}\vect{Y}) = \vect{A}\Cov(\vect{Y})\vect{A}^T$ for a constant matrix $\vect{A}$. Note that $\Cov(\vect{Y}) = \Cov(\vect{X}\vect{\beta} + \vect{\epsilon}) = \Cov(\vect{\epsilon}) = \sigma^2 \vect{I}_n$, since $\vect{X}\vect{\beta}$ is constant. This gives:
+    \begin{align*}
+    \Cov(\hat{\vect{\beta}}) &= [(\vect{X}^T \vect{X})^{-1} \vect{X}^T] (\sigma^2 \vect{I}_n) [(\vect{X}^T \vect{X})^{-1} \vect{X}^T]^T \\
+    &= \sigma^2 (\vect{X}^T \vect{X})^{-1} \vect{X}^T \vect{X} [(\vect{X}^T \vect{X})^{-1}]^T \\
+    &= \sigma^2 (\vect{X}^T \vect{X})^{-1} \vect{X}^T \vect{X} (\vect{X}^T \vect{X})^{-1} \quad \text{(since } (\vect{X}^T \vect{X})^{-1} \text{ is symmetric)} \\
+    &= \sigma^2 (\vect{X}^T \vect{X})^{-1}
+    \end{align*}
+\end{itemize}
+\end{proof}
+
+\section{Linear Combinations of Parameters}
+
+Often, we aren't interested in estimating the entire vector $\vect{\beta}$, but rather a specific linear combination of its components. For example, we might want to estimate a single coefficient $\beta_j$, or the difference between two coefficients $\beta_i - \beta_j$, or the average effect $\frac{1}{p+1}\sum_{j=0}^p \beta_j$.
+
+\begin{definition}[Linear Combination]
+Let $\vect{a} = (a_0, a_1, \dots, a_p)^T$ be a fixed, known vector of constants in $\mathbb{R}^{p+1}$. A \textbf{linear combination} of the parameters in $\vect{\beta}$ is defined as the scalar quantity:
+\begin{equation*}
+\theta = \vect{a}^T \vect{\beta} = \sum_{j=0}^{p} a_j \beta_j
+\end{equation*}
+Since $\vect{\beta}$ consists of unknown parameters, $\theta$ is also an unknown parameter.
+\end{definition}
+
+\begin{example}[Estimating a Single Coefficient]
+Suppose we want to estimate the $j$-th coefficient, $\beta_j$ (where the index $j$ runs from $0$ to $p$). We can achieve this by choosing the vector $\vect{a} = \vect{e}_j$, where $\vect{e}_j$ is the standard basis vector with a $1$ in the $(j+1)$-th position (corresponding to $\beta_j$) and $0$s elsewhere. Then,
+\begin{equation*}
+\theta = \vect{e}_j^T \vect{\beta} = \beta_j
+\end{equation*}
+So, individual coefficients are special cases of linear combinations.
+\end{example}
+
+\begin{example}[Estimating the Average Coefficient]
+Suppose we want to estimate the average of all coefficients. We can choose $\vect{a} = \frac{1}{p+1} (1, 1, \dots, 1)^T = \frac{1}{p+1} \mathbf{1}$. Then,
+\begin{equation*}
+\theta = \left(\frac{1}{p+1} \mathbf{1}\right)^T \vect{\beta} = \frac{1}{p+1} \sum_{j=0}^{p} \beta_j = \bar{\beta}
+\end{equation*}
+This gives the average value of the regression coefficients.
+\end{example}
+
+\begin{question}
+Given that we want to estimate $\theta = \vect{a}^T \vect{\beta}$, and we already have a good estimator $\hat{\vect{\beta}}$ for $\vect{\beta}$, what would be a natural way to estimate $\theta$?
+\end{question}
+
+The most intuitive approach is simply to replace the unknown $\vect{\beta}$ in the definition of $\theta$ with its estimator $\hat{\vect{\beta}}$.
+
+\begin{definition}[Estimator for a Linear Combination]
+The \textbf{least squares estimator} for the linear combination $\theta = \vect{a}^T \vect{\beta}$ is given by:
+\begin{equation*}
+\hat{\theta} = \vect{a}^T \hat{\vect{\beta}}
+\end{equation*}
+Substituting the formula for $\hat{\vect{\beta}}$, we get:
+\begin{equation*}
+\hat{\theta} = \vect{a}^T (\vect{X}^T \vect{X})^{-1} \vect{X}^T \vect{Y}
+\end{equation*}
+\end{definition}
+
+\begin{remark}[Structure of $\hat{\theta}$]
+Notice that $\hat{\theta}$ is a scalar value (since $\vect{a}$ is $(p+1)\times 1$ and $\hat{\vect{\beta}}$ is $(p+1)\times 1$). It's also a random variable because it depends on the random vector $\vect{Y}$. Furthermore, we can see that $\hat{\theta}$ is a linear combination of the elements of $\vect{Y}$. Let's define a vector $\vect{c}$:
+\begin{equation*}
+\vect{c} = \vect{X} (\vect{X}^T \vect{X})^{-1} \vect{a}
+\end{equation*}
+Let's check the dimensions: $\vect{X}$ is $n \times (p+1)$, $(\vect{X}^T \vect{X})^{-1}$ is $(p+1) \times (p+1)$, and $\vect{a}$ is $(p+1) \times 1$. So, $\vect{c}$ is an $n \times 1$ vector. This vector $\vect{c}$ is fixed and known, as it only depends on $\vect{X}$ and our choice of $\vect{a}$.
+Then, we can rewrite $\hat{\theta}$ as:
+\begin{equation*}
+\hat{\theta} = (\vect{X} (\vect{X}^T \vect{X})^{-1} \vect{a})^T \vect{Y} = \vect{c}^T \vect{Y} = \sum_{i=1}^n c_i Y_i
+\end{equation*}
+This explicitly shows that $\hat{\theta}$ is a linear estimator (linear function of $\vect{Y}$).
+\end{remark}
+
+Now, let's examine the properties of this natural estimator $\hat{\theta}$.
+
+\begin{proposition}[Properties of $\hat{\theta}$]
+The estimator $\hat{\theta} = \vect{a}^T \hat{\vect{\beta}}$ has the following properties:
+\begin{itemize}
+    \item \textbf{Unbiasedness:} $\hat{\theta}$ is an unbiased estimator of $\theta$.
+        \begin{equation*}
+        \E[\hat{\theta}] = \theta
+        \end{equation*}
+    \item \textbf{Variance:} The variance of $\hat{\theta}$ is
+        \begin{equation*}
+        \Var(\hat{\theta}) = \sigma^2 \vect{a}^T (\vect{X}^T \vect{X})^{-1} \vect{a}
+        \end{equation*}
+\end{itemize}
+\end{proposition}
+
+\begin{proof}
+\begin{itemize}
+    \item \textbf{Unbiasedness:} Using the linearity of expectation and the unbiasedness of $\hat{\vect{\beta}}$:
+        \begin{equation*}
+        \E[\hat{\theta}] = \E[\vect{a}^T \hat{\vect{\beta}}] = \vect{a}^T \E[\hat{\vect{\beta}}] = \vect{a}^T \vect{\beta} = \theta
+        \end{equation*}
+    \item \textbf{Variance:} We can view the scalar $\hat{\theta}$ as a $1 \times 1$ random matrix. Its variance is then its $1 \times 1$ covariance matrix. Using the property $\Cov(\vect{A}\vect{Z}) = \vect{A}\Cov(\vect{Z})\vect{A}^T$ with $\vect{A} = \vect{a}^T$ and $\vect{Z} = \hat{\vect{\beta}}$:
+        \begin{align*}
+        \Var(\hat{\theta}) = \Cov(\vect{a}^T \hat{\vect{\beta}}) &= \vect{a}^T \Cov(\hat{\vect{\beta}}) (\vect{a}^T)^T \\
+        &= \vect{a}^T [\sigma^2 (\vect{X}^T \vect{X})^{-1}] \vect{a} \\
+        &= \sigma^2 \vect{a}^T (\vect{X}^T \vect{X})^{-1} \vect{a}
+        \end{align*}
+\end{itemize}
+\end{proof}
+
+\begin{remark}[Alternative Variance Calculation]
+We can also calculate the variance using the form $\hat{\theta} = \vect{c}^T \vect{Y}$, where $\vect{c} = \vect{X} (\vect{X}^T \vect{X})^{-1} \vect{a}$.
+\begin{align*}
+\Var(\hat{\theta}) = \Var(\vect{c}^T \vect{Y}) &= \vect{c}^T \Cov(\vect{Y}) \vect{c} \\
+&= \vect{c}^T (\sigma^2 \vect{I}_n) \vect{c} \\
+&= \sigma^2 \vect{c}^T \vect{c} \\
+&= \sigma^2 [\vect{X} (\vect{X}^T \vect{X})^{-1} \vect{a}]^T [\vect{X} (\vect{X}^T \vect{X})^{-1} \vect{a}] \\
+&= \sigma^2 \vect{a}^T [(\vect{X}^T \vect{X})^{-1}]^T \vect{X}^T \vect{X} (\vect{X}^T \vect{X})^{-1} \vect{a} \\
+&= \sigma^2 \vect{a}^T (\vect{X}^T \vect{X})^{-1} \vect{X}^T \vect{X} (\vect{X}^T \vect{X})^{-1} \vect{a} \quad \text{(since } (\vect{X}^T \vect{X})^{-1} \text{ is symmetric)} \\
+&= \sigma^2 \vect{a}^T (\vect{X}^T \vect{X})^{-1} \vect{a}
+\end{align*}
+Reassuringly, both approaches yield the same result for the variance.
+\end{remark}
+
+So, $\hat{\theta} = \vect{a}^T \hat{\vect{\beta}}$ is a linear estimator (in $\vect{Y}$) and it's unbiased for $\theta$. A natural question arises: Is this the *best* possible estimator we can find within a reasonable class? To answer this, we first need to define what "best" means.
+
+\section{Comparing Estimators: The Mean Squared Error Criterion}
+
+When comparing different estimators for the same parameter $\theta$, a widely used criterion is the Mean Squared Error (MSE).
+
+\begin{definition}[Mean Squared Error (MSE)]
+Let $\hat{\theta}$ be any estimator for a parameter $\theta$. The \textbf{Mean Squared Error} of $\hat{\theta}$ is defined as:
+\begin{equation*}
+\MSE(\hat{\theta}) = \E[(\hat{\theta} - \theta)^2]
+\end{equation*}
+The MSE measures the average squared distance between the estimator and the true parameter value. An estimator with a smaller MSE is generally preferred.
+\end{definition}
+
+\begin{remark}[Dependence of MSE on $\theta$]
+It's crucial to understand that the MSE of an estimator $\hat{\theta}$ is typically a function of the true, unknown parameter $\theta$. The expectation $\E[\cdot]$ is taken with respect to the distribution of the data (which depends on $\theta$), and $\theta$ itself appears in the expression.
+\end{remark}
+
+\begin{example}[Constant Estimator]
+Consider the naive estimator $\hat{\theta}_{\text{const}} = 0$ for all data.
+If the true parameter happens to be $\theta = 0$, then $\MSE(\hat{\theta}_{\text{const}}) = \E[(0-0)^2] = 0$. This estimator is perfect in this specific case.
+However, if the true parameter is $\theta \neq 0$, then $\MSE(\hat{\theta}_{\text{const}}) = \E[(0-\theta)^2] = \E[(-\theta)^2] = \theta^2$. The error grows quadratically as the true $\theta$ moves away from 0.
+This illustrates that the performance (MSE) of an estimator depends on the unknown true parameter value.
+\end{example}
+
+A fundamental result relates the MSE to two other important quantities: the variance and the bias of the estimator.
+
+\begin{definition}[Bias]
+The \textbf{Bias} of an estimator $\hat{\theta}$ for $\theta$ is defined as:
+\begin{equation*}
+\Bias(\hat{\theta}) = \E[\hat{\theta}] - \theta
+\end{equation*}
+An estimator is \textbf{unbiased} if $\Bias(\hat{\theta}) = 0$ for all possible values of $\theta$.
+\end{definition}
+
+\begin{theorem}[MSE Decomposition: Bias-Variance Tradeoff]
+The Mean Squared Error of an estimator $\hat{\theta}$ can be decomposed as:
+\begin{equation*}
+\MSE(\hat{\theta}) = \Var(\hat{\theta}) + [\Bias(\hat{\theta})]^2
+\end{equation*}
+\end{theorem}
+
+\begin{proof}
+We start with the definition of MSE and employ the "add and subtract" trick involving $\E[\hat{\theta}]$:
+\begin{align*}
+\MSE(\hat{\theta}) &= \E[(\hat{\theta} - \theta)^2] \\
+&= \E[(\hat{\theta} - \E[\hat{\theta}] + \E[\hat{\theta}] - \theta)^2] \\
+&= \E[ (\hat{\theta} - \E[\hat{\theta}])^2 + (\E[\hat{\theta}] - \theta)^2 + 2 (\hat{\theta} - \E[\hat{\theta}]) (\E[\hat{\theta}] - \theta) ]
+\end{align*}
+Using the linearity of expectation:
+\begin{align*}
+\MSE(\hat{\theta}) &= \E[(\hat{\theta} - \E[\hat{\theta}])^2] + \E[(\E[\hat{\theta}] - \theta)^2] + \E[2 (\hat{\theta} - \E[\hat{\theta}]) (\E[\hat{\theta}] - \theta)]
+\end{align*}
+Let's examine each term:
+\begin{itemize}
+    \item The first term is, by definition, the variance of $\hat{\theta}$: $\E[(\hat{\theta} - \E[\hat{\theta}])^2] = \Var(\hat{\theta})$.
+    \item The second term involves $\E[\hat{\theta}] - \theta$, which is the bias. Since $\theta$ is a constant and $\E[\hat{\theta}]$ is also a constant (for a given $\theta$), the bias is a constant. The expectation of a constant squared is just the constant squared: $\E[(\E[\hat{\theta}] - \theta)^2] = (\E[\hat{\theta}] - \theta)^2 = [\Bias(\hat{\theta})]^2$.
+    \item For the third term (the cross-term), notice that $(\E[\hat{\theta}] - \theta)$ is a constant factor. We can pull it out of the expectation:
+    \begin{align*}
+    \E[2 (\hat{\theta} - \E[\hat{\theta}]) (\E[\hat{\theta}] - \theta)] &= 2 (\E[\hat{\theta}] - \theta) \E[\hat{\theta} - \E[\hat{\theta}]] \\
+    &= 2 (\Bias(\hat{\theta})) (\E[\hat{\theta}] - \E[\E[\hat{\theta}]]) \\
+    &= 2 (\Bias(\hat{\theta})) (\E[\hat{\theta}] - \E[\hat{\theta}]) \quad \text{(since } \E[\hat{\theta}] \text{ is a constant)} \\
+    &= 2 (\Bias(\hat{\theta})) (0) = 0
+    \end{align*}
+\end{itemize}
+Putting it all together:
+\begin{equation*}
+\MSE(\hat{\theta}) = \Var(\hat{\theta}) + [\Bias(\hat{\theta})]^2 + 0
+\end{equation*}
+as required.
+\end{proof}
+
+This decomposition is fundamental. It tells us that the MSE has two components:
+\begin{enumerate}
+    \item \textbf{Variance:} How much the estimator $\hat{\theta}$ fluctuates around its own average value $\E[\hat{\theta}]$.
+    \item \textbf{Squared Bias:} How far the average value of the estimator $\E[\hat{\theta}]$ is from the true target $\theta$.
+\end{enumerate}
+
+\begin{remark}[The Bias-Variance Tradeoff]
+Unbiasedness ($\Bias=0$) seems desirable. If we shoot a rifle at a target (the true $\theta$), unbiasedness means that, on average, our shots ($\hat{\theta}$) are centered on the target ($\E[\hat{\theta}] = \theta$). However, the MSE measures the average squared distance from the target, which depends on both the centering (bias) and the spread of the shots (variance).
+It's possible to have an estimator with a small bias but very large variance, leading to a large MSE. Conversely, sometimes introducing a small amount of bias might allow for a significant reduction in variance, potentially resulting in a lower overall MSE. This is the essence of the \textbf{bias-variance tradeoff}. Think of a rifle that isn't perfectly zeroed (biased) but shoots very tight groups (low variance). Its average squared error might be smaller than a perfectly zeroed rifle that sprays shots widely (unbiased but high variance).
+\end{remark}
+
+In many classical statistical settings, including our current focus, we often restrict our attention to the class of \textbf{unbiased estimators}.
+
+\begin{corollary}[MSE for Unbiased Estimators]
+If $\hat{\theta}$ is an unbiased estimator of $\theta$, then $\Bias(\hat{\theta}) = 0$, and its MSE simplifies to:
+\begin{equation*}
+\MSE(\hat{\theta}) = \Var(\hat{\theta})
+\end{equation*}
+Therefore, when comparing two unbiased estimators, the one with the smaller variance also has the smaller MSE and is considered "better" according to this criterion.
+\end{corollary}
+
+Our estimator $\hat{\theta} = \vect{a}^T \hat{\vect{\beta}}$ is linear (in $\vect{Y}$) and unbiased. The question now becomes: Is there any *other* linear, unbiased estimator for $\theta$ that has a smaller variance than $\hat{\theta}$?
+
+\section{The Gauss-Markov Theorem: Optimality of Least Squares}
+
+The answer to the question above is provided by a cornerstone result in linear models theory: the Gauss-Markov Theorem. It establishes that within the class of linear unbiased estimators, the least squares estimator is optimal in the sense that it has the minimum variance.
+
+\begin{theorem}[Gauss-Markov Theorem]
+Consider the linear model $\vect{Y} = \vect{X}\vect{\beta} + \vect{\epsilon}$ with $\E[\vect{\epsilon}] = \vect{0}$ and $\Cov(\vect{\epsilon}) = \sigma^2 \vect{I}_n$. Let $\theta = \vect{a}^T \vect{\beta}$ be any linear combination of the parameters. Let $\hat{\theta} = \vect{a}^T \hat{\vect{\beta}}$ be the least squares estimator of $\theta$.
+
+Then, $\hat{\theta}$ is the \textbf{Best Linear Unbiased Estimator (BLUE)} of $\theta$. This means:
+\begin{enumerate}
+    \item \textbf{Linear:} $\hat{\theta}$ is a linear function of $\vect{Y}$. (We already wrote $\hat{\theta} = \vect{c}^T \vect{Y}$).
+    \item \textbf{Unbiased:} $\hat{\theta}$ is unbiased for $\theta$, i.e., $\E[\hat{\theta}] = \theta$. (We already proved this).
+    \item \textbf{Best:} Among all linear unbiased estimators of $\theta$, $\hat{\theta}$ has the minimum variance. That is, if $\tilde{\theta}$ is any other estimator of $\theta$ such that $\tilde{\theta} = \tilde{\vect{c}}^T \vect{Y}$ for some constant vector $\tilde{\vect{c}}$ (linear) and $\E[\tilde{\theta}] = \theta$ (unbiased), then
+        \begin{equation*}
+        \Var(\hat{\theta}) \le \Var(\tilde{\theta})
+        \end{equation*}
+        This inequality holds for all possible values of the true parameters $\vect{\beta}$ and $\sigma^2 > 0$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Let $\hat{\theta} = \vect{c}^T \vect{Y}$ be the LSE, where $\vect{c} = \vect{X} (\vect{X}^T \vect{X})^{-1} \vect{a}$.
+Let $\tilde{\theta}$ be any other linear unbiased estimator of $\theta$. Since it's linear, it must be of the form $\tilde{\theta} = \tilde{\vect{c}}^T \vect{Y}$ for some fixed $n \times 1$ vector $\tilde{\vect{c}}$.
+
+Define the difference vector $\vect{\delta} = \tilde{\vect{c}} - \vect{c}$. Then $\tilde{\vect{c}} = \vect{c} + \vect{\delta}$, and we can write:
+\begin{equation*}
+\tilde{\theta} = (\vect{c} + \vect{\delta})^T \vect{Y} = \vect{c}^T \vect{Y} + \vect{\delta}^T \vect{Y} = \hat{\theta} + \vect{\delta}^T \vect{Y}
+\end{equation*}
+
+Now, let's use the unbiasedness condition for $\tilde{\theta}$: $\E[\tilde{\theta}] = \theta$.
+\begin{align*}
+\theta = \E[\tilde{\theta}] &= \E[\hat{\theta} + \vect{\delta}^T \vect{Y}] \\
+&= \E[\hat{\theta}] + \E[\vect{\delta}^T \vect{Y}] \\
+&= \theta + \vect{\delta}^T \E[\vect{Y}] \quad \text{(since } \hat{\theta} \text{ is unbiased and } \vect{\delta} \text{ is constant)} \\
+&= \theta + \vect{\delta}^T (\vect{X}\vect{\beta}) \quad \text{(since } \E[\vect{Y}] = \vect{X}\vect{\beta})
+\end{align*}
+For this equality $\theta = \theta + \vect{\delta}^T \vect{X}\vect{\beta}$ to hold for *all* possible parameter vectors $\vect{\beta}$, we must have:
+\begin{equation}
+\vect{\delta}^T \vect{X}\vect{\beta} = 0 \quad \text{for all } \vect{\beta} \in \mathbb{R}^{p+1} \label{eq:unbias_cond}
+\end{equation}
+The only way for this linear combination of the elements of $\vect{\beta}$ (with coefficients given by the row vector $\vect{\delta}^T \vect{X}$) to be zero for all $\vect{\beta}$ is if the coefficient vector itself is the zero vector. That is:
+\begin{equation}
+\vect{\delta}^T \vect{X} = \vect{0}^T \quad \text{(a } 1 \times (p+1) \text{ row vector of zeros)} \label{eq:deltaTX_zero}
+\end{equation}
+This condition $\vect{\delta}^T \vect{X} = \vect{0}^T$ is a necessary consequence of requiring $\tilde{\theta}$ to be unbiased. It essentially means $\vect{\delta}$ must be orthogonal to the column space of $\vect{X}$.
+
+Now, let's compute the variance of $\tilde{\theta}$:
+\begin{align*}
+\Var(\tilde{\theta}) &= \Var(\hat{\theta} + \vect{\delta}^T \vect{Y}) \\
+&= \Var(\hat{\theta}) + \Var(\vect{\delta}^T \vect{Y}) + 2 \Cov(\hat{\theta}, \vect{\delta}^T \vect{Y}) \\
+&= \Var(\vect{c}^T \vect{Y}) + \Var(\vect{\delta}^T \vect{Y}) + 2 \Cov(\vect{c}^T \vect{Y}, \vect{\delta}^T \vect{Y})
+\end{align*}
+We know $\Var(\vect{c}^T \vect{Y}) = \Var(\hat{\theta}) = \sigma^2 \vect{c}^T \vect{c}$.
+Similarly, $\Var(\vect{\delta}^T \vect{Y}) = \vect{\delta}^T \Cov(\vect{Y}) \vect{\delta} = \vect{\delta}^T (\sigma^2 \vect{I}_n) \vect{\delta} = \sigma^2 \vect{\delta}^T \vect{\delta}$.
+Now consider the covariance term:
+\begin{align*}
+\Cov(\vect{c}^T \vect{Y}, \vect{\delta}^T \vect{Y}) &= \vect{c}^T \Cov(\vect{Y}) \vect{\delta} \\
+&= \vect{c}^T (\sigma^2 \vect{I}_n) \vect{\delta} \\
+&= \sigma^2 \vect{c}^T \vect{\delta} \\
+&= \sigma^2 [\vect{X} (\vect{X}^T \vect{X})^{-1} \vect{a}]^T \vect{\delta} \\
+&= \sigma^2 \vect{a}^T (\vect{X}^T \vect{X})^{-1} (\vect{X}^T \vect{\delta})
+\end{align*}
+But from condition \eqref{eq:deltaTX_zero}, we know $\vect{\delta}^T \vect{X} = \vect{0}^T$, which implies $(\vect{X}^T \vect{\delta}) = \vect{0}$. Therefore, the covariance term is zero:
+\begin{equation*}
+\Cov(\hat{\theta}, \vect{\delta}^T \vect{Y}) = \sigma^2 \vect{a}^T (\vect{X}^T \vect{X})^{-1} \vect{0} = 0
+\end{equation*}
+Substituting these back into the variance expression for $\tilde{\theta}$:
+\begin{align*}
+\Var(\tilde{\theta}) &= \Var(\hat{\theta}) + \sigma^2 \vect{\delta}^T \vect{\delta} + 2(0) \\
+&= \Var(\hat{\theta}) + \sigma^2 ||\vect{\delta}||^2
+\end{align*}
+Since $\sigma^2 > 0$ and $||\vect{\delta}||^2 = ||\tilde{\vect{c}} - \vect{c}||^2 \ge 0$, we have $\sigma^2 ||\vect{\delta}||^2 \ge 0$.
+Thus,
+\begin{equation*}
+\Var(\tilde{\theta}) \ge \Var(\hat{\theta})
+\end{equation*}
+Equality holds if and only if $||\vect{\delta}||^2 = 0$, which means $\vect{\delta} = \vect{0}$, implying $\tilde{\vect{c}} = \vect{c}$, i.e., $\tilde{\theta} = \hat{\theta}$.
+This shows that the LSE $\hat{\theta}$ has the minimum variance among all linear unbiased estimators.
+\end{proof}
+
+\begin{remark}
+The crucial step where unbiasedness was used was in deriving $\vect{\delta}^T \vect{X} = \vect{0}^T$. This condition was necessary to show that the covariance term between $\hat{\theta}$ and the difference term $\vect{\delta}^T \vect{Y}$ is zero.
+\end{remark}
+
+\section{Summary and Looking Ahead}
+
+Let's consolidate what we've established:
+\begin{itemize}
+    \item Under the standard linear model assumptions ($Y = X\beta + \epsilon, E[\epsilon]=0, Cov(\epsilon)=\sigma^2 I$), the least squares estimator $\hat{\beta} = (X^T X)^{-1} X^T Y$ is unbiased for $\beta$, with $Cov(\hat{\beta}) = \sigma^2 (X^T X)^{-1}$.
+    \item For any linear combination $\theta = a^T \beta$, the natural estimator $\hat{\theta} = a^T \hat{\beta}$ is also unbiased for $\theta$, with $Var(\hat{\theta}) = \sigma^2 a^T (X^T X)^{-1} a$.
+    \item We use Mean Squared Error (MSE) to compare estimators, where $MSE = Variance + Bias^2$.
+    \item For unbiased estimators, minimizing MSE is equivalent to minimizing variance.
+    \item The \textbf{Gauss-Markov Theorem} states that $\hat{\theta} = a^T \hat{\beta}$ is the Best Linear Unbiased Estimator (BLUE) for $\theta$, meaning it has the smallest variance among all estimators that are both linear functions of $Y$ and unbiased for $\theta$.
+\end{itemize}
+
+This provides strong justification for using the least squares estimator when our goal is point estimation and we value linearity and unbiasedness. However, our analysis so far has relied only on the first two moments (mean and covariance) of the error distribution. To proceed further into statistical inference – constructing confidence intervals, performing hypothesis tests – we need to make more specific assumptions about the *shape* of the error distribution.
+
+The most common and mathematically tractable assumption is that the errors follow a normal distribution. This will allow us to determine the exact distributions of our estimators (not just their mean and variance) and build formal inferential procedures.
+
+Before diving into that, let's briefly refresh our understanding of multivariate distributions, as our error term $\epsilon$ and our response vector $Y$ are vectors.
+
+\section{Appendix: A Brief Reminder on Multivariate Distributions}
+
+When dealing with random vectors, like $\vect{Z} = (Z_1, Z_2, \dots, Z_m)^T$, we need concepts analogous to the CDF and PDF from the univariate case. Let's illustrate with the simplest multivariate case, $m=2$.
+
+Let $\vect{Z} = (Z_1, Z_2)^T$ be a 2-dimensional random vector. $Z_1$ and $Z_2$ are random variables defined on the same probability space, so they have a joint behavior.
+
+\begin{definition}[Joint Cumulative Distribution Function (CDF)]
+The \textbf{joint CDF} of $\vect{Z} = (Z_1, Z_2)^T$ is a function $F_{\vect{Z}}: \mathbb{R}^2 \to [0, 1]$ defined as:
+\begin{equation*}
+F_{\vect{Z}}(z_1, z_2) = P(Z_1 \le z_1, Z_2 \le z_2)
+\end{equation*}
+for any point $(z_1, z_2) \in \mathbb{R}^2$. Geometrically, $F_{\vect{Z}}(z_1, z_2)$ gives the probability mass accumulated in the quadrant to the "south-west" of the point $(z_1, z_2)$.
+\end{definition}
+
+Just as in the univariate case, if the CDF is sufficiently smooth, we can define a density function.
+
+\begin{definition}[Joint Probability Density Function (PDF)]
+If the joint CDF $F_{\vect{Z}}(z_1, z_2)$ is differentiable, the \textbf{joint PDF} of $\vect{Z} = (Z_1, Z_2)^T$ is a function $f_{\vect{Z}}: \mathbb{R}^2 \to [0, \infty)$ defined by the mixed partial derivative:
+\begin{equation*}
+f_{\vect{Z}}(z_1, z_2) = \frac{\partial^2 F_{\vect{Z}}(z_1, z_2)}{\partial z_1 \partial z_2}
+\end{equation*}
+(provided the derivative exists). The PDF must satisfy $f_{\vect{Z}}(z_1, z_2) \ge 0$ for all $(z_1, z_2)$, and its integral over the whole plane must be 1:
+\begin{equation*}
+\int_{-\infty}^{\infty} \int_{-\infty}^{\infty} f_{\vect{Z}}(z_1, z_2) dz_1 dz_2 = 1
+\end{equation*}
+Probabilities are found by integrating the PDF over regions: $P((Z_1, Z_2) \in A) = \iint_A f_{\vect{Z}}(z_1, z_2) dz_1 dz_2$.
+\end{definition}
+
+\begin{remark}
+When the PDF exists, the CDF and PDF provide equivalent information about the distribution of the random vector. Just as in the univariate case, knowing one allows you to determine the other. These concepts generalize naturally to $m$ dimensions, involving $m$-variate integrals and $m$-th order mixed partial derivatives.
+\end{remark}
+
+Next time, we will introduce the \textit{multivariate normal distribution}, which will be our key distributional assumption for $\epsilon$ moving forward.
+
+
+\end{document}

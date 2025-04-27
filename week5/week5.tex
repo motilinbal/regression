@@ -1,0 +1,557 @@
+\documentclass[11pt, letterpaper]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{hyperref} % Optional: for clickable references if needed later
+
+% Geometry settings for better readability
+\geometry{
+    letterpaper,
+    total={6.5in, 9in},
+    left=1in,
+    top=1in,
+}
+
+% --- Custom Theorem Environments ---
+\theoremstyle{plain} % Bold title, italic body
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition} % Bold title, normal body
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example} % Preserve original examples
+
+\theoremstyle{remark} % Italic title, normal body
+\newtheorem{remark}[theorem]{Remark}
+
+% --- Math Macros ---
+\renewcommand{\mathbf}{\boldsymbol} % Use \boldsymbol for vectors/matrices
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\V}{\mathrm{Var}} % Use \mathrm{Var} for variance
+\newcommand{\Cov}{\mathrm{Cov}} % Use \mathrm{Cov} for covariance
+\newcommand{\MSE}{\mathrm{MSE}}
+\newcommand{\tr}{\mathrm{tr}}
+\newcommand{\rank}{\mathrm{rank}}
+\newcommand{\Normal}{\mathcal{N}}
+\newcommand{\Chisq}{\chi^2}
+\newcommand{\Tdist}{t}
+\newcommand{\Fdist}{\mathrm{F}}
+\newcommand{\I}{\mathbf{I}} % Identity matrix
+
+% --- Placeholder for Administrative Notes ---
+\newenvironment{announcement}
+  {\begin{center}\normalfont\bfseries --- Course Announcements ---\end{center}\begin{itemize}}
+  {\end{itemize}\hrulefill\vspace{1em}}
+
+% --- Document ---
+\begin{document}
+
+% --- Title ---
+\title{Linear Models: Estimation and Inference under Normality \\ \Large Lecture Notes Supplement}
+\author{Your Name/Course Name Here} % Replace as needed
+\date{\today} % Or specific lecture date
+\maketitle
+
+% --- Administrative Announcements (Placeholder) ---
+% \begin{announcement}
+%     \item \textbf{Homework 5:} Due next Friday by 5:00 PM in the usual submission box.
+%     \item \textbf{Office Hours:} My office hours next week are moved to Tuesday 2-4 PM due to a department meeting.
+%     \item \textbf{Midterm Exam:} Scheduled for Wednesday, [Date], in [Location]. Covers material up to the end of this week's lectures (including the Normal Linear Model). More details to follow.
+% \end{announcement}
+% *Note: The above is a placeholder. No administrative details were present in the source material.*
+
+% --- Introduction (Optional) ---
+% \textit{These notes cover the optimality of least squares estimators via the Gauss-Markov theorem and introduce the Normal Linear Model, which allows for more detailed statistical inference.}
+
+% ===================================================================
+\section{Estimating Linear Combinations of Coefficients}
+% ===================================================================
+
+In our study of the linear model $\boldsymbol{Y} = \boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}$, we've focused on estimating the entire vector of coefficients $\boldsymbol{\beta} \in \R^{p+1}$. Often, however, we are interested in estimating a specific linear combination of these coefficients.
+
+\begin{definition}[Linear Combination]
+Let $\boldsymbol{\beta} = (\beta_0, \beta_1, \ldots, \beta_p)^{\top}$ be the vector of regression coefficients, and let $\boldsymbol{a} = (a_0, a_1, \ldots, a_p)^{\top} \in \R^{p+1}$ be a fixed, known vector of constants. The scalar quantity
+\begin{equation}
+\theta := \boldsymbol{a}^{\top} \boldsymbol{\beta} = \sum_{j=0}^{p} a_j \beta_j
+\end{equation}
+is called a \textbf{linear combination} of the elements of $\boldsymbol{\beta}$.
+\end{definition}
+
+\begin{remark}[Motivation]
+Why study linear combinations?
+\begin{itemize}
+    \item \textbf{Individual Coefficients:} Estimating $\beta_j$ itself corresponds to choosing $\boldsymbol{a}$ with $a_j=1$ and all other $a_k=0$.
+    \item \textbf{Differences/Contrasts:} Comparing two coefficients, say $\beta_1 - \beta_2$, corresponds to $a_1=1, a_2=-1$, and others zero.
+    \item \textbf{Predictions:} For a new set of predictor values $\boldsymbol{x}_* = (1, x_{*1}, \ldots, x_{*p})^{\top}$, the expected response is $\E[Y_*] = \boldsymbol{x}_*^{\top} \boldsymbol{\beta}$, which is a linear combination with $\boldsymbol{a} = \boldsymbol{x}_*$.
+\end{itemize}
+\end{remark}
+
+Given the least squares (LS) estimator $\hat{\boldsymbol{\beta}} = (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top}\boldsymbol{Y}$ for $\boldsymbol{\beta}$, a natural estimator for $\theta = \boldsymbol{a}^{\top}\boldsymbol{\beta}$ is obtained by simply plugging in $\hat{\boldsymbol{\beta}}$:
+
+\begin{definition}[LS Estimator of a Linear Combination]
+The LS estimator for $\theta = \boldsymbol{a}^{\top}\boldsymbol{\beta}$ is
+\begin{equation}
+\hat{\theta} := \boldsymbol{a}^{\top} \hat{\boldsymbol{\beta}} = \boldsymbol{a}^{\top} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{Y}.
+\end{equation}
+\end{definition}
+
+Notice that $\hat{\theta}$ is a linear function of the observation vector $\boldsymbol{Y}$. We can write it as $\hat{\theta} = \boldsymbol{c}^{\top} \boldsymbol{Y}$, where the vector $\boldsymbol{c} \in \R^n$ is given by
+\begin{equation}
+\boldsymbol{c} := \boldsymbol{X} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{a}.
+\end{equation}
+It's worth noting the dimensions: $\boldsymbol{a}$ is in $\R^{p+1}$, while $\boldsymbol{c}$ is in $\R^n$.
+
+Let's examine the properties of this estimator under the standard \textbf{linear model assumptions}:
+\begin{equation} \label{eq:linear_model_assumptions}
+\boldsymbol{Y} = \boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}, \quad \text{where } \E[\boldsymbol{\epsilon}] = \mathbf{0} \text{ and } \Cov(\boldsymbol{\epsilon}) = \sigma^2 \I_n.
+\end{equation}
+These assumptions imply $\E[\boldsymbol{Y}] = \boldsymbol{X}\boldsymbol{\beta}$ and $\Cov(\boldsymbol{Y}) = \sigma^2 \I_n$.
+
+\paragraph{Mean of $\hat{\theta}$:}
+Using the linearity of expectation and the unbiasedness of $\hat{\boldsymbol{\beta}}$ ($\E[\hat{\boldsymbol{\beta}}] = \boldsymbol{\beta}$), we have:
+\[
+\E[\hat{\theta}] = \E[\boldsymbol{a}^{\top} \hat{\boldsymbol{\beta}}] = \boldsymbol{a}^{\top} \E[\hat{\boldsymbol{\beta}}] = \boldsymbol{a}^{\top} \boldsymbol{\beta} = \theta.
+\]
+Thus, $\hat{\theta}$ is an \textbf{unbiased} estimator for $\theta$.
+
+\paragraph{Variance of $\hat{\theta}$:}
+Using the linearity property of variance for vector transformations ($V(\boldsymbol{A}\boldsymbol{Y}) = \boldsymbol{A}\Cov(\boldsymbol{Y})\boldsymbol{A}^{\top}$) or directly for the linear combination $\hat{\theta} = \boldsymbol{c}^{\top}\boldsymbol{Y}$:
+\begin{align*}
+\V(\hat{\theta}) &= \V(\boldsymbol{c}^{\top} \boldsymbol{Y}) \\
+&= \boldsymbol{c}^{\top} \Cov(\boldsymbol{Y}) \boldsymbol{c} \\
+&= \boldsymbol{c}^{\top} (\sigma^2 \I_n) \boldsymbol{c} \\
+&= \sigma^2 \boldsymbol{c}^{\top} \boldsymbol{c}.
+\end{align*}
+We can express this variance in terms of $\boldsymbol{a}$ as well:
+\begin{align*}
+\V(\hat{\theta}) = \sigma^2 \boldsymbol{c}^{\top} \boldsymbol{c} &= \sigma^2 \left( \boldsymbol{X} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{a} \right)^{\top} \left( \boldsymbol{X} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{a} \right) \\
+&= \sigma^2 \boldsymbol{a}^{\top} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{X} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{a} \\
+&= \sigma^2 \boldsymbol{a}^{\top} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{a}.
+\end{align*}
+So, $\hat{\theta}$ is a linear, unbiased estimator with variance $\sigma^2 \boldsymbol{c}^{\top}\boldsymbol{c} = \sigma^2 \boldsymbol{a}^{\top} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{a}$.
+
+\paragraph{Is $\hat{\theta}$ the "Best" Linear Unbiased Estimator?}
+We found *an* unbiased linear estimator $\hat{\theta}$. But could there be another estimator, say $\tilde{\theta}$, which is also linear in $\boldsymbol{Y}$ and unbiased for $\theta$, but somehow "better" than $\hat{\theta}$? First, we need to define what "better" means. A standard criterion is the Mean Squared Error (MSE).
+
+\begin{definition}[Mean Squared Error (MSE)]
+The MSE of an estimator $\hat{\phi}$ for a parameter $\phi$ is
+\[
+\MSE(\hat{\phi}) := \E_{\phi}\left[ (\hat{\phi} - \phi)^2 \right],
+\]
+where the expectation is taken with respect to the distribution governed by the true parameter $\phi$. Note that the MSE generally depends on the true value of $\phi$.
+\end{definition}
+
+We say an estimator $\hat{\phi}$ is \textbf{better} than another estimator $\tilde{\phi}$ if $\MSE(\hat{\phi}) \le \MSE(\tilde{\phi})$ for all possible values of the parameter $\phi$, with strict inequality for at least one value.
+
+\paragraph{Bias-Variance Decomposition of MSE:}
+A fundamental property of MSE is its decomposition into variance and squared bias. For any estimator $\hat{\phi}$ of $\phi$:
+\begin{align}
+\MSE(\hat{\phi}) &= \E\left[ (\hat{\phi} - \phi)^2 \right] \nonumber \\
+&= \E\left[ ((\hat{\phi} - \E[\hat{\phi}]) + (\E[\hat{\phi}] - \phi))^2 \right] \nonumber \\
+&= \E\left[ (\hat{\phi} - \E[\hat{\phi}])^2 \right] + \E\left[ (\E[\hat{\phi}] - \phi)^2 \right] + 2 \E\left[ (\hat{\phi} - \E[\hat{\phi}]) (\E[\hat{\phi}] - \phi) \right] \nonumber \\
+&= \E\left[ (\hat{\phi} - \E[\hat{\phi}])^2 \right] + (\E[\hat{\phi}] - \phi)^2 + 2 (\E[\hat{\phi}] - \phi) \underbrace{\E[\hat{\phi} - \E[\hat{\phi}]]}_{=0} \nonumber \\
+&= \underbrace{\E\left[ (\hat{\phi} - \E[\hat{\phi}])^2 \right]}_{\V(\hat{\phi})} + \underbrace{(\E[\hat{\phi}] - \phi)^2}_{(\text{bias}(\hat{\phi}))^2} \label{eq:bias_variance_decomp}
+\end{align}
+where $\text{bias}(\hat{\phi}) = \E[\hat{\phi}] - \phi$.
+
+Crucially, for an \textbf{unbiased} estimator, the bias term is zero, so $\text{bias}(\hat{\phi}) = 0$. In this case, the decomposition simplifies beautifully:
+\[
+\MSE(\hat{\phi}) = \V(\hat{\phi}) \quad \text{(if } \hat{\phi} \text{ is unbiased)}.
+\]
+Therefore, if we restrict our search to \emph{unbiased} estimators, finding the "best" estimator in terms of MSE is equivalent to finding the estimator with the \emph{minimum variance}.
+
+This leads us to a central question: Among all linear unbiased estimators for $\theta = \boldsymbol{a}^{\top}\boldsymbol{\beta}$, does the LS estimator $\hat{\theta} = \boldsymbol{a}^{\top}\hat{\boldsymbol{\beta}}$ have the smallest variance? The answer is yes, as formalized by the famous Gauss-Markov Theorem.
+
+% ===================================================================
+\section{The Gauss-Markov Theorem}
+% ===================================================================
+
+This theorem is a cornerstone of linear regression theory. It provides a powerful justification for using the least squares estimator, relying only on the assumptions about the first and second moments of the errors, not on any specific distribution like the normal distribution.
+
+\begin{theorem}[Gauss-Markov] \label{thm:gauss_markov}
+Assume the linear model holds: $\boldsymbol{Y} = \boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}$ with $\E[\boldsymbol{\epsilon}] = \mathbf{0}$ and $\Cov(\boldsymbol{\epsilon}) = \sigma^2 \I_n$. Let $\theta = \boldsymbol{a}^{\top}\boldsymbol{\beta}$ be any linear combination of the coefficients. Let $\hat{\theta} = \boldsymbol{a}^{\top}\hat{\boldsymbol{\beta}}$ be the least squares estimator of $\theta$, where $\hat{\boldsymbol{\beta}} = (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top}\boldsymbol{Y}$.
+
+Consider any other estimator $\tilde{\theta}$ that is also \textbf{linear} in $\boldsymbol{Y}$ (i.e., $\tilde{\theta} = \boldsymbol{d}^{\top}\boldsymbol{Y}$ for some vector $\boldsymbol{d} \in \R^n$) and \textbf{unbiased} for $\theta$ (i.e., $\E[\tilde{\theta}] = \theta$ for all possible $\boldsymbol{\beta}$).
+
+Then, the variance of the LS estimator is less than or equal to the variance of any other such linear unbiased estimator:
+\[
+\V(\hat{\theta}) \le \V(\tilde{\theta}) \quad \text{for all } \boldsymbol{\beta}.
+\]
+For this reason, $\hat{\theta}$ is called the \textbf{Best Linear Unbiased Estimator (BLUE)} of $\theta$.
+\end{theorem}
+
+\begin{proof}
+Let $\hat{\theta} = \boldsymbol{c}^{\top}\boldsymbol{Y}$ where $\boldsymbol{c} = \boldsymbol{X}(\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{a}$, as defined earlier.
+Let $\tilde{\theta} = \boldsymbol{d}^{\top}\boldsymbol{Y}$ be any other linear unbiased estimator for $\theta$.
+
+We can write the vector $\boldsymbol{d}$ in terms of $\boldsymbol{c}$ and a difference vector $\boldsymbol{\Delta}$:
+\[
+\boldsymbol{d} = \boldsymbol{c} + \boldsymbol{\Delta}, \quad \text{where } \boldsymbol{\Delta} = \boldsymbol{d} - \boldsymbol{c} \in \R^n.
+\]
+Now, let's use the unbiasedness condition for $\tilde{\theta}$: $\E[\tilde{\theta}] = \theta$ must hold for all $\boldsymbol{\beta}$.
+\begin{align*}
+\theta = \E[\tilde{\theta}] &= \E[\boldsymbol{d}^{\top}\boldsymbol{Y}] \\
+&= \E[(\boldsymbol{c} + \boldsymbol{\Delta})^{\top}\boldsymbol{Y}] \\
+&= \E[\boldsymbol{c}^{\top}\boldsymbol{Y}] + \E[\boldsymbol{\Delta}^{\top}\boldsymbol{Y}] \\
+&= \E[\hat{\theta}] + \boldsymbol{\Delta}^{\top}\E[\boldsymbol{Y}] \quad \text{(since } \boldsymbol{\Delta} \text{ is constant)} \\
+&= \theta + \boldsymbol{\Delta}^{\top}(\boldsymbol{X}\boldsymbol{\beta}) \quad \text{(since } \hat{\theta} \text{ is unbiased and } \E[\boldsymbol{Y}]=\boldsymbol{X}\boldsymbol{\beta})
+\end{align*}
+Comparing the start and end of this chain of equalities, we must have:
+\[
+\boldsymbol{\Delta}^{\top} \boldsymbol{X} \boldsymbol{\beta} = 0 \quad \text{for all } \boldsymbol{\beta} \in \R^{p+1}.
+\]
+The only way this can hold for all possible vectors $\boldsymbol{\beta}$ is if the vector multiplying $\boldsymbol{\beta}$ is the zero vector. That is,
+\begin{equation} \label{eq:delta_transpose_X_zero}
+\boldsymbol{\Delta}^{\top} \boldsymbol{X} = \mathbf{0}^{\top}.
+\end{equation}
+This condition captures the implication of unbiasedness for the difference vector $\boldsymbol{\Delta}$.
+
+Now, let's use this condition to examine the relationship between $\boldsymbol{\Delta}$ and $\boldsymbol{c}$. Recall $\boldsymbol{c} = \boldsymbol{X}(\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{a}$. Consider the inner product $\boldsymbol{\Delta}^{\top}\boldsymbol{c}$:
+\[
+\boldsymbol{\Delta}^{\top} \boldsymbol{c} = \boldsymbol{\Delta}^{\top} \left( \boldsymbol{X} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{a} \right) = \underbrace{(\boldsymbol{\Delta}^{\top} \boldsymbol{X})}_{=\mathbf{0}^{\top}} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{a} = \mathbf{0}^{\top} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{a} = 0.
+\]
+So, the vectors $\boldsymbol{\Delta}$ and $\boldsymbol{c}$ are orthogonal: $\boldsymbol{\Delta}^{\top}\boldsymbol{c} = 0$.
+
+Finally, let's calculate the variance of $\tilde{\theta}$:
+\begin{align*}
+\V(\tilde{\theta}) &= \V(\boldsymbol{d}^{\top}\boldsymbol{Y}) \\
+&= \boldsymbol{d}^{\top} \Cov(\boldsymbol{Y}) \boldsymbol{d} \\
+&= \boldsymbol{d}^{\top} (\sigma^2 \I_n) \boldsymbol{d} \\
+&= \sigma^2 \boldsymbol{d}^{\top}\boldsymbol{d} \\
+&= \sigma^2 (\boldsymbol{c} + \boldsymbol{\Delta})^{\top}(\boldsymbol{c} + \boldsymbol{\Delta}) \\
+&= \sigma^2 (\boldsymbol{c}^{\top}\boldsymbol{c} + \boldsymbol{c}^{\top}\boldsymbol{\Delta} + \boldsymbol{\Delta}^{\top}\boldsymbol{c} + \boldsymbol{\Delta}^{\top}\boldsymbol{\Delta}) \\
+&= \sigma^2 (\boldsymbol{c}^{\top}\boldsymbol{c} + 0 + 0 + \boldsymbol{\Delta}^{\top}\boldsymbol{\Delta}) \quad \text{(since } \boldsymbol{\Delta}^{\top}\boldsymbol{c} = \boldsymbol{c}^{\top}\boldsymbol{\Delta} = 0) \\
+&= \sigma^2 (\boldsymbol{c}^{\top}\boldsymbol{c} + \boldsymbol{\Delta}^{\top}\boldsymbol{\Delta})
+\end{align*}
+We know that $\V(\hat{\theta}) = \sigma^2 \boldsymbol{c}^{\top}\boldsymbol{c}$. Therefore,
+\[
+\V(\tilde{\theta}) = \V(\hat{\theta}) + \sigma^2 \boldsymbol{\Delta}^{\top}\boldsymbol{\Delta}.
+\]
+Since $\boldsymbol{\Delta}^{\top}\boldsymbol{\Delta} = \|\boldsymbol{\Delta}\|^2$ is the squared Euclidean norm of $\boldsymbol{\Delta}$, it must be non-negative ($\boldsymbol{\Delta}^{\top}\boldsymbol{\Delta} \ge 0$). Thus,
+\[
+\V(\tilde{\theta}) \ge \V(\hat{\theta}).
+\]
+Equality holds if and only if $\boldsymbol{\Delta}^{\top}\boldsymbol{\Delta} = 0$, which implies $\boldsymbol{\Delta} = \mathbf{0}$, meaning $\boldsymbol{d} = \boldsymbol{c}$. This confirms that the LS estimator $\hat{\theta}$ has the minimum variance among all linear unbiased estimators.
+\end{proof}
+
+\begin{remark}
+The Gauss-Markov theorem is truly remarkable. It tells us that without making any assumptions about the *shape* of the error distribution (like normality), as long as the errors are uncorrelated and have constant variance, the least squares procedure naturally yields estimators that are optimal in the class of linear unbiased estimators, judged by the criterion of minimum variance (or equivalently, minimum MSE within this class).
+\end{remark}
+
+% ===================================================================
+\section{Toward Inference: The Need for Distributional Assumptions}
+% ===================================================================
+
+We have established the optimality of LS estimators in terms of minimum variance among linear unbiased estimators (point estimation). However, many statistical tasks go beyond point estimation. For example, we often want to:
+\begin{itemize}
+    \item Construct \textbf{confidence intervals} for coefficients $\beta_j$ or linear combinations $\theta = \boldsymbol{a}^{\top}\boldsymbol{\beta}$.
+    \item Perform \textbf{hypothesis tests}, such as testing if a particular coefficient is zero ($H_0: \beta_j = 0$).
+\end{itemize}
+To perform these tasks, we need more than just the mean and variance of our estimators; we need to know their \emph{sampling distribution}. This typically requires making stronger assumptions about the distribution of the error term $\boldsymbol{\epsilon}$. The most common and mathematically tractable assumption is that the errors follow a multivariate normal distribution.
+
+Before diving into the normal linear model, let's briefly review some key concepts about multivariate distributions, focusing on the multivariate normal.
+
+% -------------------------------------------------------------------
+\subsection{Review of Multivariate Distributions}
+% -------------------------------------------------------------------
+
+Consider a random vector $\boldsymbol{Z} = (Z_1, \ldots, Z_k)^{\top}$.
+
+\paragraph{Joint CDF:} The joint cumulative distribution function (CDF) is defined as
+\[ F_{\boldsymbol{Z}}(z_1, \ldots, z_k) := P(Z_1 \le z_1, \ldots, Z_k \le z_k). \]
+The CDF always exists and uniquely determines the distribution of $\boldsymbol{Z}$.
+
+\paragraph{Independence:} The components $Z_1, \ldots, Z_k$ are mutually (statistically) independent if and only if the joint CDF factors into the product of the marginal CDFs:
+\[ F_{\boldsymbol{Z}}(z_1, \ldots, z_k) = P(Z_1 \le z_1) \cdots P(Z_k \le z_k) = F_{Z_1}(z_1) \cdots F_{Z_k}(z_k) \]
+for all $z_1, \ldots, z_k \in \R$.
+
+\paragraph{Joint PDF:} If the joint CDF is sufficiently smooth, we can define the joint probability density function (PDF) via differentiation:
+\[ f_{\boldsymbol{Z}}(z_1, \ldots, z_k) = \frac{\partial^k}{\partial z_1 \cdots \partial z_k} F_{\boldsymbol{Z}}(z_1, \ldots, z_k). \]
+When the PDF exists, it provides an equivalent characterization of the distribution, satisfying
+\[ F_{\boldsymbol{Z}}(z_1, \ldots, z_k) = \int_{-\infty}^{z_1} \cdots \int_{-\infty}^{z_k} f_{\boldsymbol{Z}}(u_1, \ldots, u_k) du_k \cdots du_1, \]
+and $f_{\boldsymbol{Z}}(\boldsymbol{z}) \ge 0$ with $\int_{\R^k} f_{\boldsymbol{Z}}(\boldsymbol{z}) d\boldsymbol{z} = 1$. For independent continuous random variables, the joint PDF is the product of the marginal PDFs: $f_{\boldsymbol{Z}}(\boldsymbol{z}) = f_{Z_1}(z_1) \cdots f_{Z_k}(z_k)$.
+
+% -------------------------------------------------------------------
+\subsection{The Multivariate Normal Distribution}
+% -------------------------------------------------------------------
+
+The multivariate normal (MVN) distribution is arguably the most important multivariate distribution in statistics, partly due to the Central Limit Theorem and its mathematical tractability.
+
+\begin{definition}[Multivariate Normal Distribution] \label{def:mvn}
+A random vector $\boldsymbol{W} = (W_1, \ldots, W_k)^{\top}$ is said to have a \textbf{multivariate normal distribution} if it can be represented as
+\begin{equation} \label{eq:mvn_representation}
+\boldsymbol{W} \stackrel{d}{=} \boldsymbol{\mu} + \boldsymbol{A} \boldsymbol{Z}
+\end{equation}
+where:
+\begin{itemize}
+    \item $\boldsymbol{\mu} \in \R^k$ is a constant vector (the mean).
+    \item $\boldsymbol{A} \in \R^{k \times l}$ is a constant matrix.
+    \item $\boldsymbol{Z} = (Z_1, \ldots, Z_l)^{\top}$ is a random vector whose components $Z_i$ are independent and identically distributed (i.i.d.) standard normal random variables, $Z_i \sim \Normal(0, 1)$.
+\end{itemize}
+The symbol $\stackrel{d}{=}$ means "equal in distribution".
+\end{definition}
+
+\paragraph{Properties of the Multivariate Normal Distribution:}
+
+\begin{enumerate}
+    \item \textbf{Mean and Covariance:} If $\boldsymbol{W} \stackrel{d}{=} \boldsymbol{\mu} + \boldsymbol{A} \boldsymbol{Z}$ as in Definition \ref{def:mvn}, we can calculate its mean vector and covariance matrix:
+    \begin{align*}
+    \E[\boldsymbol{W}] &= \E[\boldsymbol{\mu} + \boldsymbol{A}\boldsymbol{Z}] = \boldsymbol{\mu} + \boldsymbol{A}\E[\boldsymbol{Z}] = \boldsymbol{\mu} + \boldsymbol{A}\mathbf{0} = \boldsymbol{\mu}. \\
+    \Cov(\boldsymbol{W}) &= \Cov(\boldsymbol{\mu} + \boldsymbol{A}\boldsymbol{Z}) = \Cov(\boldsymbol{A}\boldsymbol{Z}) \\
+    &= \boldsymbol{A} \Cov(\boldsymbol{Z}) \boldsymbol{A}^{\top} \\
+    &= \boldsymbol{A} (\I_l) \boldsymbol{A}^{\top} \quad \text{(since } Z_i \text{ are i.i.d. } \Normal(0,1)) \\
+    &= \boldsymbol{A} \boldsymbol{A}^{\top}.
+    \end{align*}
+    Let $\boldsymbol{V} = \boldsymbol{A}\boldsymbol{A}^{\top}$. Then $\boldsymbol{V}$ is the covariance matrix of $\boldsymbol{W}$. Note that $\boldsymbol{V}$ is always symmetric and positive semi-definite. The representation $\boldsymbol{W} \stackrel{d}{=} \boldsymbol{\mu} + \boldsymbol{A}\boldsymbol{Z}$ implies $\E[\boldsymbol{W}] = \boldsymbol{\mu}$ and $\Cov(\boldsymbol{W}) = \boldsymbol{V} = \boldsymbol{A}\boldsymbol{A}^{\top}$. The mean vector $\boldsymbol{\mu}$ is unique, but the matrix $\boldsymbol{A}$ is not unique for a given $\boldsymbol{V}$ (e.g., if $\boldsymbol{U}$ is an $l \times l$ orthogonal matrix, $\boldsymbol{A}' = \boldsymbol{A}\boldsymbol{U}$ gives $\boldsymbol{A}'(\boldsymbol{A}')^{\top} = \boldsymbol{A}\boldsymbol{U}\boldsymbol{U}^{\top}\boldsymbol{A}^{\top} = \boldsymbol{A}\boldsymbol{A}^{\top} = \boldsymbol{V}$).
+
+    \item \textbf{Density Function (when $\boldsymbol{V}$ is invertible):} If $l=k$ and the matrix $\boldsymbol{A}_{k \times k}$ is invertible (equivalently, has linearly independent columns), then the covariance matrix $\boldsymbol{V} = \boldsymbol{A}\boldsymbol{A}^{\top}$ is positive definite (and thus invertible). In this case, the random vector $\boldsymbol{W}$ has a probability density function (PDF) given by:
+    \[
+    f_{\boldsymbol{W}}(\boldsymbol{w}) = (2\pi)^{-k/2} |\det(\boldsymbol{V})|^{-1/2} \exp\left( -\frac{1}{2} (\boldsymbol{w} - \boldsymbol{\mu})^{\top} \boldsymbol{V}^{-1} (\boldsymbol{w} - \boldsymbol{\mu}) \right), \quad \boldsymbol{w} \in \R^k.
+    \]
+    If $\boldsymbol{V}$ is singular (not invertible), the distribution does not have a density with respect to the Lebesgue measure on $\R^k$; the distribution is concentrated on a lower-dimensional affine subspace.
+
+    \item \textbf{Notation:} Regardless of whether $\boldsymbol{V}$ is invertible, the distribution of $\boldsymbol{W}$ is completely determined by its mean vector $\boldsymbol{\mu}$ and covariance matrix $\boldsymbol{V}$. We use the notation
+    \[
+    \boldsymbol{W} \sim \Normal_k(\boldsymbol{\mu}, \boldsymbol{V})
+    \]
+    to denote that $\boldsymbol{W}$ follows a $k$-dimensional multivariate normal distribution with mean $\boldsymbol{\mu}$ and covariance matrix $\boldsymbol{V}$.
+
+    \item \textbf{Linear Combinations are Normal:} If $\boldsymbol{W} \sim \Normal_k(\boldsymbol{\mu}, \boldsymbol{V})$ and $\boldsymbol{c} \in \R^k$ is a constant vector, then the scalar random variable $Y = \boldsymbol{c}^{\top}\boldsymbol{W}$ has a univariate normal distribution:
+    \[
+    \boldsymbol{c}^{\top}\boldsymbol{W} \sim \Normal(\boldsymbol{c}^{\top}\boldsymbol{\mu}, \boldsymbol{c}^{\top}\boldsymbol{V}\boldsymbol{c}).
+    \]
+    This is a crucial property. It follows directly from the definition: if $\boldsymbol{W} = \boldsymbol{\mu} + \boldsymbol{A}\boldsymbol{Z}$, then $\boldsymbol{c}^{\top}\boldsymbol{W} = \boldsymbol{c}^{\top}\boldsymbol{\mu} + (\boldsymbol{c}^{\top}\boldsymbol{A})\boldsymbol{Z}$. Since $(\boldsymbol{c}^{\top}\boldsymbol{A})\boldsymbol{Z}$ is a linear combination of independent standard normals, it is itself normally distributed (possibly with variance 0 if $\boldsymbol{c}^{\top}\boldsymbol{A}=\mathbf{0}^{\top}$). The mean is $\boldsymbol{c}^{\top}\boldsymbol{\mu}$ and the variance is $(\boldsymbol{c}^{\top}\boldsymbol{A})(\boldsymbol{c}^{\top}\boldsymbol{A})^{\top} = \boldsymbol{c}^{\top}(\boldsymbol{A}\boldsymbol{A}^{\top})\boldsymbol{c} = \boldsymbol{c}^{\top}\boldsymbol{V}\boldsymbol{c}$.
+    \textit{Example:} Taking $\boldsymbol{c} = (0, \ldots, 0, 1, 0, \ldots, 0)^{\top}$ (with 1 in the $j$-th position) shows that each component $W_j$ is univariate normal:
+    \[ W_j \sim \Normal(\mu_j, V_{jj}), \]
+    where $V_{jj}$ is the $j$-th diagonal element of $\boldsymbol{V}$.
+
+    \item \textbf{Characterization via Linear Combinations:} The previous property has a converse. A random vector $\boldsymbol{W}$ is multivariate normal if and only if every linear combination $\boldsymbol{c}^{\top}\boldsymbol{W}$ is univariate normal. Formally:
+    \[
+    \boldsymbol{W} \sim \Normal_k(\boldsymbol{\mu}, \boldsymbol{V}) \quad \Longleftrightarrow \quad \boldsymbol{c}^{\top}\boldsymbol{W} \sim \Normal(\boldsymbol{c}^{\top}\boldsymbol{\mu}, \boldsymbol{c}^{\top}\boldsymbol{V}\boldsymbol{c}) \quad \forall \boldsymbol{c} \in \R^k.
+    \]
+    (Here $\boldsymbol{\mu} = \E[\boldsymbol{W}]$ and $\boldsymbol{V} = \Cov(\boldsymbol{W})$). This provides an alternative way to define or check for multivariate normality.
+
+    \item \textbf{Linear Transformations Preserve Normality:} If $\boldsymbol{W} \sim \Normal_k(\boldsymbol{\mu}, \boldsymbol{V})$ and $\boldsymbol{C} \in \R^{m \times k}$ is a constant matrix, then the transformed vector $\boldsymbol{Y} = \boldsymbol{C}\boldsymbol{W}$ is also multivariate normal:
+    \[
+    \boldsymbol{C}\boldsymbol{W} \sim \Normal_m(\boldsymbol{C}\boldsymbol{\mu}, \boldsymbol{C}\boldsymbol{V}\boldsymbol{C}^{\top}).
+    \]
+    This follows because if $\boldsymbol{W} = \boldsymbol{\mu} + \boldsymbol{A}\boldsymbol{Z}$, then $\boldsymbol{C}\boldsymbol{W} = \boldsymbol{C}\boldsymbol{\mu} + (\boldsymbol{C}\boldsymbol{A})\boldsymbol{Z}$. This fits the definition of MVN with mean $\boldsymbol{C}\boldsymbol{\mu}$ and matrix $\boldsymbol{A}' = \boldsymbol{C}\boldsymbol{A}$. The covariance is $\boldsymbol{A}'(\boldsymbol{A}')^{\top} = (\boldsymbol{C}\boldsymbol{A})(\boldsymbol{C}\boldsymbol{A})^{\top} = \boldsymbol{C}(\boldsymbol{A}\boldsymbol{A}^{\top})\boldsymbol{C}^{\top} = \boldsymbol{C}\boldsymbol{V}\boldsymbol{C}^{\top}$.
+
+    \item \textbf{Sums of Independent Normals are Normal:} If $\boldsymbol{W}^{(j)} \sim \Normal_k(\boldsymbol{\mu}^{(j)}, \boldsymbol{V}^{(j)})$ for $j=1, \ldots, p$, are independent random vectors, and $d_1, \ldots, d_p$ are scalar constants, then their linear combination is also multivariate normal:
+    \[
+    \sum_{j=1}^{p} d_j \boldsymbol{W}^{(j)} \sim \Normal_k \left( \sum_{j=1}^{p} d_j \boldsymbol{\mu}^{(j)}, \sum_{j=1}^{p} d_j^2 \boldsymbol{V}^{(j)} \right).
+    \]
+
+    \item \textbf{Independence and Zero Covariance:} Let $\boldsymbol{W} \sim \Normal_k(\boldsymbol{\mu}, \boldsymbol{V})$. Partition $\boldsymbol{W}$ into two sub-vectors, $\boldsymbol{W}^{(1)}$ and $\boldsymbol{W}^{(2)}$, corresponding to disjoint subsets of indices $\mathcal{I}_1, \mathcal{I}_2 \subseteq \{1, \ldots, k\}$. That is, $\boldsymbol{W}^{(1)} = (W_i : i \in \mathcal{I}_1)$ and $\boldsymbol{W}^{(2)} = (W_j : j \in \mathcal{I}_2)$. A remarkable property of the MVN distribution is that $\boldsymbol{W}^{(1)}$ and $\boldsymbol{W}^{(2)}$ are \textbf{statistically independent} if and only if their cross-covariance is zero:
+    \[
+    \Cov(W_i, W_j) = 0 \quad \forall i \in \mathcal{I}_1, j \in \mathcal{I}_2 \quad \Longleftrightarrow \quad \boldsymbol{W}^{(1)} \text{ and } \boldsymbol{W}^{(2)} \text{ are independent.}
+    \]
+    In general, zero covariance does not imply independence, but it does for jointly normal random variables. This property is extremely useful in linear models.
+\end{enumerate}
+
+% ===================================================================
+\section{Distributions Related to the Normal}
+% ===================================================================
+
+Several important probability distributions arise from transformations of normal random variables. These are fundamental for constructing confidence intervals and test statistics in the context of the normal linear model.
+
+\begin{definition}[Chi-square ($\Chisq$) Distribution] \label{def:chisq}
+If $Z_1, Z_2, \ldots, Z_k$ are independent and identically distributed (i.i.d.) standard normal random variables, $Z_i \sim \Normal(0, 1)$, then the distribution of the sum of their squares,
+\[
+Q = \sum_{j=1}^{k} Z_j^2,
+\]
+is called the \textbf{Chi-square distribution} with $k$ degrees of freedom. We denote this by $Q \sim \Chisq_k$.
+(In R: `pchisq()`, `qchisq()`, `rchisq()`, `dchisq()`).
+\end{definition}
+
+\begin{proposition}[Expected Value of $\Chisq_k$]
+If $Q \sim \Chisq_k$, then $\E[Q] = k$.
+\end{proposition}
+\begin{proof}
+Let $Q = \sum_{i=1}^{k} Z_i^2$ where $Z_i \stackrel{iid}{\sim} \Normal(0, 1)$. By linearity of expectation:
+\[
+\E[Q] = \E\left[ \sum_{i=1}^{k} Z_i^2 \right] = \sum_{i=1}^{k} \E[Z_i^2].
+\]
+For a standard normal random variable $Z_i$, we know $\E[Z_i] = 0$ and $\V(Z_i) = 1$. Since $\V(Z_i) = \E[Z_i^2] - (\E[Z_i])^2$, we have
+\[
+\E[Z_i^2] = \V(Z_i) + (\E[Z_i])^2 = 1 + 0^2 = 1.
+\]
+Therefore, $\E[Q] = \sum_{i=1}^{k} 1 = k$.
+\end{proof}
+
+\begin{proposition}[Quadratic Forms in Normal Variables] \label{prop:quadratic_form_chisq}
+Let $\boldsymbol{Z} \sim \Normal_n(\mathbf{0}, \I_n)$ (a vector of $n$ i.i.d. standard normal variables). Let $\boldsymbol{P}$ be an $n \times n$ symmetric ($\boldsymbol{P}^{\top} = \boldsymbol{P}$) and idempotent ($\boldsymbol{P}^2 = \boldsymbol{P}$) matrix with $\rank(\boldsymbol{P}) = r$. Then the quadratic form $\boldsymbol{Z}^{\top}\boldsymbol{P}\boldsymbol{Z}$ follows a Chi-square distribution with $r$ degrees of freedom:
+\[
+\boldsymbol{Z}^{\top}\boldsymbol{P}\boldsymbol{Z} = \|\boldsymbol{P}\boldsymbol{Z}\|^2 \sim \Chisq_r.
+\]
+\end{proposition}
+\begin{proof}[Proof Sketch]
+Since $\boldsymbol{P}$ is symmetric and idempotent, it represents an orthogonal projection onto a subspace of dimension $r = \rank(\boldsymbol{P}) = \tr(\boldsymbol{P})$. Such a matrix has eigenvalues that are either 0 or 1, with exactly $r$ eigenvalues equal to 1. By the spectral theorem, $\boldsymbol{P} = \boldsymbol{U}\boldsymbol{D}\boldsymbol{U}^{\top}$ where $\boldsymbol{U}$ is orthogonal and $\boldsymbol{D}$ is diagonal with $r$ ones and $n-r$ zeros. Let $\boldsymbol{W} = \boldsymbol{U}^{\top}\boldsymbol{Z}$. Since $\boldsymbol{U}^{\top}$ is orthogonal, $\boldsymbol{W} \sim \Normal_n(\mathbf{0}, \boldsymbol{U}^{\top}\I_n \boldsymbol{U}) = \Normal_n(\mathbf{0}, \I_n)$. Then
+\[
+\boldsymbol{Z}^{\top}\boldsymbol{P}\boldsymbol{Z} = \boldsymbol{Z}^{\top}\boldsymbol{U}\boldsymbol{D}\boldsymbol{U}^{\top}\boldsymbol{Z} = (\boldsymbol{U}^{\top}\boldsymbol{Z})^{\top} \boldsymbol{D} (\boldsymbol{U}^{\top}\boldsymbol{Z}) = \boldsymbol{W}^{\top}\boldsymbol{D}\boldsymbol{W} = \sum_{i=1}^{n} D_{ii} W_i^2 = \sum_{i=1}^{r} W_i^2,
+\]
+where the sum is taken over the $r$ indices $i$ for which $D_{ii}=1$. Since $W_i$ are i.i.d. $\Normal(0, 1)$, this sum is, by definition, a $\Chisq_r$ random variable.
+(The original note uses $\E\|\boldsymbol{P} \boldsymbol{Z}\|^2 = \tr(\Cov[\boldsymbol{P} \boldsymbol{Z}]) = \tr(\boldsymbol{P}\boldsymbol{I}\boldsymbol{P}^{\top}) = \tr(\boldsymbol{P}) = r$. While this correctly calculates the expected value, it doesn't fully prove the distribution is $\Chisq_r$. The spectral decomposition argument is more complete).
+\end{proof}
+
+\begin{definition}[Student's $t$-distribution] \label{def:t_dist}
+If $Z \sim \Normal(0, 1)$ and $V \sim \Chisq_k$ are independent random variables, then the distribution of the ratio
+\[
+T = \frac{Z}{\sqrt{V/k}}
+\]
+is called the \textbf{$t$-distribution} with $k$ degrees of freedom. We denote this by $T \sim \Tdist_k$.
+(In R: `pt()`, `qt()`, `rt()`, `dt()`).
+\end{definition}
+
+\begin{definition}[$F$-distribution] \label{def:f_dist}
+If $V_1 \sim \Chisq_{k_1}$ and $V_2 \sim \Chisq_{k_2}$ are independent random variables, then the distribution of the ratio of scaled Chi-square variables
+\[
+F = \frac{V_1 / k_1}{V_2 / k_2}
+\]
+is called the \textbf{$F$-distribution} with $k_1$ (numerator) and $k_2$ (denominator) degrees of freedom. We denote this by $F \sim \Fdist_{k_1, k_2}$.
+(In R: `pf()`, `qf()`, `rf()`, `df()`).
+\end{definition}
+
+% ===================================================================
+\section{Inference Under the Normal Linear Model}
+% ===================================================================
+
+We now combine the linear model structure with the assumption of normally distributed errors. This allows us to derive exact sampling distributions for our estimators, paving the way for confidence intervals and hypothesis tests.
+
+Recall the standard linear model assumptions \eqref{eq:linear_model_assumptions}:
+\[
+\boldsymbol{Y} = \boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}, \quad \E[\boldsymbol{\epsilon}] = \mathbf{0}, \quad \Cov(\boldsymbol{\epsilon}) = \sigma^2 \I_n.
+\]
+We now add the assumption that the errors are multivariate normal.
+
+\begin{definition}[Normal Linear Model]
+The \textbf{normal linear model} assumes:
+\begin{equation} \label{eq:normal_linear_model}
+\boldsymbol{Y} = \boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}, \quad \text{where } \boldsymbol{\epsilon} \sim \Normal_n(\mathbf{0}, \sigma^2 \I_n).
+\end{equation}
+This implies that the observations $\boldsymbol{Y}$ are also multivariate normal:
+\[ \boldsymbol{Y} \sim \Normal_n(\boldsymbol{X}\boldsymbol{\beta}, \sigma^2 \I_n). \]
+\end{definition}
+
+Under this model, we can determine the exact distributions of the LS estimator $\hat{\boldsymbol{\beta}}$ and the variance estimator $\hat{\sigma}^2$.
+
+% -------------------------------------------------------------------
+\subsection{Distribution of the LS Estimator $\hat{\boldsymbol{\beta}}$}
+% -------------------------------------------------------------------
+
+Recall the formula for the LS estimator:
+\[
+\hat{\boldsymbol{\beta}} = (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{Y}.
+\]
+Let $\boldsymbol{A} = (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{X}^{\top}$, which is a $(p+1) \times n$ matrix. We can write $\hat{\boldsymbol{\beta}}$ in terms of the error vector $\boldsymbol{\epsilon}$:
+\begin{align*}
+\hat{\boldsymbol{\beta}} &= \boldsymbol{A} \boldsymbol{Y} \\
+&= \boldsymbol{A} (\boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}) \\
+&= \boldsymbol{A}\boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{A}\boldsymbol{\epsilon} \\
+&= (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{X} \boldsymbol{\beta} + \boldsymbol{A}\boldsymbol{\epsilon} \\
+&= \I_{p+1} \boldsymbol{\beta} + \boldsymbol{A}\boldsymbol{\epsilon} \\
+&= \boldsymbol{\beta} + \boldsymbol{A}\boldsymbol{\epsilon}.
+\end{align*}
+Since $\boldsymbol{\epsilon} \sim \Normal_n(\mathbf{0}, \sigma^2 \I_n)$, and $\hat{\boldsymbol{\beta}}$ is a linear transformation of $\boldsymbol{\epsilon}$ shifted by a constant vector $\boldsymbol{\beta}$, it follows from Property 6 of MVN distributions that $\hat{\boldsymbol{\beta}}$ is also multivariate normal.
+
+We already know its mean and covariance matrix from our earlier work (which did not require normality):
+\[
+\E[\hat{\boldsymbol{\beta}}] = \boldsymbol{\beta}
+\]
+\[
+\Cov(\hat{\boldsymbol{\beta}}) = \Cov(\boldsymbol{\beta} + \boldsymbol{A}\boldsymbol{\epsilon}) = \Cov(\boldsymbol{A}\boldsymbol{\epsilon}) = \boldsymbol{A} \Cov(\boldsymbol{\epsilon}) \boldsymbol{A}^{\top} = \boldsymbol{A} (\sigma^2 \I_n) \boldsymbol{A}^{\top} = \sigma^2 \boldsymbol{A}\boldsymbol{A}^{\top}.
+\]
+Calculating $\boldsymbol{A}\boldsymbol{A}^{\top}$:
+\[
+\boldsymbol{A}\boldsymbol{A}^{\top} = \left( (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \right) \left( (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \right)^{\top} = (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{X} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} = (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}.
+\]
+So, $\Cov(\hat{\boldsymbol{\beta}}) = \sigma^2 (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}$.
+
+Combining these results, we have the sampling distribution of the LS estimator under the normal linear model:
+\begin{equation} \label{eq:dist_beta_hat}
+\hat{\boldsymbol{\beta}} \sim \Normal_{p+1} \left( \boldsymbol{\beta}, \sigma^2 (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \right).
+\end{equation}
+
+% -------------------------------------------------------------------
+\subsection{Distribution of the Variance Estimator $\hat{\sigma}^2$}
+% -------------------------------------------------------------------
+
+Recall the definition of the unbiased variance estimator:
+\[
+\hat{\sigma}^2 = \frac{\|\boldsymbol{e}\|^2}{n-p-1} = \frac{SSE}{n-p-1},
+\]
+where $\boldsymbol{e} = \boldsymbol{Y} - \hat{\boldsymbol{Y}} = \boldsymbol{Y} - \boldsymbol{P_X}\boldsymbol{Y} = (\I_n - \boldsymbol{P_X})\boldsymbol{Y}$ are the residuals, and $\boldsymbol{P_X} = \boldsymbol{X}(\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top}$ is the projection matrix onto the column space of $\boldsymbol{X}$. Let $\boldsymbol{Q} = \I_n - \boldsymbol{P_X}$. Then $\boldsymbol{e} = \boldsymbol{Q}\boldsymbol{Y}$.
+
+We can express the residuals in terms of the errors $\boldsymbol{\epsilon}$:
+\[
+\boldsymbol{e} = \boldsymbol{Q}\boldsymbol{Y} = \boldsymbol{Q}(\boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}) = \boldsymbol{Q}\boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{Q}\boldsymbol{\epsilon}.
+\]
+Since $\boldsymbol{Q}$ projects onto the space orthogonal to the column space of $\boldsymbol{X}$, we have $\boldsymbol{Q}\boldsymbol{X} = \mathbf{0}$. Thus,
+\[
+\boldsymbol{e} = \boldsymbol{Q}\boldsymbol{\epsilon}.
+\]
+The sum of squared errors (SSE) is $\|\boldsymbol{e}\|^2 = \|\boldsymbol{Q}\boldsymbol{\epsilon}\|^2 = \boldsymbol{\epsilon}^{\top}\boldsymbol{Q}^{\top}\boldsymbol{Q}\boldsymbol{\epsilon}$.
+The matrix $\boldsymbol{Q}$ is symmetric ($\boldsymbol{Q}^{\top}=\boldsymbol{Q}$) and idempotent ($\boldsymbol{Q}^2 = \boldsymbol{Q}$) because it's an orthogonal projection matrix. Its rank is $\rank(\boldsymbol{Q}) = \tr(\boldsymbol{Q}) = \tr(\I_n - \boldsymbol{P_X}) = \tr(\I_n) - \tr(\boldsymbol{P_X}) = n - \tr(\boldsymbol{X}(\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top}) = n - \tr((\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top}\boldsymbol{X}) = n - \tr(\I_{p+1}) = n - (p+1)$.
+
+Now, consider the random vector $\boldsymbol{Z} = \boldsymbol{\epsilon}/\sigma$. Since $\boldsymbol{\epsilon} \sim \Normal_n(\mathbf{0}, \sigma^2\I_n)$, we have $\boldsymbol{Z} \sim \Normal_n(\mathbf{0}, \I_n)$. The SSE can be written as:
+\[
+SSE = \|\boldsymbol{e}\|^2 = \|\boldsymbol{Q}\boldsymbol{\epsilon}\|^2 = \| \sigma \boldsymbol{Q} (\boldsymbol{\epsilon}/\sigma) \|^2 = \sigma^2 \|\boldsymbol{Q}\boldsymbol{Z}\|^2.
+\]
+We apply Proposition \ref{prop:quadratic_form_chisq} with the matrix $\boldsymbol{P}=\boldsymbol{Q}$ and vector $\boldsymbol{Z} \sim \Normal_n(\mathbf{0}, \I_n)$. Since $\boldsymbol{Q}$ is symmetric, idempotent, and has rank $r = n-p-1$, we conclude that
+\[
+\frac{SSE}{\sigma^2} = \frac{\|\boldsymbol{e}\|^2}{\sigma^2} = \|\boldsymbol{Q}\boldsymbol{Z}\|^2 \sim \Chisq_{n-p-1}.
+\]
+Relating this back to $\hat{\sigma}^2$:
+\[
+\frac{(n-p-1)\hat{\sigma}^2}{\sigma^2} = \frac{SSE}{\sigma^2} \sim \Chisq_{n-p-1}.
+\]
+This gives us the sampling distribution of the variance estimator $\hat{\sigma}^2$. It follows a scaled Chi-square distribution.
+
+% -------------------------------------------------------------------
+\subsection{Joint Distribution of $\hat{\boldsymbol{\beta}}$ and $\hat{\sigma}^2$}
+% -------------------------------------------------------------------
+
+A crucial result for constructing $t$-statistics and $F$-statistics is that, under the normal linear model, the LS estimator $\hat{\boldsymbol{\beta}}$ is statistically independent of the variance estimator $\hat{\sigma}^2$.
+
+To show this, we will show that $\hat{\boldsymbol{\beta}}$ is independent of the residual vector $\boldsymbol{e}$, since $\hat{\sigma}^2$ is solely a function of $\boldsymbol{e}$ (specifically, $\|\boldsymbol{e}\|^2$).
+
+We know $\hat{\boldsymbol{\beta}} = \boldsymbol{A}\boldsymbol{Y}$ and $\boldsymbol{e} = \boldsymbol{Q}\boldsymbol{Y}$, where $\boldsymbol{A} = (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top}$ and $\boldsymbol{Q} = \I_n - \boldsymbol{P_X}$. Consider the joint vector:
+\[
+\begin{pmatrix} \hat{\boldsymbol{\beta}} \\ \boldsymbol{e} \end{pmatrix}
+= \begin{pmatrix} \boldsymbol{A} \\ \boldsymbol{Q} \end{pmatrix} \boldsymbol{Y}.
+\]
+Since $\boldsymbol{Y} \sim \Normal_n(\boldsymbol{X}\boldsymbol{\beta}, \sigma^2\I_n)$, this stacked vector is also multivariate normal because it's a linear transformation of $\boldsymbol{Y}$.
+
+Now, we examine the covariance between the blocks $\hat{\boldsymbol{\beta}}$ and $\boldsymbol{e}$:
+\begin{align*}
+\Cov(\hat{\boldsymbol{\beta}}, \boldsymbol{e}) &= \Cov(\boldsymbol{A}\boldsymbol{Y}, \boldsymbol{Q}\boldsymbol{Y}) \\
+&= \boldsymbol{A} \Cov(\boldsymbol{Y}) \boldsymbol{Q}^{\top} \\
+&= \boldsymbol{A} (\sigma^2 \I_n) \boldsymbol{Q} \quad \text{(since } \boldsymbol{Q} \text{ is symmetric)} \\
+&= \sigma^2 \boldsymbol{A}\boldsymbol{Q}
+\end{align*}
+Let's compute $\boldsymbol{A}\boldsymbol{Q}$:
+\begin{align*}
+\boldsymbol{A}\boldsymbol{Q} &= (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top} (\I_n - \boldsymbol{P_X}) \\
+&= (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top} (\I_n - \boldsymbol{X}(\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top}) \\
+&= (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top} - (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top} \boldsymbol{X}(\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top} \\
+&= (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top} - (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1} \I_{p+1} (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top} \\
+&= (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top} - (\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{X}^{\top} \\
+&= \mathbf{0}_{(p+1) \times n} \quad \text{(The zero matrix)}
+\end{align*}
+Therefore, $\Cov(\hat{\boldsymbol{\beta}}, \boldsymbol{e}) = \mathbf{0}$.
+
+Since $(\hat{\boldsymbol{\beta}}, \boldsymbol{e})$ are jointly multivariate normal and their covariance is zero, we can invoke Property 8 of MVN distributions to conclude that $\hat{\boldsymbol{\beta}}$ and $\boldsymbol{e}$ are \textbf{statistically independent}.
+
+Because $\hat{\sigma}^2 = \|\boldsymbol{e}\|^2 / (n-p-1)$ is a function of $\boldsymbol{e}$ only, it follows that $\hat{\boldsymbol{\beta}}$ and $\hat{\sigma}^2$ are also \textbf{statistically independent}.
+
+\begin{theorem}[Independence of $\hat{\boldsymbol{\beta}}$ and $\hat{\sigma}^2$]
+Under the normal linear model \eqref{eq:normal_linear_model}, the least squares estimator $\hat{\boldsymbol{\beta}}$ is statistically independent of the residual variance estimator $\hat{\sigma}^2$.
+\end{theorem}
+
+This independence is fundamental. It allows us, for example, to form $t$-statistics like
+\[ \frac{(\boldsymbol{a}^{\top}\hat{\boldsymbol{\beta}} - \boldsymbol{a}^{\top}\boldsymbol{\beta})}{\sqrt{\hat{\sigma}^2 \boldsymbol{a}^{\top}(\boldsymbol{X}^{\top}\boldsymbol{X})^{-1}\boldsymbol{a}}} \]
+where the numerator (related to $\hat{\boldsymbol{\beta}}$) is independent of the denominator (related to $\hat{\sigma}^2$), leading to a $t$-distribution (after appropriate scaling), which forms the basis for confidence intervals and hypothesis tests for $\boldsymbol{a}^{\top}\boldsymbol{\beta}$.
+
+\end{document}
